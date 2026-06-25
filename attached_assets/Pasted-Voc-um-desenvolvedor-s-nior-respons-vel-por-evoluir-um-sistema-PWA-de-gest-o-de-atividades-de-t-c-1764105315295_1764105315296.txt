@@ -1,0 +1,110 @@
+Você é um desenvolvedor sênior responsável por evoluir um sistema PWA de gestão de atividades de técnicos em campo (agenda + mapa + controle de tempo).
+
+🎯 Contexto atual (IMPORTANTE):
+- O sistema já está funcionando perfeitamente com:
+  - Agendamento de atividades (ex.: “Instalação”) com:
+    - Cliente vinculado
+    - Endereço do cliente (usado para mapa/rota)
+    - Tempo de deslocamento até o cliente (ida) calculado ou estimado (ex.: 1h).
+  - Tela de dashboard onde o gestor acompanha:
+    - Tempo de deslocamento (ida) até os clientes
+    - Tempo de trabalho efetivo na atividade
+    - Classificação desses tempos no relatório (trabalho efetivo x trabalho adicional x perda).
+  - Fluxo do técnico:
+    1) Atividade agendada (com tempo de deslocamento previsto até o cliente)
+    2) Técnico clica em **Iniciar**
+    3) Técnico clica em **Concluir**
+    4) Abre um popup: **“Trabalho realizado? SIM ou NÃO”**
+       - Se **SIM**:
+         - O tempo de deslocamento até o cliente é contabilizado como **trabalho adicional**  
+           (tipo: “Tempo de trajeto ao cliente (planejado, inevitável ou necessário)”)  
+         - O tempo de trabalho efetivo é contabilizado normalmente como “Trabalho efetivo”.
+       - (O fluxo de “NÃO” já está implementado e funcionando; não queremos quebrar nada disso).
+
+📌 NOVA REGRA DE NEGÓCIO:
+Agora precisamos também contabilizar o **tempo de retorno** do técnico (volta do cliente para a base / home office / ponto de apoio), **SEM ser considerado perda**, e sim como **trabalho adicional**.
+
+Ou seja:
+- Já temos o **tempo de deslocamento de ida** → cliente.
+- Agora precisamos incluir o **tempo de deslocamento de volta** → da localização do cliente até:
+  - Base do técnico (endereço fixo da base),
+  - OU “Base home office” (se o técnico estiver em home office),
+  - OU outro ponto de referência que o sistema já utilize para o técnico.
+
+Esse tempo de volta deve:
+- Ser contabilizado como **trabalho adicional (tempo de retorno)**.
+- Aparecer nos relatórios e dashboards de forma clara e separada:
+  - Tempo de deslocamento (ida)
+  - Tempo de deslocamento (volta)
+  - Trabalho efetivo
+- Não ser lançado como “perda”.
+
+✅ O que eu quero que você faça:
+
+1. **Analisar o projeto**:
+   - Procure no código onde:
+     - É calculado e armazenado o tempo de deslocamento **de ida**.
+     - São gerados os relatórios de tempo (trabalho efetivo, trabalho adicional, perda).
+     - Está o fluxo da tela de conclusão de atividade (popup “Trabalho realizado? SIM/NÃO”).
+
+2. **Propor o desenho da solução (antes de alterar código)**:
+   - Modelagem de dados:
+     - Como você sugere armazenar **ida** e **volta**?  
+       Exemplos:
+       - Campos separados: `travel_time_outbound` e `travel_time_return`
+       - Ou uma tabela de “trajetos” vinculada à atividade com `tipo: ida/volta`.
+     - Como vincular o ponto de retorno:
+       - Base do técnico, home office, ou outro endereço?
+       - Sugira como usar dados existentes (ex.: endereço da base técnica no cadastro do técnico).
+   - Regra de negócio:
+     - Em que momento o tempo de **volta** será calculado?
+       - Na conclusão da atividade?
+       - A partir de um botão extra (“Registrar retorno”)?
+     - Como garantir que:
+       - O tempo de volta não seja contado duas vezes.
+       - O técnico não consiga registrar retorno sem ter concluído a atividade.
+   - UX / Fluxo de tela:
+     - Sugira qual é a melhor experiência:
+       - Ex.: ao concluir a atividade, depois do “Trabalho realizado? SIM/NÃO”, abrir uma segunda pergunta:
+         - “Registrar deslocamento de volta?” (SIM/NÃO)
+         - Se SIM, o sistema já calcula via mapa/rota o tempo estimado até a base/home office e grava como **trabalho adicional – tempo de retorno**.
+       - Ou outro fluxo que você considerar mais robusto.
+
+3. **Definir como calcular o tempo de retorno**:
+   - Reutilizar o mesmo recurso de rotas já utilizado para calcular o tempo de deslocamento de ida (biblioteca ou API de mapa/rotas já presente no projeto).
+   - Explicar como será feita a chamada:
+     - Origem: endereço do cliente
+     - Destino: endereço da base do técnico / base home office
+   - Como salvar esse tempo no banco e vincular ao relatório como “trabalho adicional”.
+
+4. **Impactos em relatórios e dashboard**:
+   - Detalhar quais ajustes precisam ser feitos:
+     - Em consultas SQL / ORM.
+     - Nos cards / KPIs do dashboard.
+     - Em exportações (se existir relatório em Excel/PDF).
+   - Exemplo de métricas:
+     - Total de tempo de deslocamento (ida)
+     - Total de tempo de deslocamento (volta)
+     - Total de trabalho efetivo
+     - Percentual de tempo adicional (ida + volta) em relação ao tempo total diário do técnico.
+
+5. **Somente depois disso, sugerir as alterações de código**:
+   - Liste exatamente quais arquivos pretende alterar (frontend, backend, migrations, etc.).
+   - Para cada arquivo:
+     - Explique o que será feito.
+     - Depois mostre o código proposto (React/TypeScript/Node/PostgreSQL, seguindo o padrão já usado no projeto).
+   - Mantenha compatibilidade com tudo que já está funcionando hoje.
+
+⚠️ Regras para execução:
+- Não remova nem quebre o fluxo atual de:
+  - Agendamento
+  - Iniciar atividade
+  - Concluir atividade
+  - Popup “Trabalho realizado? SIM/NÃO”.
+- Apenas **estenda** o fluxo para contemplar o tempo de retorno, classificado como **trabalho adicional**.
+- Sempre explique suas decisões técnicas antes de mostrar o código.
+
+Comece respondendo com:
+1) Um resumo de como você entendeu o problema.  
+2) O desenho da solução (modelagem + fluxo + impacto em telas/relatórios).  
+3) Só depois, as sugestões concretas de alterações de código.

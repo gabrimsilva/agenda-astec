@@ -1,0 +1,194 @@
+PROMPT – Ajustes no cabeçalho e campos exibidos da RAT (sistema + relatório final/PDF)
+
+Você é um desenvolvedor sênior responsável por ajustar o módulo de RAT – Relatório de Atividade Técnica já existente no nosso sistema (web + PWA).
+
+A RAT já está implementada com abas e relatório final/PDF, porém precisamos corrigir nomes de campos, exibição e mapeamentos.
+
+Regra importante:
+
+Mantenha cada campo dentro da categoria/aba onde ele já pertence.
+
+Os campos citados abaixo devem ficar com o mesmo nome e conteúdo:
+
+Na tela do sistema (formulário RAT)
+
+E no relatório final / PDF.
+
+Não mude a stack nem a estrutura geral, apenas faça os ajustes descritos.
+
+1. Cabeçalho da RAT
+
+Nº do relatório
+
+Hoje existe um código gerado pelo sistema no formato tipo: RAT-2025-0008.
+
+Precisamos que:
+
+O campo “Nº do relatório” seja o número oficial do relatório, preenchido conforme a lógica já definida (seja manual ou por geração controlada).
+
+Esse Nº do relatório substitua o código gerado automaticamente no relatório final.
+
+Em resumo:
+
+O que deve aparecer no cabeçalho do relatório final é o valor do campo “Nº do relatório”, e não um código interno do sistema.
+
+Data de fechamento
+
+Já existe no formulário, mas:
+
+Não está aparecendo no relatório final.
+
+Ajuste:
+
+Garantir que a “Data de fechamento” seja exibida corretamente no cabeçalho/área de datas do relatório final/PDF.
+
+Data de abertura
+
+Hoje provavelmente está vindo da data da atividade realizada pelo técnico.
+
+Precisamos:
+
+Incluir o campo “Data de abertura” na RAT para ser preenchido no sistema junto com a “Data de fechamento”.
+
+Exibir “Data de abertura” também no cabeçalho do relatório final/PDF.
+
+Pode continuar pré-preenchida com a data da atividade, mas deve ser um campo explícito de RAT, editável se necessário.
+
+2. Ajustes de nomes de campos (labels) e mapeamento
+
+Ajustar os labels no sistema e garantir que os mesmos textos sejam usados no relatório final.
+
+Campo “agressividade do meio”
+
+Renomear para:
+“agressividade a que o revestimento/pintura será submetido”
+
+Atualizar esse nome no:
+
+Formulário,
+
+E no relatório final.
+
+Campo “grau inicial”
+
+Renomear para:
+“grau inicial da superfície”
+
+Atualizar tanto no sistema quanto no relatório final.
+
+Campo “chapas novas”
+
+Não deve mais aparecer no relatório final.
+
+Se quiser, pode manter internamente no formulário (se ainda for usado para controle interno), mas:
+
+No relatório final/PDF, remover a linha/campo “chapas novas”.
+
+Campo “manutenção (ASTM D610)”
+
+Hoje está com um zero a mais no label (algo como “D0610”).
+
+Ajustar o label para:
+“manutenção (ASTM D610)”
+(retirar o zero extra antes do 6).
+
+Além disso:
+
+O valor preenchido nesse campo não está aparecendo no relatório final → corrigir o mapeamento.
+
+Garantir que o valor inserido na aba correspondente apareça corretamente no relatório/PDF.
+
+Tipo de componente “diluente”
+
+Quando o tipo de componente for “diluente”, o campo hoje chamado “espessura recomendada” deve, para esse caso, ser exibido como:
+“diluição recomendada”
+
+Ajustes:
+
+No formulário de RAT (aba Produto), ao adicionar/com editar um componente do tipo “diluente”, renomear esse campo para “diluição recomendada”.
+
+No relatório final, para componentes do tipo “diluente”, também exibir o campo como “diluição recomendada”.
+
+Campo de temperatura “T (ºC)”
+
+Renomear o label para:
+“temperatura (ºC)”
+
+Atualizar tanto na tela quanto no relatório final.
+
+Campo “URA”
+
+Renomear o label para:
+“URA (%)”
+
+Atualizar no formulário e no relatório final.
+
+Campo “Espessura seca total”
+
+Renomear para:
+“Espessura seca total (µm)”
+
+O mesmo nome deve aparecer:
+
+Na aba/aba correspondente à aplicação/produto,
+
+E no relatório final/PDF.
+
+Campo “metodo”
+
+Renomear para:
+“método de aplicação”
+
+Atualizar nos dois lugares (sistema e relatório final).
+
+Campo “condições”
+
+Renomear para:
+“condições de aplicação”
+
+Ajustar o label na aba correta (provavelmente “aplicação”) e no relatório final.
+
+3. Ajuste de mapeamento: observação adicional
+
+No relatório final existe o campo “Obs. adicional”, mas ele está vazio.
+
+No sistema, na aba “Aplicação”, existe o campo:
+“observação adicional da aplicação”.
+
+Ajuste:
+
+Garanta que o campo “Obs. adicional” exibido no relatório final use exatamente o conteúdo do campo “observação adicional da aplicação” da aba “aplicação”.
+
+Ou seja, corrigir o mapeamento entre formulário e relatório.
+
+4. Ajuste visual no relatório final (linha telefone)
+
+No relatório final, logo após a assinatura, existe uma linha “Telefone” (ou campo similar).
+
+Remover essa linha/campo “Telefone” que aparece logo após a assinatura do técnico.
+
+A assinatura, o nome e demais informações que forem necessárias devem permanecer; apenas a linha de telefone após a assinatura deve sair.
+
+5. Requisitos gerais
+
+Não alterar a arquitetura geral, apenas:
+
+Renomear labels,
+
+Corrigir mapeamentos,
+
+Ajustar o que aparece no relatório final/PDF.
+
+Sempre que um campo tiver seu nome ajustado:
+
+O mesmo texto deve ser usado:
+
+Na aba/aba correspondente dentro do sistema,
+
+E no relatório final/PDF.
+
+Garanta que:
+
+Nenhum dado hoje existente seja perdido,
+
+Apenas os nomes e exibições sejam corrigidos conforme listado.

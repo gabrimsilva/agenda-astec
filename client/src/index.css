@@ -1,0 +1,600 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* LIGHT MODE */
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+
+  /* Automatic computation of border around primary / danger buttons */
+  --opaque-button-border-intensity: -8; /* In terms of percentages */
+
+  /* Backgrounds applied on top of other backgrounds when hovered/active */
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+
+  --background: 0 0% 100%;
+
+  --foreground: 220 15% 15%;
+
+  --border: 220 10% 90%;
+
+  --card: 220 15% 98%;
+
+  --card-foreground: 220 15% 15%;
+
+  --card-border: 220 10% 94%;
+
+  --sidebar: 220 15% 96%;
+
+  --sidebar-foreground: 220 15% 15%;
+
+  --sidebar-border: 220 10% 92%;
+
+  --sidebar-primary: 220 70% 45%;
+
+  --sidebar-primary-foreground: 220 70% 98%;
+
+  --sidebar-accent: 220 12% 92%;
+
+  --sidebar-accent-foreground: 220 15% 20%;
+
+  --sidebar-ring: 220 70% 45%;
+
+  --popover: 220 12% 94%;
+
+  --popover-foreground: 220 15% 15%;
+
+  --popover-border: 220 10% 88%;
+
+  --primary: 220 70% 45%;
+
+  --primary-foreground: 220 70% 98%;
+
+  --secondary: 220 10% 88%;
+
+  --secondary-foreground: 220 15% 20%;
+
+  --muted: 220 8% 92%;
+
+  --muted-foreground: 220 10% 40%;
+
+  --accent: 220 12% 90%;
+
+  --accent-foreground: 220 15% 20%;
+
+  --destructive: 0 70% 50%;
+
+  --destructive-foreground: 0 70% 98%;
+
+  --input: 220 15% 75%;
+  --ring: 220 70% 45%;
+  --chart-1: 220 65% 45%;
+  --chart-2: 160 55% 40%;
+  --chart-3: 25 80% 50%;
+  --chart-4: 280 60% 50%;
+  --chart-5: 200 65% 48%;
+
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: "JetBrains Mono", Menlo, Monaco, "Courier New", monospace;
+  --radius: .5rem; /* 8px */
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 10% 10% / 0.05);
+  --shadow-xs: 0px 1px 3px 0px hsl(220 10% 10% / 0.08);
+  --shadow-sm: 0px 2px 4px -1px hsl(220 10% 10% / 0.06), 0px 1px 2px -1px hsl(220 10% 10% / 0.08);
+  --shadow: 0px 4px 6px -1px hsl(220 10% 10% / 0.08), 0px 2px 4px -1px hsl(220 10% 10% / 0.06);
+  --shadow-md: 0px 6px 12px -2px hsl(220 10% 10% / 0.10), 0px 3px 6px -2px hsl(220 10% 10% / 0.08);
+  --shadow-lg: 0px 10px 20px -4px hsl(220 10% 10% / 0.12), 0px 4px 8px -2px hsl(220 10% 10% / 0.08);
+  --shadow-xl: 0px 20px 32px -8px hsl(220 10% 10% / 0.14), 0px 8px 16px -4px hsl(220 10% 10% / 0.10);
+  --shadow-2xl: 0px 32px 64px -12px hsl(220 10% 10% / 0.16);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+  /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
+
+  /* Fallback for older browsers */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+
+  --opaque-button-border-intensity: 9;  /* In terms of percentages */
+
+  /* Backgrounds applied on top of other backgrounds when hovered/active */
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+
+  --background: 220 15% 10%;
+
+  --foreground: 220 10% 92%;
+
+  --border: 220 10% 25%;
+
+  --card: 220 12% 15%;
+
+  --card-foreground: 220 10% 92%;
+
+  --card-border: 220 10% 20%;
+
+  --sidebar: 220 12% 13%;
+
+  --sidebar-foreground: 220 10% 92%;
+
+  --sidebar-border: 220 10% 18%;
+
+  --sidebar-primary: 220 70% 50%;
+
+  --sidebar-primary-foreground: 220 70% 98%;
+
+  --sidebar-accent: 220 12% 18%;
+
+  --sidebar-accent-foreground: 220 10% 92%;
+
+  --sidebar-ring: 220 70% 50%;
+
+  --popover: 220 12% 17%;
+
+  --popover-foreground: 220 10% 92%;
+
+  --popover-border: 220 10% 22%;
+
+  --primary: 220 70% 50%;
+
+  --primary-foreground: 220 70% 98%;
+
+  --secondary: 220 10% 22%;
+
+  --secondary-foreground: 220 10% 92%;
+
+  --muted: 220 8% 20%;
+
+  --muted-foreground: 220 10% 65%;
+
+  --accent: 220 12% 23%;
+
+  --accent-foreground: 220 10% 92%;
+
+  --destructive: 0 70% 50%;
+
+  --destructive-foreground: 0 70% 98%;
+
+  --input: 220 15% 35%;
+  --ring: 220 70% 50%;
+  --chart-1: 220 65% 60%;
+  --chart-2: 160 55% 55%;
+  --chart-3: 25 80% 60%;
+  --chart-4: 280 60% 65%;
+  --chart-5: 200 65% 58%;
+
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 15% 5% / 0.20);
+  --shadow-xs: 0px 1px 3px 0px hsl(220 15% 5% / 0.25);
+  --shadow-sm: 0px 2px 4px -1px hsl(220 15% 5% / 0.22), 0px 1px 2px -1px hsl(220 15% 5% / 0.25);
+  --shadow: 0px 4px 6px -1px hsl(220 15% 5% / 0.26), 0px 2px 4px -1px hsl(220 15% 5% / 0.22);
+  --shadow-md: 0px 6px 12px -2px hsl(220 15% 5% / 0.30), 0px 3px 6px -2px hsl(220 15% 5% / 0.26);
+  --shadow-lg: 0px 10px 20px -4px hsl(220 15% 5% / 0.35), 0px 4px 8px -2px hsl(220 15% 5% / 0.28);
+  --shadow-xl: 0px 20px 32px -8px hsl(220 15% 5% / 0.40), 0px 8px 16px -4px hsl(220 15% 5% / 0.32);
+  --shadow-2xl: 0px 32px 64px -12px hsl(220 15% 5% / 0.45);
+
+  /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/**
+ * Using the elevate system.
+ * Automatic contrast adjustment.
+ *
+ * <element className="hover-elevate" />
+ * <element className="active-elevate-2" />
+ *
+ * // Using the tailwind utility when a data attribute is "on"
+ * <element className="toggle-elevate data-[state=on]:toggle-elevated" />
+ * // Or manually controlling the toggle state
+ * <element className="toggle-elevate toggle-elevated" />
+ *
+ * Elevation systems have to handle many states.
+ * - not-hovered, vs. hovered vs. active  (three mutually exclusive states)
+ * - toggled or not
+ * - focused or not (this is not handled with these utilities)
+ *
+ * Even without handling focused or not, this is six possible combinations that
+ * need to be distinguished from eachother visually.
+ */
+@layer utilities {
+
+  /* Hide ugly search cancel button in Chrome until we can style it properly */
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply hidden;
+  }
+
+  /* Placeholder styling for contentEditable div */
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+  }
+
+  /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
+   * buttons/badges can remove the automatic brightness adjustment on interactions
+   * and program their own. */
+  .no-default-hover-elevate {}
+
+  .no-default-active-elevate {}
+
+
+  /**
+   * Toggleable backgrounds go behind the content. Hoverable/active goes on top.
+   * This way they can stack/compound. Both will overlap the parent's borders!
+   * So borders will be automatically adjusted both on toggle, and hover/active,
+   * and they will be compounded.
+   */
+  .toggle-elevate::before,
+  .toggle-elevate-2::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    /*border-radius: inherit;   match rounded corners */
+    border-radius: inherit;
+    z-index: -1;
+    /* sits behind content but above backdrop */
+  }
+
+  .toggle-elevate.toggle-elevated::before {
+    background-color: var(--elevate-2);
+  }
+
+  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
+  .border.toggle-elevate::before {
+    inset: -1px;
+  }
+
+  /* Does not work on elements with overflow:hidden! */
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate),
+  .hover-elevate-2:not(.no-default-hover-elevate),
+  .active-elevate-2:not(.no-default-active-elevate) {
+    position: relative;
+    z-index: 0;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after,
+  .hover-elevate-2:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    /*border-radius: inherit;   match rounded corners */
+    border-radius: inherit;
+    z-index: 999;
+    /* sits in front of content */
+  }
+
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-1);
+  }
+
+  .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-2);
+  }
+
+  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
+    inset: -1px;
+  }
+}
+
+/* React Big Calendar Custom Styles */
+.calendar-container .rbc-calendar {
+  font-family: var(--font-sans);
+}
+
+.calendar-container .rbc-header {
+  padding: 10px 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-today {
+  background-color: hsl(var(--accent));
+}
+
+.calendar-container .rbc-event {
+  padding: 2px 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.calendar-container .rbc-event:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Ocultar toolbar nativo do react-big-calendar */
+.calendar-container .rbc-toolbar {
+  display: none !important;
+}
+
+.calendar-container .rbc-month-view {
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Time view precisa de estrutura especial para sticky header */
+.calendar-container .rbc-time-view {
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Linhas do mês devem preencher o espaço igualmente */
+.calendar-container .rbc-month-row {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Cada célula de dia preenche a linha */
+.calendar-container .rbc-day-bg {
+  height: auto !important;
+}
+
+/* Container de eventos de cada célula com scroll (custom component) */
+.calendar-container .rbc-events-container-scroll {
+  max-height: calc(100% - 24px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+}
+
+/* Estilizar scrollbar do container customizado */
+.calendar-container .rbc-events-container-scroll::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.calendar-container .rbc-events-container-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.2) !important;
+  border-radius: 3px !important;
+}
+
+.calendar-container .rbc-events-container-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5) !important;
+  border-radius: 3px !important;
+}
+
+.calendar-container .rbc-events-container-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8) !important;
+}
+
+/* Make month view cells scrollable when showAllEvents is enabled */
+.calendar-container .rbc-month-view .rbc-row-content {
+  overflow-y: auto !important;
+  flex: 1 1 0% !important;
+  max-height: none !important;
+  scrollbar-width: thin !important;
+}
+
+.calendar-container .rbc-month-view .rbc-row-content::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.calendar-container .rbc-month-view .rbc-row-content::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.2) !important;
+  border-radius: 3px !important;
+}
+
+.calendar-container .rbc-month-view .rbc-row-content::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5) !important;
+  border-radius: 3px !important;
+}
+
+.calendar-container .rbc-month-view .rbc-row-content::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8) !important;
+}
+
+/* Garantir que os eventos fiquem em coluna, não em linha */
+.calendar-container .rbc-event-content {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Tornar os eventos mais compactos */
+.calendar-container .rbc-event {
+  padding: 1px 3px !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 1px !important;
+}
+
+.calendar-container .rbc-event-label {
+  font-size: 10px !important;
+}
+
+.calendar-container .rbc-time-slot {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-time-header-content {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-time-content {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-month-row + .rbc-month-row {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.calendar-container .rbc-date-cell {
+  padding: 2px 6px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.calendar-container .rbc-off-range-bg {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.calendar-container .rbc-current-time-indicator {
+  background-color: hsl(var(--destructive));
+  height: 2px;
+}
+
+/* MOBILE FIX: Leaflet map responsiveness corrections */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Prevent horizontal overflow on mobile */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-pane,
+.leaflet-shadow-pane,
+.leaflet-overlay-pane {
+  max-width: 100%;
+}
+
+/* Ensure map tiles don't cause overflow */
+.leaflet-tile-container {
+  max-width: 100% !important;
+}
+
+/* Fix for black bars on mobile by ensuring proper layer positioning */
+.leaflet-map-pane {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Ensure Radix popover/dropdown appears above Leaflet map */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* PWA Mobile Optimizations */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Prevent pull-to-refresh in PWA standalone mode */
+@media (display-mode: standalone) {
+  html, body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Mobile dialog adjustments */
+@media (max-width: 640px) {
+  [role="dialog"] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: 90dvh !important;
+    border-radius: 0.75rem !important;
+  }
+}
+
+/* Fix inputs zooming on iOS */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

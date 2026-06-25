@@ -1,0 +1,111 @@
+PROMPT PARA REPLIT (PLANEJAMENTO — NÃO EXECUTAR SEM MINHA APROVAÇÃO)
+
+Você é um engenheiro full-stack sênior. ATENÇÃO: NÃO EXECUTE NADA sem minha aprovação explícita.
+
+REGRAS OBRIGATÓRIAS
+1) Não altere código, não crie/edite/remova arquivos, não rode comandos, não faça commits, não rode migrações, não execute testes.
+2) Primeiro faça somente: diagnóstico + plano detalhado + lista de arquivos afetados + estratégia de testes.
+3) Ao final, pergunte: “Posso executar o plano? (sim/não)”. Só execute se eu responder “sim”.
+4) Para cada tópico abaixo: descreva o comportamento atual (provável), o comportamento desejado, impacto técnico, pontos de atenção, e passos de implementação.
+
+CONTEXTO
+Sistema possui agendamentos com calendário, conclusão de atividade com registro de tempos (ida/execução/retorno/encerrar jornada) e fluxo de RAT (Completa e Simplificada) com geração de PDF, assinatura e fotos. Existem problemas de UX, persistência de rascunho e inconsistências de registro de tempos.
+
+OBJETIVO
+Planejar e implementar melhorias e correções nos itens 1 a 23 abaixo, mantendo compatibilidade e evitando regressões.
+
+ENTREGÁVEIS (ANTES DE QUALQUER EXECUÇÃO)
+A) Mapa de módulos/telas envolvidos (Agendamentos/Calendário/Tipos de Atividade/RAT Completa/RAT Simplificada/PDF/Assinaturas/Uploads/Perfil/Base).
+B) Plano por tópico (1-23) com:
+   - O que muda (resumo)
+   - Onde muda (front/back/db/pdf)
+   - Arquivos prováveis (caminhos)
+   - Regras de negócio e edge cases
+   - Critérios de aceite (passo a passo para validar)
+C) Ordem recomendada de implementação (sequência por dependências).
+D) Plano de testes: unitários (se houver), integração, e testes manuais com cenários e dados.
+E) Lista de perguntas apenas se for estritamente necessário (no máximo 5). Se não for necessário, siga com suposições explícitas.
+
+ITENS / REQUISITOS
+
+1 - Ao criar um agendamento, sugerir automaticamente 1 hora de serviço.
+   Ex: início 09:00 → sugerir fim 10:00. Deve permitir edição manual.
+
+2 - Tela de “Novo Tipo de Atividade”: reorganizar e padronizar campos na ordem:
+   - Categoria pai
+   - Nome (renomear para “Subcategoria”)
+   - Categoria de atividade
+   - Ativo (toggle)
+   - Checkbox: “Requer RAT”
+   Remover campo “Descrição”.
+
+3 - Aumentar um pouco o tamanho da fonte dos agendamentos exibidos no calendário (somente visual, sem quebrar layout).
+
+4 - No input de tempo de execução ao concluir agendamento, NÃO forçar “0” (zero) automaticamente quando o campo estiver vazio ou em edição.
+
+5 - Incluir scroll nas telas de preenchimento da RAT simplificada (evitar corte em telas menores).
+
+6 - Se o usuário selecionar RAT simplificada e não terminar, a RAT deve ficar salva como RASCUNHO na tela/lista de RATs.
+
+7 - Se o usuário iniciar RAT simplificada e fechar (clicar fora / sair), salvar o que já foi preenchido (auto-save) como rascunho.
+
+8 - Em todas as abas (RAT completa e simplificada): manter botões “Cancelar” e “Salvar rascunho”.
+   Botões “Gerar PDF” e “Concluir RAT” devem aparecer apenas na ÚLTIMA aba (para ambos os tipos).
+
+9 - Remover limite de caracteres nos campos da aba “Relatório” dentro da RAT simplificada.
+
+10 - Incluir botão “Importar assinatura” na RAT simplificada (mesmo comportamento da completa).
+
+11 - PDF da RAT simplificada: na seção “Dados do cliente”, bordas/margens dos campos estão muito grossas (negrito). Deixar mais suave/leve.
+
+12 - PDF: Priorizar o campo de FOTOS para sempre começar em uma página separada.
+     Se precisar quebrar em mais páginas, ok, mas iniciar “Fotos” sempre numa nova página.
+
+13 - PDF: Não separar label e valor em linhas/colunas diferentes.
+     Exemplo: ao invés de “Cliente:” em um lugar e “teste 2” distante, manter “Cliente: teste 2” junto/contíguo (mesma linha/bloco).
+
+14 - PDF: Assinatura e imagem não estão alinhadas corretamente na página do relatório. Corrigir alinhamento.
+
+15 - PDF/Relatório: Aproveitar largura máxima disponível para visualização das imagens importadas (sem distorcer, manter proporção).
+
+16 - Ao clicar em “Concluir RAT”, fechar a tela/modal de preenchimento da RAT automaticamente.
+
+17 - Na tela/lista de RATs: indicar claramente se é RAT completa ou simplificada.
+     Incluir filtro por “Simplificada” (e idealmente por tipo).
+
+18 - Ajustar o cinza do título/etiqueta “Relatório de visita simplificada” para um tom mais leve (UI).
+
+19 - Nas opções de tipo de deslocamento de RETORNO: remover “moto”, “ônibus”, “trem/metro”, “van fretado”, “ônibus” (eliminar duplicidade e itens).
+     (Manter somente as opções aprovadas existentes; listar quais ficam.)
+
+20 - Fluxo ao concluir agendamento:
+     Ao marcar “Agendamento concluído”, mostrar PRIMEIRO as opções de preenchimento de RAT (completa/simplificada/sem RAT) separadamente,
+     ANTES do registro do tempo de execução.
+     Se o usuário optar por preencher RAT na hora: abrir RAT.
+     Assim que clicar em “Concluir RAT”, retornar automaticamente para a etapa de registrar o tempo de execução da atividade (onde parou).
+
+21 - Opção “Retorno à base”: preencher automaticamente o endereço de base do perfil logado (se existir).
+     Definir fallback se não houver base cadastrada.
+
+22 - Bug: Campo “Encerrar jornada” não está registrando o número zero (0) no card do agendamento,
+     porém no relatório está gravando normalmente. Identificar causa (UI/formatação/parse/condição) e corrigir.
+
+23 - Auditoria de tempos: Foi “zerado os agendamentos” para testes, porém ficou “50 minutos adicionais” registrados no dia 05/02.
+     Testes foram em 06/02, então esses 50 min não deveriam aparecer.
+     Investigar se existe job/rotina/cálculo/trigger ou reaproveitamento de estado gerando “adicional” por trás.
+     Entregar: hipótese + evidências no código + correção proposta + como prevenir recorrência.
+
+SAÍDA ESPERADA (FORMATO)
+- Comece com um resumo executivo (máx 10 linhas).
+- Depois uma tabela/lista com os 23 tópicos: Prioridade (Alta/Média/Baixa), Complexidade (P/M/G), Risco, e Dependências.
+- Depois detalhe tópico a tópico (1→23), com:
+  * Diagnóstico do comportamento atual (onde procurar no código)
+  * Mudança proposta
+  * Passos de implementação (front/back/pdf/db)
+  * Critérios de aceite
+  * Testes
+- Finalize pedindo minha aprovação para execução.
+
+IMPORTANTE
+Se perceber que algum item depende de alteração de banco, proponha a migration, mas NÃO aplique.
+Se perceber que algum item pode quebrar retrocompatibilidade, proponha feature flag.

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Ícones PWA - ASTEC</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d31527;
+            margin-bottom: 20px;
+        }
+        .canvas-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #d31527;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #b51220;
+        }
+        .info {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #0284c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐴 Gerador de Ícones PWA - ASTEC Renner</h1>
+        
+        <div class="info">
+            <strong>Instruções:</strong>
+            <ol>
+                <li>Clique nos botões abaixo para baixar cada ícone</li>
+                <li>Salve os arquivos na pasta <code>client/public/</code></li>
+                <li>Substitua os arquivos existentes</li>
+            </ol>
+        </div>
+
+        <div class="canvas-container">
+            <div>
+                <h3>192x192 (PWA)</h3>
+                <canvas id="canvas192" width="192" height="192"></canvas>
+                <br>
+                <button onclick="downloadCanvas('canvas192', 'pwa-192x192.png')">⬇️ Baixar 192x192</button>
+            </div>
+            
+            <div>
+                <h3>512x512 (PWA)</h3>
+                <canvas id="canvas512" width="512" height="512"></canvas>
+                <br>
+                <button onclick="downloadCanvas('canvas512', 'pwa-512x512.png')">⬇️ Baixar 512x512</button>
+            </div>
+            
+            <div>
+                <h3>180x180 (Apple)</h3>
+                <canvas id="canvas180" width="180" height="180"></canvas>
+                <br>
+                <button onclick="downloadCanvas('canvas180', 'apple-touch-icon.png')">⬇️ Baixar Apple Icon</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carregar e desenhar logo em cada canvas
+        const img = new Image();
+        img.onload = function() {
+            drawIcon('canvas192', 192);
+            drawIcon('canvas512', 512);
+            drawIcon('canvas180', 180);
+        };
+        img.src = 'renner-logo.png';
+
+        function drawIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Fundo vermelho Renner
+            ctx.fillStyle = '#d31527';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Desenhar logo centralizado (80% do tamanho)
+            const logoSize = size * 0.8;
+            const offset = (size - logoSize) / 2;
+            ctx.drawImage(img, offset, offset, logoSize, logoSize);
+        }
+
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

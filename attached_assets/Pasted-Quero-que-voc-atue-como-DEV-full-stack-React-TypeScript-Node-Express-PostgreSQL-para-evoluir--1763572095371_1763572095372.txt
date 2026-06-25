@@ -1,0 +1,235 @@
+Quero que você atue como DEV full-stack (React/TypeScript + Node/Express + PostgreSQL) para evoluir o nosso sistema de agenda/técnicos + mapa/rota, focado no PWA (uso em celular).
+
+TAREFA GERAL
+1. Escaneie o projeto inteiro (frontend e backend).
+2. Identifique:
+   - Componentes da PWA (layout mobile, rotas, layouts de telas).
+   - Tela de Relatórios.
+   - Tela de Mapa e Rotas.
+   - Tela/lista de Atividades e o popup de detalhe.
+   - Lógica de perfis (admin x técnico).
+   - Onde ficam as entidades de “atividade”, “cliente” e “técnico” no backend (models/migrations).
+3. Me explique rapidamente o que encontrou (arquivos principais) e depois implemente as melhorias abaixo, mostrando:
+   - Quais arquivos serão alterados.
+   - Trechos de código ANTES/DEPOIS quando relevante.
+
+====================================================================
+MELHORIA 1 – RESPONSIVIDADE DO PWA NO CELULAR
+====================================================================
+Objetivo: corrigir responsividade no PWA para uso em celular, evitando travamentos visuais, barras horizontais e cortes.
+
+Requisitos:
+- Garantir que:
+  - Layout principal do PWA ocupe 100% da largura da tela (viewport).
+  - Não haja scroll horizontal em nenhuma tela principal (agenda, mapa, relatórios, detalhes).
+  - Componentes grandes (tabelas, cards, mapas) se ajustem ao mobile (ex.: flex/coluna, quebra de linhas, fontes mais adequadas).
+- Se houver CSS ou layouts específicos para mobile (media queries), ajuste-os para:
+  - width: 100vw;
+  - overflow-x: hidden; quando fizer sentido.
+- Revise principalmente a tela inicial do PWA e a tela de detalhes de atividades.
+- Se precisar, crie classes utilitárias específicas para mobile (ex.: `.pwa-mobile-container`) e aplique nas telas principais.
+
+====================================================================
+MELHORIA 2 – BASE DO TÉCNICO (HOME OFFICE) NO CAMPO “CLIENTE”
+====================================================================
+Objetivo: permitir agendar atividade tendo como “local” a base do técnico (home office), além de clientes normais.
+
+Requisitos:
+- No formulário de agendamento/edição de atividade:
+  - No campo CLIENTE, incluir opção para selecionar “Base do técnico (Home office)”.
+  - Quando o tipo escolhido for essa base, vincular o endereço/local da própria base do técnico (pode existir em tabela separada ou campo no cadastro do técnico; se ainda não existir, criar estrutura mínima).
+- Backend/BD:
+  - Ajustar o modelo de Atividade para permitir:
+    - Ou `cliente_id` normal
+    - Ou um flag/campo indicando que o local é a base do técnico (ex.: `is_home_office_base` ou similar).
+  - Garantir que isso seja refletido em qualquer listagem/relatório que exiba o “cliente”, mostrando algo como: “Base do técnico (Home office)”.
+- Frontend:
+  - Na listagem de atividades, exibir corretamente quando for base do técnico em vez de cliente externo.
+
+====================================================================
+MELHORIA 3 – MAPA E ROTA SOMENTE PARA ADMIN
+====================================================================
+Objetivo: remover acesso a “Mapa e Rotas” para perfil técnico no PWA e web; deixar visível apenas para admin.
+
+Requisitos:
+- Identificar onde está o controle de perfis/roles (ex.: `role === 'admin' | 'tecnico'`).
+- Frontend:
+  - Remover o menu/ícone/botão de “Mapa e Rotas” da interface do técnico.
+  - Garantir que técnico não consiga abrir essa tela nem por rota direta (redirect para tela inicial ou mensagem de acesso negado).
+- Backend:
+  - Proteger as rotas relacionadas a mapa/rotas por middleware de autorização.
+  - Somente role admin (ou equivalente) pode acessar endpoints de mapa/rota.
+- Testar:
+  - Usuário admin continua acessando normalmente.
+  - Usuário técnico não vê o menu e não consegue acessar por URL direta.
+
+====================================================================
+MELHORIA 4 – ESCONDER FILTROS NA TELA DE RELATÓRIO (PWA) AO ROLAR
+====================================================================
+Objetivo: melhorar UX no PWA escondendo filtros quando o usuário rolar a tela de relatório para baixo.
+
+Requisitos:
+- Tela de Relatórios (PWA):
+  - Filtros (datas, técnico, cliente, tipo de atividade, etc.) devem:
+    - Ficar visíveis no topo ao carregar.
+    - Ao rolar para baixo, esconder-se (por exemplo, encolher para um botão “Mostrar filtros” fixo).
+    - Ao rolar para cima ou ao clicar em “Mostrar filtros”, reaparecer.
+- Implementação sugerida:
+  - Adicionar um estado de `isFilterVisible` + listener de scroll que:
+    - Se scroll para baixo, define `isFilterVisible = false`.
+    - Se scroll para cima, define `isFilterVisible = true`.
+  - Alternativamente, adicionar um botão fixo “Filtros” na parte superior que abre/fecha um painel colapsável com os filtros.
+- Garantir que isso funcione bem em telas pequenas (celular).
+
+====================================================================
+MELHORIA 5 – POPUP DE DETALHE DA ATIVIDADE TRAVANDO NO PWA
+====================================================================
+Problema: no PWA, ao abrir o detalhe da atividade, a tela trava e o popup não fecha.
+
+Requisitos:
+- Localizar o componente de popup/modal de detalhe da atividade no PWA.
+- Verificar:
+  - Estado que controla a visibilidade do modal (ex.: `isDetailOpen`).
+  - Eventos de fechamento (botão “Fechar”, clique no backdrop, tecla ESC).
+  - Se existe conflito de scroll/overflow no body ou container principal (ex.: `overflow: hidden` que não é desfeito).
+- Corrigir:
+  - Garantir que o modal tenha:
+    - Botão claramente funcional de fechar, chamando a função correta de setState.
+    - Opção de fechar ao clicar fora (backdrop) se isso já for padrão no projeto.
+  - Remover qualquer bloqueio permanente de scroll após fechar (resetar CSS do body/contêiner).
+- Testar em:
+  - Navegador desktop (modo dev tools mobile).
+  - PWA em celular real, se possível (instalado).
+
+====================================================================
+MELHORIA 6 – MAPA E ROTA NO PWA FORA DA RESPONSIVIDADE (TARJA PRETA)
+====================================================================
+Problema: o mapa é grande; ao puxar a tela para o lado no PWA, aparece uma tarja preta (bug visual) e a tela “boga”.
+
+Requisitos:
+- Localizar o componente de mapa (provavelmente usando alguma lib como Leaflet/MapLibre/Google Maps).
+- Ajustes de layout/CSS:
+  - Conter o mapa dentro de um container com:
+    - width: 100%;
+    - max-width: 100vw;
+    - overflow-x: hidden;
+  - Evitar que o mapa force largura maior que a viewport no mobile.
+- Se for necessário arrastar o mapa internamente:
+  - Garantir que o scroll horizontal da página seja desativado, mantendo apenas o pan dentro do mapa.
+- Testar em:
+  - Modo mobile.
+  - PWA instalado, verificando se não aparecem mais tarjas pretas nas laterais.
+
+====================================================================
+LÓGICA DE TEMPO DE DESLOCAMENTO / TRABALHO EFETIVO
+====================================================================
+Temos duas situações com agendamento prévio:
+
+- Tipo de atividade: TRABALHO EFETIVO
+- Tempo de trajeto (planejado) ex.: 1 hora
+
+Queremos registrar o tempo de deslocamento de forma diferente conforme o resultado da visita, através de um popup ao CONCLUIR a atividade.
+
+-----------------------------
+MODELAGEM / BACKEND
+-----------------------------
+1. No modelo de Atividade (ou tabela relacionada), incluir campos para controlar o tempo de deslocamento:
+   - `travel_time_minutes` (ou em horas, se já houver padrão).
+   - `travel_time_classification` (string/enum), com pelo menos:
+       - "ADICIONAL_PLANEJADO"  // Tempo de trajeto ao cliente (planejado, inevitável ou necessário)
+       - "PERDA_EXCESSO_PLANEJAMENTO" // Tempo de deslocamento até o cliente (excessivo, mal planejado ou evitável)
+   - `travel_time_justification` (texto opcional, usado na situação de NÃO realizado).
+2. Se já existir um campo de tempo de deslocamento, adaptar reaproveitando-o, sem quebrar dados antigos.
+3. O tempo de trabalho efetivo normal continua sendo calculado pela diferença entre horário de início e término da atividade.
+
+-----------------------------
+FLUXO GERAL NO FRONTEND (PWA E WEB)
+-----------------------------
+Quando o técnico tiver um agendamento com:
+- tipo de atividade = “Trabalho efetivo”
+- tempo de trajeto preenchido (ex.: 1h)
+
+Fluxo padrão:
+1. O técnico chega no cliente e segue o fluxo normal: clicar em INICIAR e depois CONCLUIR.
+2. Ao clicar em CONCLUIR:
+   - Abrir um popup/modal com a pergunta:
+     "Trabalho realizado?" com botões [SIM] e [NÃO].
+
+Implementar 2 cenários:
+
+========================================
+SITUAÇÃO 1 – TRABALHO REALIZADO (SIM)
+========================================
+- Condições:
+  - Agendamento feito.
+  - Tipo de atividade: Trabalho efetivo.
+  - Tempo de trajeto: ex. 1 hora.
+  - Técnico foi atendido, trabalho executado.
+
+Fluxo:
+1. Técnico clica CONCLUIR.
+2. Popup: "Trabalho realizado?" → usuário clica em [SIM].
+3. A aplicação:
+   - Registra o tempo de deslocamento como TRABALHO ADICIONAL:
+       - `travel_time_classification = "ADICIONAL_PLANEJADO"`
+       - `travel_time_minutes` = tempo de trajeto informado no agendamento.
+       - `travel_time_justification` = nulo ou texto padrão, se desejado.
+   - Registra o trabalho efetivo normalmente (tempo entre INICIAR e CONCLUIR).
+4. Relatórios:
+   - Esse tempo de deslocamento deve aparecer nos relatórios como:
+     "Tempo de trajeto ao cliente (planejado, inevitável ou necessário)".
+   - Não deve ser classificado como perda, e sim como tempo adicional produtivo vinculando à atividade.
+
+========================================
+SITUAÇÃO 2 – TRABALHO NÃO REALIZADO (NÃO)
+========================================
+- Condições:
+  - Agendamento feito.
+  - Tipo de atividade: Trabalho efetivo.
+  - Tempo de trajeto: ex. 1 hora.
+  - Técnico chegou ao local e NÃO foi atendido (trabalho não executado).
+
+Fluxo:
+1. Técnico clica CONCLUIR.
+2. Popup: "Trabalho realizado?" → usuário clica em [NÃO].
+3. Ao clicar em [NÃO], abrir SEGUNDA caixa de diálogo:
+   - Título: "Justificativa"
+   - Campo de texto (obrigatório) para o técnico explicar o motivo.
+   - Botão [OK] para confirmar.
+4. Ao clicar em [OK]:
+   - Registrar o tempo de deslocamento como PERDA:
+       - `travel_time_classification = "PERDA_EXCESSO_PLANEJAMENTO"`
+       - `travel_time_minutes` = tempo de trajeto informado no agendamento.
+       - `travel_time_justification` = texto digitado pelo técnico.
+   - O trabalho efetivo nessa atividade deve ser considerado “não realizado” (ajustar status/campos conforme o padrão atual do sistema).
+5. Relatórios:
+   - Esse tempo de deslocamento deve aparecer como:
+     "Tempo de deslocamento até o cliente (Excessivo, mal planejado ou evitável)".
+   - Deve entrar na coluna/indicador de PERDA DE TEMPO, não de trabalho adicional.
+
+-----------------------------
+INTEGRAÇÃO COM RELATÓRIOS
+-----------------------------
+- Na tela de Relatórios:
+  - Incluir colunas ou seções que mostrem:
+    - Soma de `travel_time_minutes` por classificação (ADICIONAL_PLANEJADO x PERDA_EXCESSO_PLANEJAMENTO).
+    - Possibilidade de filtrar por:
+      - Técnico
+      - Tipo de atividade
+      - Data
+      - Classificação do deslocamento (adicional x perda)
+- Garantir que:
+  - Situação 1 (SIM) seja computada como tempo adicional “planejado/inevitável/necessário”, não como perda.
+  - Situação 2 (NÃO) seja computada como perda de tempo, com justificativa acessível na tela de detalhe/relatório.
+
+====================================================================
+FINALIZAÇÃO
+====================================================================
+Depois de implementar tudo:
+1. Liste todos os arquivos modificados.
+2. Descreva rapidamente o que mudou em cada um.
+3. Sugira alguns testes manuais passo a passo para:
+   - Acessar PWA no celular (responsividade e mapas).
+   - Abrir e fechar popup de detalhes da atividade.
+   - Ver comportamentos diferentes para admin x técnico no menu de Mapas e Rotas.
+   - Testar Situação 1 (SIM) e Situação 2 (NÃO) e conferir os dados na tela de Relatórios.

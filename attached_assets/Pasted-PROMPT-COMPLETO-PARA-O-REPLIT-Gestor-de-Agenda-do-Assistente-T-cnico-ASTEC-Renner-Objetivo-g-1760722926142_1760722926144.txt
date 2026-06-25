@@ -1,0 +1,141 @@
+PROMPT COMPLETO PARA O REPLIT — Gestor de Agenda do Assistente Técnico (ASTEC) — Renner
+
+Objetivo: gerar uma aplicação SaaS interna (web + mobile‑responsive) para planejar, executar e analisar a agenda dos Assistentes Técnicos (ASTEC), com visão por técnico, visão global em calendário, mapa com geolocalização/rotas, matriz mensal estilo planilha, KPIs e insights com IA. O sistema substituirá a planilha "Agenda Mensal - ASTEC" e será o sistema central de controle.
+
+1) Stack & Padrões
+
+Frontend: React + Vite + TypeScript + Tailwind + shadcn/ui + React Router + FullCalendar.
+
+Mapas/Rotas: Google Maps Platform (Maps + Geocoding + Places + Directions).
+
+Backend: Node.js (Express) + TypeScript.
+
+Banco: PostgreSQL + Prisma ORM.
+
+Auth: JWT + Refresh Token + RBAC (Admin, Gestor, Assistente, Comercial/Viewer). Senhas com bcrypt.
+
+Upload de arquivos: S3‑compatible (ex.: AWS S3, MinIO) ou local em dev.
+
+Fila/Jobs (opcional): BullMQ (Redis) para cálculos de KPIs noturnos e reprocessos de IA.
+
+IA: endpoint interno chamando provedor LLM (placeholder OPENAI_API_KEY) para classificação de atividade, resumo diário, recomendações, e relatório executivo.
+
+Fuso/Locale: America/Sao_Paulo, datas em ISO8601, moeda/numeração pt‑BR.
+
+Qualidade: ESLint, Prettier, Zod (validações), Vitest/Jest (tests), GitHub Actions (CI).
+
+2) Personas & Permissões (RBAC)
+
+Admin: gerencia tudo (usuários, técnicos, parametrizações, feriados).
+
+Gestor: planeja agendas (todos técnicos), aprova lançamentos, fecha mês, exporta relatórios.
+
+Assistente: lança atividades, check‑in/out, anexa RAT/RAD/checklists, vê sua agenda.
+
+Comercial/Viewer: leitura de agendas, dashboards e relatórios, sem editar.
+
+3) Vocabulário do Negócio (Da Planilha → Sistema)
+Categorias de Atividade (origem da planilha)
+
+Trabalho efetivo:
+
+Treinamento técnico.
+
+Visita técnica (preventiva ou testes).
+
+Especificações técnicas.
+
+Visita técnica (corretiva ou RCs).
+
+Trabalho adicional: 5. Suporte técnico à distância (sem deslocamento). 6. Documentação (RATs, RADs, checklists), agenda e carta técnica. 7. Participação em treinamentos internos/externos (aluno). 8. Tempo de trajeto até o cliente — inevitável/planejado/necessário.
+
+Perda: 9. Tempo de trajeto até o cliente — excessivo, mal planejado ou evitável. 10. Aguardar cliente/tinta/acesso/liberação/integração.
+
+Marcadores de Dia (legenda)
+
+F = Feriado / FE = Férias / S = Sábado / D = Domingo / P = Ponte / H = Home Office.
+
+Observação: o sistema deve permitir cadastro/edição desses marcadores por dia e por técnico, com cores e ícones configuráveis.
+
+4) Requisitos Funcionais
+4.1 Cadastro & Configurações
+
+Técnicos (nome, e‑mail, celular, time/equipe, cidade‑base, jornada padrão, CNH, veículo, cor no calendário, foto/avatar).
+
+Clientes/Sites (razão social, CNPJ, contato, endereços multi‑site com geocoding, exigências de segurança, janelas de atendimento, SLA).
+
+Tipos de atividade (pré‑cadastrados das 10 categorias acima, com grupo: Efetivo/Adicional/Perda, cor, ícone e regras de apontamento).
+
+Tabelas auxiliares: feriados nacionais/regionais, justificativas de perda, tipos de documentos (RAT, RAD, checklist), produtos/processos relevantes.
+
+Parâmetros de negócio (limites de deslocamento aceitável por região, metas de %Efetivo, regras de hora extra, tolerâncias).
+
+4.2 Planejamento da Agenda
+
+Visão Calendário Global (todos técnicos) com filtro por técnico, equipe, cliente, tipo de atividade, status (Planejado, Em execução, Concluído, Reprovado, Cancelado) e período.
+
+Visão por Técnico (semana/mês) e Visão Planilha Mensal (matriz 1..31) espelhando o layout da planilha, com totalizadores por categoria e total do mês.
+
+Arrastar & soltar (drag‑and‑drop) para replanejamento.
+
+Marcadores de Dia (F/FE/S/D/P/H) por técnico no calendário.
+
+Conflitos: bloqueio/alerta quando há sobreposição de compromissos.
+
+Sugestão IA: com base em histórico e SLAs, propor janelas ideais e consolidar atendimentos próximos geograficamente.
+
+4.3 Execução (Mobile‑first)
+
+Modo Rota do Dia: técnico vê seus atendimentos do dia em lista + mapa, botão "Iniciar rota" (abre Google Maps com paradas sequenciais otimizadas).
+
+Check‑in/Check‑out: registra horário e geolocalização; calcula tempo em site e tempo de deslocamento.
+
+Lançamento de Atividades: escolher tipo (1..10), cliente/site, descrição, anexos (fotos, RAT/RAD), material utilizado, observações.
+
+Offline‑first (opcional): cache local e sincronização posterior.
+
+4.4 Aprovação & Fechamento
+
+Fluxo de aprovação pelo Gestor (editar/ajustar classificação, devolver para correção, aprovar).
+
+Fechamento mensal por técnico e por equipe, congelando apontamentos e gerando Relatório Oficial (PDF) com assinaturas digitais.
+
+4.5 Mapa & Rotas
+
+Mapa com a localização atual de cada técnico (último check‑in) e pins dos atendimentos planejados.
+
+Otimização de rota (chamada ao Directions API com optimize:true), previsão de tempo e distância total.
+
+Alerta de deslocamento excessivo (marca como Perda 9 se exceder parâmetros), com justificativa obrigatória.
+
+4.6 Dashboards & KPIs
+
+% de Trabalho Efetivo / Adicional / Perda por técnico, equipe, cliente e período.
+
+Horas planejadas vs. executadas, lead time de atendimento, taxa de visitas corretivas vs. preventivas.
+
+Km e tempo de deslocamento (planejado vs. real), custo estimado (parâmetro de R$/km).
+
+Heatmap de demanda por região, ranking de clientes por esforço/ocorrências.
+
+4.7 Relatórios & Exportações
+
+Exportar PDF (com logotipo Renner) e Excel/CSV.
+
+Exportar .ics (compromissos aprovados) para Google Calendar/Outlook.
+
+Importar planilha antiga (layout "Agenda Mensal - ASTEC") para migração.
+
+4.8 Notificações
+
+E‑mail/WhatsApp (webhook) para lembretes de agenda, devolutivas de aprovação e alterações.
+
+Alertas de conflito, feriado, SLA a vencer, deslocamento excessivo.
+
+5) Requisitos Não‑Funcionais
+
+Segurança: JWT + Refresh, RBAC, logs de auditoria (quem alterou o quê e quando), criptografia em trânsito (HTTPS).
+
+Escalabilidade: endpoints paginados, índices no banco, cache (Redis) para filtros pesados.
+
+Observabilidade: logs estruturados, métricas básicas (p95 de resposta), health checks.

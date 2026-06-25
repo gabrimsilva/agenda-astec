@@ -1,0 +1,358 @@
+PROMPT PARA O REPLIT
+
+(Mapas & Rotas – Filtro por Técnico + Cores + Técnico Mais Próximo + CEP + Base)
+
+Você é um desenvolvedor sênior responsável por evoluir o meu sistema de agendamento de técnicos, que já está rodando no Replit.
+
+O sistema já possui:
+
+Tela de Mapas e Rotas
+
+Aba de Colaboradores
+
+Agenda de atividades por técnico
+
+Função de agendar visita direto na agenda do técnico
+
+Uma função já existente de “encontrar o técnico mais próximo” (não remova, apenas evolua/unifique com as novas melhorias)
+
+Seu objetivo é manter toda a stack e arquitetura já usadas no projeto (não reescreva o sistema do zero) e implementar as melhorias abaixo na tela de Mapas e Rotas (aba Colaboradores).
+
+1. Contexto geral da melhoria
+
+O gestor precisa:
+
+Ver no mapa onde estarão os técnicos em determinados dias/horários (atividades já agendadas).
+
+Filtrar quais técnicos aparecerão no mapa ao mesmo tempo.
+
+Visualizar cores diferentes por técnico, usando a cor configurada no cadastro do usuário/técnico.
+
+Unificar a lógica atual de “técnico mais próximo” com essa visualização no mapa.
+
+Digitar o CEP do local da nova visita e descobrir:
+
+Quais técnicos estarão mais próximos desse CEP,
+
+E ainda poder filtrar isso pela base do técnico (ex.: base SP, base Curitiba, home office etc.).
+
+A partir dessa análise, agendar uma nova atividade direto na agenda do técnico escolhido.
+
+Existe no cadastro de usuário/técnico um campo de cor, que deve ser usado para diferenciar visualmente as atividades de cada técnico no mapa.
+
+Também existe o conceito de “base do técnico” (pode ser um endereço, cidade, CEP ou algo equivalente). Você deve aproveitar essa informação.
+
+2. O que você deve fazer no código
+2.1. Analisar o projeto atual
+
+Localize:
+
+A tela/página de Mapas e Rotas.
+
+A aba Colaboradores dentro dessa tela.
+
+Onde ficam os componentes de mapa (biblioteca de mapas já usada: mantenha a mesma).
+
+A lógica atual de:
+
+Listagem de técnicos/colaboradores,
+
+Listagem de atividades agendadas por técnico,
+
+Função de agendar visita na agenda do técnico,
+
+Função existente de “encontrar técnico mais próximo”.
+
+2.2. Filtro de técnicos (dropdown com checkboxes)
+
+Na aba Colaboradores:
+
+Criar/ajustar um dropdown ou componente multi-select listando todos os técnicos.
+
+Cada opção deve exibir o nome do técnico e ter um checkbox.
+
+Deve permitir selecionar um ou vários técnicos ao mesmo tempo.
+
+Comportamento:
+
+Ao alterar a seleção, o sistema deve:
+
+Filtrar quais técnicos aparecem no mapa.
+
+Carregar as atividades agendadas apenas dos técnicos selecionados.
+
+Se nenhum técnico estiver selecionado:
+
+Definir um comportamento padrão claro (por exemplo: mostrar todos os técnicos).
+
+Use a mesma tecnologia de front-end já utilizada hoje (React, JS, etc.) – não mude de framework.
+
+2.3. Cores dos técnicos (vindo do cadastro)
+
+No backend, ao retornar técnicos e/ou atividades, incluir a cor configurada no cadastro de usuário/técnico (ex.: campo color ou map_color).
+
+No front:
+
+Para cada atividade exibida no mapa, usar a cor do técnico responsável para:
+
+Cor do marcador (pin),
+
+Ou borda/ícone/círculo no marcador.
+
+Se mais de um técnico estiver selecionado:
+
+Cada técnico deve manter sua cor, de forma consistente.
+
+Se houver legenda, atualizar (opcional, mas desejável) para exibir:
+
+Nome do técnico + cor correspondente.
+
+2.4. Carregar atividades filtradas por técnico
+
+Ao selecionar/deselecionar técnicos no dropdown:
+
+Chamar o endpoint responsável por buscar as atividades agendadas apenas para os técnicos selecionados, respeitando o filtro de data/período já existente (se houver).
+
+Se necessário, criar/ajustar endpoint, por exemplo:
+GET /api/atividades?tecnicos[]=ID1&tecnicos[]=ID2&data_inicio=...&data_fim=...
+
+No retorno das atividades, incluir:
+
+ID do técnico
+
+Nome do técnico
+
+Cor do técnico
+
+Dados da atividade (cliente, endereço, coordenadas, data/hora, status, etc.)
+
+2.5. Plotar as atividades no mapa com indicadores
+
+Para cada atividade retornada:
+
+Gerar um marcador no mapa nas coordenadas da atividade (usar a mesma lógica/serviço de geocodificação e rotas já utilizado atualmente).
+
+Aplicar a cor do técnico naquele marcador.
+
+Ao clicar em um marcador, exibir um popup com:
+
+Nome do técnico
+
+Cliente
+
+Endereço
+
+Data/hora
+
+Tipo de atividade
+
+Botão/ação de “Agendar nova atividade para este técnico” (reutilizando o fluxo atual de agendamento).
+
+3. Unificar com a função “Técnico mais próximo”
+
+A função de “encontrar o técnico mais próximo” já existe no sistema e deve ser evoluída/unificada com as funcionalidades acima, sem ser removida.
+
+3.1. Bloco “Planejar nova visita” na aba Colaboradores
+
+Na aba Colaboradores, crie um bloco/área chamado algo como “Planejar nova visita” contendo:
+
+Campo de CEP do local da visita:
+
+Input para o gestor digitar o CEP (com máscara, se já houver padrão no sistema).
+
+Opcionalmente, campos de número/complemento, se fizer sentido.
+
+Opção de fonte da localização do técnico para cálculo de proximidade:
+
+Radio buttons ou select com opções:
+
+“Usar próxima atividade agendada do técnico no período selecionado”
+
+“Usar base do técnico (endereço cadastrado como base/home office)”
+
+Filtro por Base:
+
+Dropdown para filtrar técnicos por base (ex.: Base SP, Base Curitiba, Home Office, etc.).
+
+Comportamento:
+
+Se uma base for selecionada, considerar apenas técnicos daquela base para o cálculo de proximidade.
+
+Se nenhuma base for selecionada, considerar todas as bases.
+
+Botão de ação:
+
+Botão do tipo “Buscar técnicos próximos” ou similar, que:
+
+Usa o CEP informado como ponto de referência,
+
+Usa a fonte de localização escolhida (atividade agendada ou base),
+
+Respeita o filtro de técnicos selecionados (quando aplicável) e/ou filtro de base,
+
+Chama a lógica/endpoint de “técnico mais próximo” (pode ser o mesmo que já existe, adaptado) para calcular:
+
+Distância
+
+Tempo de deslocamento
+
+Ordem dos técnicos mais próximos.
+
+3.2. Backend – unificação da lógica de proximidade
+
+Reaproveitar a lógica atual de “técnico mais próximo”.
+Se necessário, criar um endpoint mais genérico, por exemplo:
+
+POST /api/tecnicos/proximos
+
+Corpo contendo:
+
+cep_destino ou coordenadas do destino,
+
+Lista de IDs de técnicos a considerar (quando houver filtro),
+
+Opção fonte_localizacao = "atividade" | "base",
+
+Período de agendamento (se aplicável),
+
+Filtro de base.
+
+O serviço deve:
+
+Determinar a coordenada do destino a partir do CEP informado (mesmo serviço de geocodificação já usado hoje).
+
+Para cada técnico considerado:
+
+Se fonte_localizacao = "atividade":
+
+Utilizar a próxima atividade agendada no período filtrado como ponto de referência do técnico.
+
+Se fonte_localizacao = "base":
+
+Utilizar a base do técnico (endereço cadastrado no usuário/técnico) como ponto de referência.
+
+Calcular:
+
+Distância e tempo de deslocamento entre esse ponto e o CEP da visita (usando a mesma API de rotas já usada no sistema).
+
+Retornar:
+
+Lista de técnicos ordenada do mais próximo para o mais distante,
+
+Com:
+
+ID, nome, base, cor,
+
+Distância, tempo estimado,
+
+Coordenadas utilizadas no cálculo.
+
+3.3. Frontend – exibir técnicos próximos no mapa e na lista
+
+Ao clicar em “Buscar técnicos próximos”:
+
+Exibir no mapa:
+
+Um marcador do local da visita (CEP informado),
+
+Marcadores dos técnicos considerados, usando:
+
+A cor do técnico vinda do cadastro,
+
+Um estilo visual que deixe claro que são pontos de origem para o deslocamento.
+
+Exibir também uma lista ordenada de técnicos próximos (em um painel lateral ou abaixo do bloco), contendo:
+
+Nome do técnico
+
+Base
+
+Distância e tempo estimado até o local da visita
+
+Um botão ou link “Agendar visita com este técnico”
+
+Ao clicar em “Agendar visita com este técnico”:
+
+Reutilizar o fluxo de agendamento já existente:
+
+Técnico já vem preenchido,
+
+Endereço/CEP do local de visita já vem preenchido (ou parcialmente),
+
+Permitir escolher data/hora e demais campos necessários,
+
+Salvar a nova atividade na agenda do técnico.
+
+Após salvar o agendamento:
+
+Atualizar o mapa:
+
+Incluir o novo ponto de atividade,
+
+Mantendo a cor do técnico,
+
+Sem recarregar a página inteira, se possível.
+
+4. Requisitos técnicos importantes
+
+Não alterar a stack (biblioteca de mapa, framework front-end, etc.).
+
+Não remover funcionalidades existentes:
+
+Apenas unificar e evoluir a função “técnico mais próximo” dentro desse novo fluxo com filtros, CEP e base.
+
+Manter:
+
+Padrão de código (pastas, controllers, services),
+
+Padrão de chamadas à API (fetch/axios, etc.),
+
+Padrão visual (componentes e estilos) já usados no sistema.
+
+5. Entregáveis esperados
+
+Backend:
+
+Endpoint(s) ajustados/criados para:
+
+Buscar técnicos (com cor e base),
+
+Buscar atividades filtradas por técnico(s) e período,
+
+Calcular técnicos mais próximos com base em:
+
+CEP destino,
+
+Fonte de localização (atividade ou base),
+
+Filtro de técnicos e/ou base.
+
+Frontend:
+
+Dropdown/multi-select com checkboxes para seleção de técnicos na aba Colaboradores.
+
+Mapa mostrando atividades com marcadores coloridos por técnico.
+
+Bloco “Planejar nova visita” com:
+
+Campo de CEP,
+
+Escolha da fonte de localização (atividade / base),
+
+Filtro por base,
+
+Botão para buscar técnicos próximos,
+
+Lista ordenada de técnicos próximos com botão para agendar visita.
+
+Integração desse fluxo com o agendamento existente.
+
+Comentários/código/documentação curta:
+
+Indicar onde foram feitas as alterações,
+
+Resumir o fluxo:
+
+Seleção de técnicos → atividades coloridas no mapa → CEP da visita → técnicos mais próximos (por atividade ou base) → agendamento direto na agenda.
+
+Implemente tudo isso passo a passo no meu projeto atual, garantindo que o sistema continue funcionando, que o código permaneça legível e que as novas funcionalidades fiquem integradas de forma natural à tela de Mapas e Rotas.

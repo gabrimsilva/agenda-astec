@@ -1,0 +1,11 @@
+#	Módulo	Problema	Sugestão	Minha Proposta	Tempo	Custo*	Ganhos
+1	RATs	Ter opção ao finalizar o atendimento	"Criar RAT? (sim, não, deixar para depois)"	Adicionar modal de escolha no checkout: criar RAT agora, não criar, ou lembrar depois	2h	Baixo	Flexibilidade - nem toda visita precisa de RAT formal
+2	Calendário	Tela travada, não aparece os dias do fim do mês	Colocar cursor para descer o calendário	Adicionar scroll no calendário mensal + melhorar responsividade mobile	1-2h	Baixo	Usabilidade - técnicos conseguem ver mês inteiro
+3	Calendário	Quando a agenda é mais de um dia, não pode pedir RAT dos dois dias	-	Permitir criar RAT para atividades multi-dia, vinculando todos os dias	3-4h	Médio	Cobertura completa de visitas longas
+4	Calendário/Agenda	Tem mais opções de deslocamento (ex: vai de avião, não precisa iniciar rota)	Incluir campo título no agendamento	Adicionar campo "meio de transporte" (carro, avião, ônibus) com opção de não calcular rota	2-3h	Baixo	Dados mais precisos de deslocamento
+5	Navegação	-	Calcular por ação: ida calcula, depois finalizar calcula volta	Separar tempo de trajeto em etapas: ida, execução, volta. Registrar meios de locomoção diferentes	4-6h	Médio	Relatórios detalhados de tempo por etapa
+6	Geral	Tela fica cortada, precisa diminuir para achar os ícones	Ícones em 100% não aparecem, precisa ser menos de 80%	Revisar responsividade geral, garantir que funcione em zoom 100%	3-4h	Médio	Acessibilidade melhorada
+7	Calendário	Tela fica travada no mês	Ter opção (seta) para clicar e mudar o mês	Adicionar botões de navegação entre meses mais visíveis	1h	Baixo	Navegação mais intuitiva
+8	RATs	-	Ter 2 versões de RAT: atual + uma mais simples (modelo simplificado)	Criar template "RAT Simplificada" com campos essenciais apenas	6-8h	Alto	Agilidade para visitas rápidas
+9	RATs	Redimensionar as imagens	Muito espaço entre as imagens na RAT	Otimizar layout de fotos, grid mais compacto	2h	Baixo	Melhor apresentação visual
+10	RATs	Manutenção (ASTM d610)	Ter opção de N/A	Adicionar opção "N/A" ou "Não Aplicável" em campos técnicos	1h

@@ -1,0 +1,269 @@
+🛠️ Replit Prompt — ASTEC | AGENDA + MAPAS + CLIENTES (analisar → pedir OK → executar)
+Regras gerais
+
+Stack: React 18 + TS + Vite + Tailwind + Radix/shadcn + TanStack Query | Express + TS + Drizzle (PostgreSQL/Neon) | WS (tempo real).
+
+Apenas analisar e listar diffs/arquivos/commits por módulo.
+
+A cada módulo, pergunte “Confirmar execução? (OK Mx)”.
+
+Só após o OK Mx aplicar mudanças (um commit por módulo) e mostrar logs/resumo.
+
+Escopo consolidado (F-001 → F-005)
+
+F-001 — Linha do tempo (Agenda) com drag&drop
+
+F-002 — Tooltip detalhado no calendário (mês/semana/dia)
+
+F-003 — Mapa: heatmap + status GPS por colaborador (tempo real, iniciais coloridas, popups)
+
+F-004 — Mapa de calor e clusters de clientes (zoom → cluster/expand, ícone azul individual)
+
+F-005 — Gerenciar clientes (lista, cadastro, importação Excel, endereço via Maps)
+
+Dependências novas (apenas sugerir; instalar após OK)
+
+client: react-big-calendar, date-fns, react-leaflet, leaflet, leaflet.heat, supercluster (ou react-leaflet-markercluster), xlsx (SheetJS)
+
+server: multer, xlsx, ws (se ainda não estiver), (opcional) zod para validação de payloads
+
+Tipos: @types/leaflet, @types/react-big-calendar
+
+M0 — Auditoria & Planejamento (ANÁLISE)
+
+Verificar estrutura monorepo (client/, server/) e scripts (dev, start, db:push).
+
+Validar schemas existentes:
+
+activityTypes(id, name, category enum[efetivo|adicional|perda], color, icon, displayOrder)
+
+activities(id, technicianId, clientId, siteId, activityTypeId, title, description, scheduledDate, startTime, endTime, status, …)
+
+users(role in [admin, gestor, assistente, comercial]), technicians(userId, …)
+
+clients, clientSites(lat, lon, …)
+
+Mapear papéis de UI: Administrador → admin | Técnico → assistente.
+
+Planejar migrations necessárias (ver M1) e listar arquivos a criar/alterar em client/server.
+
+Saída M0: checklist/diffs planejados, sem instalar nada.
+Aguardando OK M0.
+
+M1 — DB & API base (ANÁLISE → EXEC após OK)
+1.1 Drizzle — migrations
+
+Nova tabela technician_locations (telemetria):
+
+id UUID PK, technicianId UUID FK→technicians, lat numeric(9,6), lon numeric(9,6),
+accuracy int, battery int, gpsStatus enum('ativo','inativo'), connectionStatus enum('online','offline'),
+deviceModel text, androidVersion text, appVersion text, address text,
+updatedAt timestamptz default now()
+
+
+Índices: (technicianId, updatedAt), e GIST por lat/lon futuramente (quando PostGIS).
+
+clients: checar/adição de colunas para F-005: externalCode, corporatePhone, corporateEmail, taxId, segment, group, responsibleUserId FK→users, teamId (nullable), notes, active bool.
+
+clientSites: garantir lat, lon, city, state.
+
+1.2 Endpoints (Express + TS)
+
+Activities (Agenda):
+
+GET /api/activities?userId=&dateFrom=&dateTo= → RBAC: admin vê todos; assistente só os seus.
+
+POST /api/activities → cria (para F-001/F-002).
+
+PUT /api/activities/:id → atualiza horários (drag/resize).
+
+DELETE /api/activities/:id
+
+Activity Types:
+
+GET/POST/PUT/DELETE /api/activity-types
+
+Technician status/telemetria (F-003):
+
+GET /api/technicians/status → { technicianId, status, gpsStatus, lastLocation{lat,lon,updatedAt}, battery, accuracy, device, androidVersion, appVersion }
+
+GET /api/technicians/:id/last-location
+
+WebSocket /ws/locations → push { technicianId, lat, lon, accuracy, battery, gpsStatus, connectionStatus, updatedAt }
+
+Clients & sites (F-004/F-005):
+
+GET /api/map/clients?group=&segment=&search= → pontos para mapa/cluster
+
+GET /api/clients (paginado + filtros)
+
+POST /api/clients
+
+PUT /api/clients/:id
+
+POST /api/clients/import (upload .xlsx/.csv)
+
+POST /api/geo/parse-maps-url → recebe URL Google Maps e retorna {address parts, lat, lon}
+
+1.3 Middlewares
+
+roleMiddleware('admin')
+
+agendaScopeMiddleware (admin full; assistente restrito ao próprio userId).
+
+Saída M1: diffs de arquivos server/ (routes, storage, middleware, ws bootstrap), migrações Drizzle, tipos.
+Aguardando OK M1.
+
+M2 — CLIENTE: Agenda (linha do tempo + tooltip) (ANÁLISE → EXEC após OK)
+2.1 Componentes/arquivos
+
+client/src/pages/Agenda.tsx — toggle Calendário | Linha do tempo (Radix Tabs/Segmented).
+
+client/src/components/agenda/UsersList.tsx — lista lateral (avatar + nome + badge de nível).
+
+client/src/components/agenda/CalendarView.tsx — react-big-calendar (mês/semana/dia) + F-002 tooltip.
+
+client/src/components/agenda/TimelineView.tsx — modo Linha do tempo com drag&drop/resize (F-001).
+
+client/src/components/agenda/NewActivityForm.tsx — criação rápida (abaixo do calendário/timeline).
+
+client/src/lib/api/agenda.ts — fetchers TanStack Query.
+
+2.2 Funcional
+
+F-001 — Linha do tempo:
+
+react-big-calendar/lib/addons/dragAndDrop + date-fns localizer.
+
+Eventos com dot 4px e borda esquerda 2px na cor da categoria (efetivo=verde #22c55e, adicional=amarelo #eab308, perda=vermelho #ef4444).
+
+onEventDrop/onEventResize → PUT /api/activities/:id (rollback otimista se falhar).
+
+Clique/arrasto em slot vazio → abre NewActivityForm com horário pré-preenchido.
+
+F-002 — Tooltip (modo calendário clássico):
+
+Tooltip shadcn/Radix com Status, Tipo, Cliente, Endereço, Colaborador, Duração estimada (ícones Lucide; tema dark/light).
+
+Render lazy ao hover, delayClose=200ms.
+
+2.3 UI/UX
+
+Visual elegante e discreto (cards shadcn, rounded-2xl, shadow-sm, spacing consistente, motion sutil 120–160ms).
+
+Acessibilidade (focus ring, aria-labels).
+
+Saída M2: diffs/arquivos e hooks criados; não executar sem OK.
+Aguardando OK M2.
+
+M3 — CLIENTE: Mapas (colaboradores em tempo real + tarefas + clusters clientes) (ANÁLISE → EXEC após OK)
+3.1 Dependências de mapa
+
+react-leaflet, leaflet, leaflet.heat, supercluster (ou react-leaflet-markercluster).
+
+3.2 Componentes/arquivos
+
+client/src/pages/Map.tsx — página principal (tabs Colaboradores | Clientes).
+
+client/src/components/map/TechnicianLayer.tsx — marcadores com iniciais coloridas + popup detalhado (F-003).
+
+client/src/components/map/TasksLayer.tsx — alvos para tarefas do dia (categoria → cor).
+
+client/src/components/map/ClientsClusterLayer.tsx — clusters/heat de clientes (F-004).
+
+client/src/components/map/FiltersDrawer.tsx — filtros (grupo, segmento, busca, “Mostrar clientes”).
+
+client/src/lib/api/map.ts — fetchers e WS.
+
+3.3 Funcional
+
+F-003 — Colaboradores (tempo real):
+
+Marcadores por iniciais (AvatarFallback) com cores: verde = GPS ativo; amarelo = GPS inativo (mostrar última localização); vermelho = offline.
+
+Popup (Radix Dialog/Leaflet Popup) com: Endereço, Atualizado em, Precisão, Bateria, Status GPS + horário, Dispositivo, Versão Android/App, Check-ins hoje, Tarefas em espera, ações Detalhar monitoramento e Visualizar rota.
+
+Heatmap por posição em tempo real (overlay leaflet.heat).
+
+WebSocket /ws/locations com fallback polling (botão Sincronizar informações).
+
+F-003 — Tarefas “alvos”: pontos das atividades do dia (categoria → cor do alvo).
+
+F-004 — Clientes (clusters/heat):
+
+Clusters numéricos por zoom, expandindo em ícones azuis (#3b82f6) individuais.
+
+Painel lateral (drawer) com Grupo de clientes, Segmento, Busca e Mostrar clientes.
+
+3.4 UI/UX
+
+Controles posicionados no canto superior (Botão Sincronizar, Filtros).
+
+Responsivo: drawer no mobile; mapa full-screen.
+
+Saída M3: diffs/arquivos; não executar sem OK.
+Aguardando OK M3.
+
+M4 — CLIENTES: Lista, Cadastro, Importação Excel, Endereço via Maps (ANÁLISE → EXEC após OK)
+4.1 Componentes/arquivos
+
+client/src/pages/Clients.tsx — DataTable shadcn (busca, filtros, paginação, seleção múltipla, Mais Ações).
+
+client/src/components/clients/ClientForm.tsx — tabs Detalhes | Contatos (nome*, código externo, status, telefone/email corporativo, CPF/CNPJ, segmento, grupo, responsável*, equipe, observação).
+
+client/src/components/clients/ImportExcelDialog.tsx — upload .xlsx/.csv (SheetJS para preview/validação).
+
+client/src/components/clients/AddressPickerDialog.tsx — mapa + “Extrair da URL do Google Maps” → preenche logradouro/cidade/UF/CEP/lat/lon.
+
+4.2 API/Fluxo
+
+GET /api/clients (paginado + filtros), POST /api/clients, PUT /api/clients/:id
+
+POST /api/clients/import (multer + xlsx)
+
+POST /api/geo/parse-maps-url (extrai endereço/coords)
+
+Invalidação das queries para refletir no Mapa de Clientes (M3/F-004).
+
+4.3 Aceite visual/funcional
+
+Lista com Cliente | Endereço | Telefone | Responsável | Email | Última visita | Status.
+
+Importação Excel com preview e destaque de linhas inválidas.
+
+Endereço via URL do Google Maps preenchendo automaticamente os campos.
+
+Saída M4: diffs/arquivos; não executar sem OK.
+Aguardando OK M4.
+
+M5 — Qualidade, Seeds & Docs (ANÁLISE → EXEC após OK)
+
+Seeds opcionais:
+
+activityTypes: Efetivo #22c55e, Adicional #eab308, Perda #ef4444.
+
+Testes manuais guiados:
+
+Admin cria atividades; alterna agenda de técnicos; drag&drop/resize na timeline.
+
+Tooltip mostra campos corretos no calendário.
+
+Mapa (colaboradores): cores/status corretos; heatmap atualiza via WS; “Sincronizar” refaz polling.
+
+Mapa (clientes): clusters → ícones azuis ao dar zoom; filtros funcionam.
+
+Clientes: importar Excel, abrir AddressPicker e extrair de URL; dados aparecem no mapa.
+
+README: rotas novas, variáveis, scripts, screenshots.
+
+Aguardando OK M5.
+
+Critérios gerais de UX/Visual
+
+Estética ASTEC (profissional e sóbria): cards shadcn rounded-2xl, shadow-sm, p-4/6, ícones Lucide 16–18px, motion leve (120–160ms).
+
+Dark/Light prontos (ThemeProvider), acessibilidade (focus ring, contraste AA).
+
+Dots e bordas coloridas por categoria; nada berrante.
+
+Performance: memoização, virtualização simples no calendário, clusterização no mapa.

@@ -1,0 +1,180 @@
+Você é um arquiteto de software sênior e analista de produto. Contexto: estamos evoluindo a Agenda do Técnico do sistema ASTEC (React 18 + TypeScript + Vite + Tailwind + TanStack Query no client; Node.js + Express + TypeScript + Drizzle ORM + PostgreSQL/Neon no server). Já existe fluxo de “Iniciar navegação”, “Iniciar atividade” e “Concluir atividade”, com modais para registrar tempo (deslocamento e execução).
+
+IMPORTANTE
+NÃO IMPLEMENTE NADA. NÃO GERE CÓDIGO. NÃO CRIE MIGRATIONS. NÃO ALTERE ARQUIVOS.
+Seu trabalho é APENAS elaborar um PLANO DE SOLUÇÃO detalhado, com arquitetura, regras, fluxos e recomendações para eu aprovar antes de executar.
+
+OBJETIVO GERAL
+Definir um plano para dividir o agendamento em 3 etapas (IDA → EXECUÇÃO → VOLTA), adicionando “estimativa do GPS” como valor sugerido e editável nos modais, e garantindo uma regra crítica:
+- O tempo de VOLTA (retorno) NÃO PODE impactar o tempo de IDA da próxima atividade.
+- O tempo de IDA só nasce quando o técnico clica “Iniciar navegação” daquela atividade específica.
+
+========================
+ENTREGÁVEIS (APENAS PLANO)
+========================
+1) Descrever o fluxo completo de UX (telas, botões, modais, transições de status).
+2) Propor a modelagem de dados (tabelas/campos/enum/eventos) SEM executar migrations.
+3) Propor endpoints/API (rotas, payloads, validações) SEM implementar.
+4) Definir regras de negócio e invariantes para evitar misturas de tempos.
+5) Definir estados e máquina de estados da atividade (ex.: agendada → navegando → em_execução → concluída → pós_conclusão).
+6) Listar cenários de teste (manuais e automatizáveis).
+7) Listar riscos, edge cases, e plano de rollout (feature flag, compatibilidade, migração gradual).
+
+========================
+ETAPA 1 — INICIAR NAVEGAÇÃO + REGISTRAR TEMPO DE IDA
+========================
+Requisito:
+- Ao clicar em “Iniciar navegação”, o sistema abre o GPS/navegador e captura (se possível) uma estimativa de tempo (ETA) para o destino da atividade.
+- Antes do técnico iniciar a atividade (ou conforme UX atual, imediatamente após abrir a navegação), deve aparecer o modal de registro do tempo de deslocamento IDA.
+- No modal IDA:
+  - Exibir em destaque “Estimativa do GPS: X min” (quando houver).
+  - Campo “Tempo realizado (min)” pré-preenchido com X, mas EDITÁVEL.
+  - Manter opções atuais de “tipo de deslocamento”.
+  - Ao confirmar, registrar deslocamento_ida para a atividade.
+- Também definir no plano quais timestamps devem ser gravados:
+  - navigation_started_at (clique iniciar navegação)
+  - e como isso se relaciona com execution_started_at (início real da atividade)
+
+O que quero no plano:
+- Quando exatamente o modal abre (antes de “Iniciar atividade”, ou “Iniciar navegação” já inicia um estado “navegando”?)
+- Como guardar o ETA do GPS (campo dedicado vs metadata).
+- O que acontece se não houver ETA (sem chave / sem sinal / erro).
+
+========================
+ETAPA 2 — CONCLUIR ATIVIDADE + REGISTRAR TEMPO DE EXECUÇÃO
+========================
+Requisito:
+- Ao clicar “Concluir atividade”, abrir o modal de tempo de execução (já existe hoje).
+- O modal deve trazer “Tempo estimado de execução” calculado automaticamente pelo sistema usando:
+  - (agora - execution_started_at)
+- Pré-preencher o campo “Tempo realizado (min)” com essa estimativa e permitir edição.
+- Ao confirmar, registrar o tempo de execução e mudar status para concluída.
+
+O que quero no plano:
+- Confirmação de quais timestamps existem hoje e quais são necessários.
+- Como garantir que execution_started_at é sempre definido (e o que fazer se estiver nulo por alguma exceção).
+
+========================
+ETAPA 3 — PÓS-CONCLUSÃO: VOLTA (2 possibilidades) SEM IMPACTAR PRÓXIMA IDA
+========================
+Contexto:
+Após concluir a atividade, existem duas realidades:
+A) O técnico volta para a BASE
+B) O técnico segue para a PRÓXIMA atividade da agenda
+
+Regra central:
+- Se ele seguir para a próxima atividade, NÃO registrar “volta” e NÃO reaproveitar esse deslocamento como IDA automática da próxima.
+- O deslocamento IDA de uma atividade só pode ser registrado quando o técnico clicar “Iniciar navegação” daquela atividade.
+
+Requisito para VOLTA PARA BASE:
+- Se escolher voltar para base, abrir GPS para a base e capturar ETA (se possível).
+- Exibir modal “Tempo de retorno à base” semelhante ao de IDA:
+  - mostrar ETA em destaque
+  - tempo editável
+  - tipo de deslocamento
+- Registrar esse tempo como “retorno_base”, vinculado à atividade que acabou de ser concluída, e também relacionado à base do técnico.
+
+O que quero no plano:
+- Propor um fluxo eficiente e simples para essa decisão pós-conclusão.
+Sugestão: um modal “Próximo passo” com 3 botões:
+  1) Voltar para base (gera retorno_base)
+  2) Ir para próxima atividade (não gera retorno)
+  3) Encerrar/Disponível (não gera retorno)
+Mas você pode sugerir alternativa melhor, desde que preserve a regra central e fique fácil para o técnico.
+
+========================
+MODELAGEM DE DADOS (PROPOSTA NO PLANO)
+========================
+Apresente 2 opções e recomende uma:
+
+OPÇÃO 1 — Tabela de registros de tempo tipada (forte e simples):
+- Uma tabela “activity_time_records” (ou similar) com:
+  - activity_id
+  - type ENUM: 'ida', 'execucao', 'retorno_base'
+  - minutes_reported
+  - gps_eta_minutes (nullable)
+  - deslocamento_tipo (nullable)
+  - started_at/finished_at (se fizer sentido)
+  - created_at
+- Regras: retorno_base sempre exige base_id; ida e execucao não.
+
+OPÇÃO 2 — Event Sourcing leve (mais flexível):
+- Uma tabela “activity_events” com:
+  - activity_id
+  - event_type ('NAV_START','TRAVEL_IDA_RECORDED','EXEC_START','EXEC_FINISH','RETURN_BASE_RECORDED','NEXT_ACTIVITY_SELECTED', etc.)
+  - payload JSON (para guardar gps_eta, minutos, tipo deslocamento, base_id)
+  - created_at
+- Benefício: impossível misturar conceitos, e ótimo para auditoria e BI.
+
+No plano, explique trade-offs e qual escolher para ASTEC agora, mantendo compatibilidade com o que já existe.
+
+========================
+API / ENDPOINTS (PROPOSTA NO PLANO)
+========================
+Desenhe quais endpoints seriam necessários (ou extensão dos atuais), por exemplo:
+- start navigation / save eta
+- record travel ida
+- start execution
+- finish execution
+- record return to base
+Inclua:
+- payloads e respostas (exemplo em JSON)
+- validações (RBAC, activity ownership, status permitido, idempotência)
+- regras para evitar duplicidade (ex.: não criar dois registros de ida para mesma atividade)
+
+========================
+MÁQUINA DE ESTADOS (NO PLANO)
+========================
+Desenhe a máquina de estados:
+- agendada
+- navegando (opcional)
+- em_execução
+- concluída
+- pós_conclusão (opcional)
+E as transições permitidas com gatilhos (botões/modais).
+
+========================
+EDGE CASES (NO PLANO)
+========================
+Liste e proponha comportamento para:
+- Sem GPS / sem internet / ETA indisponível
+- Usuário fecha modal sem salvar
+- Técnico inicia navegação e não inicia atividade por horas
+- Técnico conclui atividade sem ter registrado ida (permitir? bloquear? criar aviso?)
+- Retorno base registrado duas vezes
+- Técnico escolhe “ir para próxima atividade” mas decide voltar para base depois
+- Mudança de base do técnico no perfil
+- Atividade sem endereço/CEP válido
+
+========================
+PLANO DE TESTES (NO PLANO)
+========================
+Crie checklist de testes manuais:
+- Caminho feliz completo (ida → execução → retorno base)
+- Caminho feliz (ida → execução → próxima atividade)
+- ETA ausente (ida e retorno base)
+- Edição do tempo sugerido
+- Garantir que retorno_base não altera ida da próxima atividade
+E sugestões de testes automatizados (unit + integration).
+
+========================
+ROLL OUT (NO PLANO)
+========================
+Sugira como lançar sem risco:
+- feature flag “agenda_v3_tempos”
+- compatibilidade com registros antigos
+- migração gradual / fallback para fluxo antigo
+- métricas para monitorar (erros, duplicidade, abandono de modal)
+
+SAÍDA ESPERADA
+Entregue um documento estruturado com:
+- Visão geral
+- Fluxo UX (com sequência)
+- Modelagem de dados (2 opções + recomendação)
+- Contratos de API
+- Máquina de estados
+- Regras críticas e invariantes
+- Edge cases + decisões
+- Plano de testes
+- Plano de rollout
+Sem código.

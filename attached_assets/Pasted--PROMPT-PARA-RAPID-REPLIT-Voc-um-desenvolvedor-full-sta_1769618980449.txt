@@ -1,0 +1,120 @@
+📌 PROMPT PARA RAPID / REPLIT
+
+Você é um desenvolvedor full stack sênior, trabalhando em um sistema de agenda e gestão de atividades técnicas.
+Precisamos implementar ajustes de lógica e UI, respeitando tudo que já existe no sistema, sem quebrar fluxos atuais.
+
+🔹 1. Agendamento de Atividades
+
+O agendamento pode ser feito tanto pela tela Minha Agenda quanto pela tela Calendário.
+
+Alteração necessária:
+
+Adicionar um novo campo obrigatório chamado “Título” no modal de agendamento.
+
+Esse campo não existe atualmente e deve ser incluído sem remover ou alterar os campos já existentes.
+
+Campos que permanecem:
+
+Cliente
+
+Tipo de atividade
+
+Data/hora de início
+
+Data/hora de fim
+
+Opção de múltiplos dias
+
+Demais campos já existentes no modal
+
+📌 O campo Título deve:
+
+Ser exibido no modal de criação/edição do agendamento
+
+Ser salvo no banco
+
+Ser exibido na agenda/calendário como identificação principal da atividade
+
+🔹 2. Fluxo da Atividade (Execução)
+
+Após o agendamento:
+
+A atividade fica normalmente na agenda do técnico
+
+O técnico inicia a navegação manualmente (botão já existente ou a ser ajustado)
+
+Não calcular tempo automaticamente via GPS
+
+A navegação serve apenas como marcador de início da atividade
+
+🔹 3. Conclusão da Atividade
+
+Ao finalizar a atividade, deve abrir um modal de encerramento com a seguinte lógica:
+
+Pergunta principal:
+
+A atividade foi realizada?
+
+Opções: Sim / Não
+
+Se a resposta for SIM:
+
+Exibir campos para informar tempo de deslocamento, de forma manual:
+
+Tipos de deslocamento:
+
+🚗 Carro
+
+🏍️ Moto
+
+🚶 A pé
+
+🚌 Transporte público
+
+Para cada tipo:
+
+Campo de tempo (em minutos ou horas)
+
+Permitir informar mais de um tipo no mesmo atendimento
+
+📌 O sistema deve:
+
+Somar automaticamente o tempo total de deslocamento
+
+Associar esse tempo à atividade concluída
+
+🔹 4. Dashboard / Relatórios
+
+Criar uma nova aba ou seção no Dashboard com:
+
+Filtros:
+
+Técnico
+
+Cliente
+
+Período (data inicial e final)
+
+Tipo de atividade
+
+Exibição:
+
+Lista de atividades realizadas
+
+Tempo total de deslocamento
+
+Detalhamento por tipo de deslocamento
+
+Status da atividade (Realizada / Não realizada)
+
+🔹 5. Regras Importantes
+
+❌ Não remover funcionalidades existentes
+
+❌ Não alterar regras atuais de agendamento
+
+✅ Apenas estender o sistema
+
+✅ Código organizado, seguindo o padrão atual do projeto
+
+✅ Backend, frontend e banco ajustados conforme necessário

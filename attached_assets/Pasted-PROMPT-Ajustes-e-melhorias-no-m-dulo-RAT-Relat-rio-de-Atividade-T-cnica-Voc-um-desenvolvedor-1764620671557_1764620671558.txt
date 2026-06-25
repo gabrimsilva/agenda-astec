@@ -1,0 +1,291 @@
+PROMPT – Ajustes e melhorias no módulo RAT (Relatório de Atividade Técnica)
+
+Você é um desenvolvedor sênior responsável por evoluir o módulo de RAT – Relatório de Atividade Técnica do nosso sistema (web + PWA), já existente e integrado ao fluxo de visitas técnicas.
+
+A RAT já foi implementada (com abas como cliente, superfície, produto, aplicação, relatório, status, geração de PDF etc.), e agora precisamos ajustar e refinar o formulário e o fluxo, conforme os pontos abaixo.
+
+Mantenha a stack atual, o layout já implementado e o fluxo já existente, apenas evoluindo o que está pronto.
+
+1. Campo Nº do Relatório e Data de Fechamento
+
+Incluir na RAT os campos:
+
+Nº relatório
+
+Campo para preenchimento manual pelo técnico/usuário no momento do preenchimento da RAT.
+
+Não gerar automático neste momento (somente entrada manual).
+
+Data de fechamento da RAT
+
+Campo de data (date/datetime), preenchido no momento em que a RAT é concluída/finalizada.
+
+Deve constar nos dados da RAT e no relatório/PDF final.
+
+Esses campos devem:
+
+Ser exibidos em local de destaque na RAT (ex.: cabeçalho ou seção inicial),
+
+Ser respeitados na visualização e no PDF.
+
+2. Aba “Cliente”
+
+Ajustar a aba “Cliente” da RAT conforme:
+
+Campo Cliente
+
+Deve continuar sendo preenchido automaticamente com o nome do cliente vinculado à atividade/visita.
+
+Porém, o campo deve ficar habilitado para edição manual, permitindo que o técnico ajuste o texto caso necessário (ex.: contato específico, nome da unidade etc.).
+
+Campo “Obra”
+
+Incluir o campo “Obra” com as opções:
+
+Manutenção
+
+Nova
+
+Tipo: select/radio (o que estiver em padrão no sistema para esse tipo de escolha).
+
+Esse campo deve ser obrigatório (ver seção de obrigatoriedade mais abaixo).
+
+3. Aba “Superfície”
+
+Na aba “Superficie” da RAT:
+
+Incluir o campo:
+
+“Manutenção (ASTM D0610) 0 a 8”
+
+Tipo: pode ser numérico (0 a 8) ou select com opções de 0 a 8.
+
+Esse campo deve ser obrigatório.
+
+4. Aba “Produto”
+
+Na aba “Produto” da RAT, quando o usuário adicionar um componente:
+
+Para cada componente adicionado, incluir um campo de categoria do componente, com as opções:
+
+Componente A
+
+Componente B
+
+Componente C
+
+Diluente
+
+Powder
+
+A categoria deve:
+
+Ser selecionada no momento de adicionar/editar o componente,
+
+Ser salva no backend junto aos dados do componente,
+
+Ser exibida na visualização e no relatório/PDF final.
+
+Manter a forma de adicionar múltiplos componentes, apenas enriquecendo cada um com essa categoria.
+
+5. Aba “Aplicação”
+
+Ajustar a aba “Aplicação” da RAT com os seguintes pontos:
+
+Renomear campos
+
+Campo atual “Espessura seca total” → renomear para:
+“Espessura seca (E.F.S microns)”
+
+Campo atual “Equipamento” → renomear para:
+“Equipamento de aplicação”
+
+Campo atual “Condição” → renomear para:
+“Condição de aplicação”
+
+Apenas renomear os labels, sem alterar a lógica interna dos dados, a não ser que o nome também esteja sendo usado como chave exibida no PDF.
+
+Incluir campo “Observação da aplicação”
+
+Tipo: textarea.
+
+Campo para observações específicas sobre a aplicação.
+
+Esse campo deve ser obrigatório (ver seção de obrigatoriedade).
+
+6. Aba “Relatório”
+
+Na aba “Relatório” da RAT:
+
+Renomear título
+
+Onde hoje está “Relatório descritivo”, alterar o título para:
+“Produto e informações técnicas”.
+
+Incluir campo “6 – Relatório fotográfico”
+
+Criar a seção/campo “6 – Relatório fotográfico” (se ainda não existir).
+
+Campos que aceitam fotos
+Nas seções/campos:
+
+3 – Atividades realizadas
+
+4 – Comentário (ajustar a grafia de “comentrario” para “comentário”)
+
+5 – Conclusão
+
+6 – Relatório fotográfico
+
+Implementar:
+
+A opção de incluir fotos/anexos nesses campos.
+
+Para cada foto:
+
+Um campo de descrição da foto (texto), vinculado diretamente àquele arquivo.
+
+Manter também o campo de texto tradicional de cada seção (não remover).
+→ Ou seja, o técnico pode:
+
+Descrever em texto,
+
+E complementar com fotos + descrição das fotos.
+
+Organização das fotos no relatório/PDF
+
+No relatório final e no PDF:
+
+As fotos devem aparecer de forma organizada e ajustada, com:
+
+A imagem,
+
+A descrição logo abaixo ou ao lado,
+
+Vinculadas à seção certa (atividades, comentário, conclusão, relatório fotográfico).
+
+Garantir que o layout não fique quebrado no PDF (usar grades/colunas ou outro padrão estável).
+
+7. Assinatura do Técnico (Canvas)
+
+Incluir na RAT um campo de assinatura do técnico, com:
+
+Um canvas de assinatura (campo para desenhar com o dedo/caneta no PWA e mouse na web).
+
+Ao término da RAT, o técnico deve:
+
+Assinar no canvas,
+
+Ter seu nome puxado automaticamente (nome do usuário logado ou técnico responsável vinculado à RAT),
+
+Esse nome deve constar junto à assinatura (ex.: abaixo da imagem da assinatura).
+
+No backend:
+
+Salvar a assinatura como imagem (ex.: base64 ou arquivo) associada à RAT.
+
+No relatório/PDF:
+
+Exibir a assinatura do técnico (imagem)
+
+E o nome do técnico próximo à assinatura.
+
+8. Obrigatoriedade de campos
+
+Aplicar obrigatoriedade em todos os campos da RAT, de forma consistente, incluindo:
+
+Nº relatório
+
+Data de fechamento (no momento apropriado)
+
+Cliente (pode estar preenchido automático, mas não pode ficar vazio)
+
+Obra
+
+Campos da aba superfície (incluindo ASTM D0610)
+
+Campos da aba produto (incluindo categoria do componente)
+
+Campos da aba aplicação (incluindo observação da aplicação, equipamentos, condição etc.)
+
+Campos textuais e de estrutura da aba relatório (títulos/descrição principais)
+
+Assinatura do técnico (não permitir concluir/finalizar RAT sem assinatura)
+
+Se algum campo estiver vazio ou inválido:
+
+Bloquear a ação de finalizar/concluir a RAT
+
+Exibir mensagem clara de validação para o usuário.
+
+9. Fluxo de status e comportamento do botão
+
+A RAT possui status, como por exemplo: em edição, completa, enviada (ou equivalentes).
+Ajustar o fluxo da seguinte forma:
+
+Quando a RAT estiver no status “completa”:
+
+Trocar o texto do botão atual de “Concluir” para:
+“Finalizar RAT”
+
+Ao clicar em “Finalizar RAT”:
+
+Validar todos os campos obrigatórios,
+
+Se tudo ok:
+
+Alterar o status da RAT para “enviada”,
+
+Registrar data/hora de envio (se já não estiver sendo feito).
+
+Quando a RAT estiver no status “enviada”:
+
+A RAT passa a ser somente leitura:
+
+Não permitir mais edição do arquivo/RAT,
+
+Bloquear inputs do formulário,
+
+Mostrar claramente que está em status “enviada”.
+
+Deve continuar sendo possível:
+
+Visualizar a RAT,
+
+Gerar/baixar PDF,
+
+Consultar no histórico.
+
+10. Cuidados gerais
+
+Não alterar a stack, apenas evoluir o que já existe no módulo RAT.
+
+Manter compatibilidade com:
+
+PWA (uso em celular),
+
+Versão web (desktop),
+
+Geração de relatório e PDF.
+
+Manter a organização atual por abas:
+
+Cliente
+
+Superfície
+
+Produto
+
+Aplicação
+
+Relatório
+
+Garantir que todas as novas informações (campos, fotos, assinatura, nº relatório, datas) estejam disponíveis:
+
+Na API de detalhamento da RAT,
+
+Na visualização em tela,
+
+No PDF ou relatório final.
+
+Implemente somente essas melhorias descritas acima no módulo RAT, respeitando o fluxo atual e deixando o sistema pronto para uso operacional em campo e em escritório.

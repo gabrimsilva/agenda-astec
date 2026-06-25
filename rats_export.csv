@@ -1,0 +1,67 @@
+report_number;report_number_manual;technician_name;client_name;client_name_editable;status;sent_at;send_channel;close_date;created_at
+RAT-2026-0059;;Ivan Luis Matte;I9 ENGENHARIA EIRELI - ME;;pendente;;;;2026-02-10
+RAT-2026-0058;;Pedro Antonio Silveira;Fabricio Sil;;pendente;;;;2026-02-10
+RAT-2026-0057;;Pedro Antonio Silveira;Malte;;pendente;;;;2026-02-10
+RAT-2026-0056;;Pedro Antonio Silveira;Machina Zaccaria;;pendente;;;;2026-02-10
+RAT-2026-0055;ILM 004-26;Ivan Luis Matte;Steelmast;Steelmast;rascunho;;;;2026-02-09
+RAT-2026-0054;ECJ-0001/26;Evandro Crivelari da Silva Junior;APLITEC SERVICOS MG LTA;APLITEC SERVICOS MG LTA;rascunho;;;;2026-02-08
+RAT-2026-0053;ECJ-0001/26;Evandro Crivelari da Silva Junior;APLITEC SERVICOS MG LTA;APLITEC SERVICOS MG LTA;rascunho;;;;2026-02-07
+RAT-2026-0052;ECJ-0001/26;Evandro Crivelari da Silva Junior;APLITEC SERVICOS MG LTA;APLITEC SERVICOS MG LTA;rascunho;;;;2026-02-07
+RAT-2026-0051;;Otavio Bezerra da Silva Filho;MR ARQUITETURA;;rascunho;;;;2026-02-07
+RAT-2026-0050;;Pedro Antonio Silveira;Machina Zaccaria;;pendente;;;;2026-02-06
+RAT-2026-0049;ECJ-0001/26;Evandro Crivelari da Silva Junior;APLITEC SERVICOS MG LTA;APLITEC SERVICOS MG LTA;rascunho;;;;2026-02-06
+RAT-2026-0048;;Evandro Crivelari da Silva Junior;HS METAIS / SILUHE;;pendente;;;;2026-02-06
+RAT-2026-0047;;Robson dos Santos Silveira;OREAS COMERCIAL SERVICOS IMPORTACAO E EXPORTACAO LTDA;;pendente;;;;2026-02-03
+RAT-2026-0046;;Pedro Antonio Silveira;OREAS COMERCIAL SERVICOS IMPORTACAO E EXPORTACAO LTDA;;completa;2026-02-04;;2026-02-03
+RAT-2026-0045;;Pedro Antonio Silveira;SAO JOSE LTDA;;completa;2026-02-04;;2026-02-03
+RAT-2026-0044;;Robson dos Santos Silveira;Tek Brasil;;pendente;;;;2026-02-02
+RAT-2026-0043;;Ewerton Felipe Silvestre Machado;Sangati Berga;;pendente;;;;2026-02-01
+RAT-2026-0042;;Ewerton Felipe Silvestre Machado;Sangati Berga;;pendente;;;;2026-02-01
+RAT-2026-0041;;Pedro Antonio Silveira;Aurora Industria Metalurgica;;completa;2026-01-30;;2026-01-30
+RAT-2026-0040;;Otavio Bezerra da Silva Filho;ASSO INDUSTRIA E COMERCIO DE ACOS LTDA;;pendente;;;;2026-01-30
+RAT-2026-0039;ILM 004-26;Ivan Luis Matte;SOLLUS MECANIZACAO AGRICOLA LTDA;SOLLUS MECANIZACAO AGRICOLA LTDA;rascunho;;;;2026-01-29
+RAT-2026-0038;RAT-003;Robson dos Santos Silveira;LDC Pintura Eletrostatica Ltda;LDC Pintura Eletrostatica Ltda;rascunho;;;;2026-01-29
+RAT-2026-0037;;Ivan Luis Matte;BRAFER CONSTRUCOES METALICAS LTDA;;completa;2026-02-03;;2026-01-28
+RAT-2026-0036;RAT-002;Robson dos Santos Silveira;COMBER INDUSTRIA LTDA;COMBER INDUSTRIA LTDA;rascunho;;;;2026-01-28
+RAT-2026-0035;;Pedro Antonio Silveira;MEGACOLORS PRIME LTDA - ME;;completa;2026-01-29;;2026-01-27
+RAT-2026-0034;RAT-001;Robson dos Santos Silveira;COMBER INDUSTRIA LTDA;COMBER INDUSTRIA LTDA;rascunho;;;;2026-01-27
+RAT-2026-0033;;Ewerton Felipe Silvestre Machado;Sangati;;pendente;;;;2026-01-27
+RAT-2026-0032;;Ivan Luis Matte;COM.TINTAS, MAT.ELET.HIDR. VERGINIA LTDA;;completa;2026-02-03;;2026-01-27
+RAT-2026-0031;ILM 001-26;Ivan Luis Matte;DCP ESTRUTURAS METALICAS LTDA;DCP ESTRUTURAS METALICAS LTDA;completa;;;;2026-01-27
+RAT-2026-0030;;Ewerton Felipe Silvestre Machado;Refinaria Abreu e Lima (RNEST);Refinaria Abreu e Lima (RNEST);rascunho;;;;2026-01-26
+RAT-2026-0029;;Robson dos Santos Silveira;Ullian;;pendente;;;;2026-01-23
+RAT-2026-0026;ARR0023-26;Adilco Renato Rodrigues;SOORO RENNER NUTRICAO S/A (Copia) (Copia);SOORO RENNER NUTRICAO S/A (Copia) (Copia);rascunho;;;;2026-01-22
+RAT-2026-0025;;Pedro Antonio Silveira;FIDELFERRO INDUSTRIA E COMERCIO DE MOVEIS LTDA;;completa;2026-01-23;;2026-01-22
+RAT-2026-0023;ARR0023-26;Adilco Renato Rodrigues;SOORO RENNER NUTRICAO S/A (Copia) (Copia);SOORO RENNER NUTRICAO S/A.;rascunho;;;;2026-01-21
+RAT-2026-0022;ARR0022-26;Adilco Renato Rodrigues;SOORO RENNER NUTRICAO S/A (Copia);SOORO RENNER NUTRICAO S/A (Copia);rascunho;;;;2026-01-21
+RAT-2026-0021;;Evandro Crivelari da Silva Junior;STOCK MINAS GOIAS LTDA;STOCK MINAS GOIAS LTDA;completa;2026-02-06;;2026-01-19
+RAT-2026-0020;ARR0002-26;Adilco Renato Rodrigues;Bransilos;Rennpar / Bransilos Ind e Com de Maq.;completa;2026-01-16;;2026-01-16
+RAT-2026-0019;;Otavio Bezerra da Silva Filho;ARENA TINTAS LTDA;;rascunho;;;;2026-01-16
+RAT-2026-0017;;Pedro Antonio Silveira;AL PUXADORES;;completa;2026-01-19;;2026-01-15
+RAT-2026-0016;ARR0016-26;Adilco Renato Rodrigues;PERTO S A PERIFERICOS PARA AUTOMACAO;PERTO S A PERIFERICOS PARA AUTOMACAO;completa;2026-01-16;;2026-01-14
+RAT-2026-0015;ARR0015-26;Adilco Renato Rodrigues;Jato Parts Jateamento e Pintura;Jato Parts Jateamento e Pintura;completa;2026-01-16;;2026-01-13
+RAT-2026-0014;;Pedro Antonio Silveira;6F Metais;;completa;2026-01-14;;2026-01-13
+RAT-2026-0013;;Ewerton Felipe Silvestre Machado;Cabana Eco Resort;;rascunho;;;;2026-01-13
+RAT-2026-0012;ARR0012-26;Adilco Renato Rodrigues;MARCHER BRASIL AGROINDUSTRIAL SA;MARCHER BRASIL AGROINDUSTRIAL SA;completa;2026-01-16;;2026-01-13
+RAT-2026-0011;;Pedro Antonio Silveira;AL PUXADORES;;completa;2026-01-19;;2026-01-12
+RAT-2026-0010;RAT-RPS-001-26 PROINSP - TESTE;Rafael Pains de Souza;Proinsp engenharia;;completa;2026-01-09;;2026-01-09
+RAT-2026-0009;RAT-RPS-001-26 PROINSP - TESTE;Rafael Pains de Souza;Proinsp;;completa;2026-01-09;;2026-01-09
+RAT-2026-0008;ARR0002-26;Adilco Renato Rodrigues;Roto Fermax;Roto Fermax;completa;2026-01-14;;2026-01-09
+RAT-2026-0007;;Pedro Antonio Silveira;ETEP;;completa;2026-01-09;;2026-01-09
+RAT-2026-0005;;Adilco Renato Rodrigues;Roto Fermac;;pendente;;;;2026-01-07
+RAT-2026-0004;;Ewerton Felipe Silvestre Machado;MUNDO DAS TINTAS LTDA;;pendente;;;;2026-01-07
+RAT-2026-0002;RAT ARR0001-26;Adilco Renato Rodrigues;BRAFER CONSTRUCOES METALICAS LTDA;BRAFER CONSTRUCOES METALICAS LTDA;completa;2026-01-07;;2026-01-06
+RAT-2025-0023;;Pedro Antonio Silveira;ST PINTURAS;;completa;2026-01-05;;2025-12-30
+RAT-2025-0022;;Adilco Renato Rodrigues;Viva Cor;Viva Cor Comercial Tintas.;completa;2026-01-16;;2025-12-29
+RAT-2025-0021;RAT EWE 040-25;Ewerton Felipe Silvestre Machado;Lafaete Locacao de Equipamentos;Lafaete Locacao de Equipamentos;completa;;;;2025-12-29
+RAT-2025-0020;ECJ - 0021;Evandro Crivelari da Silva Junior;Madson (Suggar);Madson (Suggar);completa;2025-12-29;;2025-12-29
+RAT-2025-0015;RPS-0027-25;Rafael Pains de Souza;SUPERBRACO SERVICOS MARITIMOS LTDA;SUPERBRACO SERVICOS MARITIMOS LTDA;completa;2025-12-23;;2025-12-23
+RAT-2025-0013;;Pedro Antonio Silveira;M.WAY;;pendente;;;;2025-12-22
+RAT-2025-0012;;Adilco Renato Rodrigues;MARCHER BRASIL AGROINDUSTRIAL SA;MARCHER BRASIL AGROINDUSTRIAL SA;completa;2025-12-19;;2025-12-19
+RAT-2025-0011;;Pedro Antonio Silveira;Metalurgica Couselo;;completa;2025-12-19;;2025-12-19
+RAT-2025-0009;;Anderson Carlos Sousa dos Santos;DIPAWA NORDESTE INDUSTRIA, COMERCIO E CONSTRUTORA LTDA.;DIPAWA NORDESTE INDUSTRIA, COMERCIO E CONSTRUTORA LTDA.;completa;2025-12-19;;2025-12-18
+RAT-2025-0006;;Adilco Renato Rodrigues;Jato Parts/ Doaco Ind e Com;Jato Parts/ Doaco Ind e Com;completa;2026-01-16;;2025-12-17
+RAT-2025-0005;;Rafael Pains de Souza;ELETROBRAS TERMONUCLEAR SA-ELETRONUCLEAR;;completa;2025-12-23;;2025-12-17
+RAT-2025-0004;;Rafael Pains de Souza;ELETROBRAS TERMONUCLEAR SA-ELETRONUCLEAR;;completa;2025-12-22;;2025-12-16
+RAT-2025-0003;;Adilco Renato Rodrigues;Viva Cor Pintura a po.;Viva Cor Pintura a po.;completa;2026-01-16;;2025-12-16
+RAT-2025-0001;ILM 005-25;Ivan Luis Matte;GREENBRIER MAXION EQUIPAMENTOS E SERVICOS FERROVIARIOS S.A;GREENBRIER MAXION EQUIPAMENTOS E SERVICOS FERROVIARIOS S.A;completa;;;;2025-12-16

@@ -1,0 +1,125 @@
+✅ PROMPT PARA O REPLIT – LISTAR TODAS AS ATIVIDADES NO PERÍODO, ORDENADAS PELA MAIS PRÓXIMA DO CEP PESQUISADO
+
+Quero que você ajuste o módulo Encontrar Técnico Próximo da seguinte forma:
+
+🎯 Objetivo
+
+Quando o gestor informar um período (Início/Fim) e um endereço/CEP de referência, o sistema deve:
+
+Buscar TODAS as atividades agendadas dentro do intervalo, para todos os técnicos.
+
+Não trazer apenas a próxima atividade, e sim todas as atividades dentro do período, por técnico.
+
+Calcular a distância e o tempo de deslocamento entre o CEP pesquisado e cada atividade encontrada.
+
+Exibir os técnicos ordenados pela atividade mais próxima do endereço pesquisado.
+
+Na listagem final, exibir:
+
+A atividade mais próxima (para fins de ordenação)
+
+botão “Ver todas as atividades deste período” para abrir uma lista expansível com todas as demais.
+
+🧠 Comportamento esperado
+Backend (Node + Express)
+
+Criar um endpoint:
+GET /api/atividades/buscar-por-periodo
+
+Parâmetros:
+
+{
+  inicio: string (YYYY-MM-DD),
+  fim: string (YYYY-MM-DD),
+  cepReferencia: string
+}
+
+
+Regras:
+
+Buscar no banco todas as atividades entre inicio e fim:
+
+SELECT * FROM atividades
+WHERE data BETWEEN $1 AND $2
+ORDER BY data ASC;
+
+
+Para cada atividade, calcular distância e tempo:
+
+usar OSRM / OpenRouteService / Google Directions (o mesmo provider atual)
+
+Agrupar atividades por técnico:
+
+{
+  tecnicoId,
+  tecnicoNome,
+  atividades: [
+     { id, data, hora, cliente, endereco, distanciaKm, tempoMin }
+  ],
+  atividadeMaisProxima: { … } // calculada pelo menor tempoMin
+}
+
+
+Retornar os técnicos ordenados pela menor distância:
+
+tecnicos.sort((a, b) => a.atividadeMaisProxima.tempoMin - b.atividadeMaisProxima.tempoMin)
+
+🎨 Frontend (React / Maps)
+Alterações necessárias:
+
+No painel lateral, substituir:
+“Próxima atividade”
+por
+“Atividade mais próxima do endereço pesquisado”
+
+Manter a linha principal exibindo apenas a mais próxima.
+
+Abaixo, adicionar:
+“Ver atividades no período” → abre accordion
+Listando todas as atividades do técnico no período informado.
+
+Cada card deve mostrar:
+
+Data / hora
+
+Cliente
+
+Endereço
+
+Distância / tempo até o CEP pesquisado
+
+🧪 Regras de teste (QA)
+
+Se existir 10 atividades no período, mas só 1 é perto → listar todas, ordenar pela próxima.
+
+Se o técnico não tiver atividades no período → não listar.
+
+Se o CEP pesquisado não retornar rota → exibir alerta e não ordenar pela distância.
+
+📌 Resumo para o Replit
+
+Implemente:
+
+BACKEND
+
+Novo endpoint /api/atividades/buscar-por-periodo
+
+Consulta completa ao banco
+
+Cálculo de rota por atividade
+
+Agrupamento por técnico
+
+Ordenação pela atividade mais próxima do CEP informado
+
+FRONTEND
+
+Atualizar painel lateral
+
+Exibir apenas a atividade mais próxima como destaque
+
+Accordion com todas as atividades encontradas no período
+
+Ordenação por proximidade
+
+Ajustar texto (não mais “próxima atividade”, e sim “mais próxima ao endereço pesquisado no período”)

@@ -1,0 +1,29 @@
+# ===== Dependências (reinstaladas com `npm install` na VM) =====
+node_modules/
+
+# ===== Saída de build (regenerada com `npm run build`) =====
+dist/
+dist-ssr/
+
+# ===== Logs e temporários =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== Artefatos de ambiente do Replit (NÃO são código do projeto) =====
+.cache/
+.config/
+.local/
+.upm/
+.agents/
+
+# ===== SO / editor =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Observação: NADA do código do projeto é ignorado.
+# server/, client/, shared/ (schema/tabelas), migrations/, scripts/,
+# package.json, *.config.ts, drizzle.config.ts, attached_assets/ etc. são versionados.

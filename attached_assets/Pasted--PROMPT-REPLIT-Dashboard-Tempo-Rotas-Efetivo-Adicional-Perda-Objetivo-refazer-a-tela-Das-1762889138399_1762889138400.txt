@@ -1,0 +1,248 @@
+🧠 PROMPT REPLIT — “Dashboard Tempo + Rotas (Efetivo/Adicional/Perda)”
+
+Objetivo: refazer a tela Dashboard do ASTEC para centralizar:
+
+apontamento de horas (Efetivo / Adicional / Perda),
+
+timer start/stop,
+
+deslocamento automático calculado pelo módulo de rotas (OpenRouteService/Google),
+
+KPIs, gráficos e ranking,
+
+integração com Agenda e Mapa.
+
+Stack: React 18 + TS + Vite + Tailwind/shadcn + TanStack Query | Node + Express + TS + Drizzle (PostgreSQL) | JWT + RBAC.
+
+0) Variáveis de ambiente (server)
+
+Adicione (usar ORS por padrão; Google como fallback):
+
+ROUTING_PROVIDER=ors          # ors|google
+ORS_API_BASE=https://api.openrouteservice.org
+ORS_API_KEY=__COLOQUE_AQUI__
+GOOGLE_MAPS_API_KEY=__OPCIONAL__
+ROUTE_CACHE_TTL_SEC=3600
+
+1) Banco (Drizzle) — novas tabelas + ajustes
+
+1.1 Enums
+
+time_category: efetivo | adicional | perda
+
+time_source: manual | timer | import | gps | route_estimate
+
+1.2 Tabelas
+
+activities(id, name, category, active, created_at)
+
+time_entries(id, tecnico_id, activity_id, work_date, minutes, notes, source, created_by, agenda_id?, travel_id?, created_at)
+
+travel_segments (id, tecnico_id, origin_lat, origin_lng, dest_lat, dest_lng, provider, route_polyline, distance_m, duration_sec_est, duration_sec_real?, started_at, arrived_at, status)
+
+status: planned | enroute | arrived | reconciled
+
+índices: (tecnico_id, work_date), (status), (created_at)
+
+1.3 Seeds activities
+
+EFETIVO: “Visita técnica (preventiva/testes)”, “Especificações técnicas”, “Visita técnica (corretiva/RCs)”
+
+ADICIONAL: “Suporte remoto”, “Documentação/RAT/RAD/Checklists/Agenda”, “Treinamentos (aluno)”
+
+PERDA: “Deslocamento até o cliente (planejado)”, “Espera/Acesso/Liberação”
+
+Regra de integridade: somatório de minutes por técnico+dia ≤ 1440.
+
+2) Rotas backend (Express)
+
+Crie server/src/routes/time.ts e server/src/routes/route.ts.
+
+2.1 Tempo
+GET  /api/activities
+POST /api/time-entries
+PUT  /api/time-entries/:id
+DELETE /api/time-entries/:id
+GET  /api/time-entries?tecnico_id&from&to&category
+GET  /api/time-summary?tecnico_id&from&to&group=day|week|month
+
+
+Resumo retorna KPIs:
+
+totalEfetivo, totalAdicional, totalPerda, totalMin
+
+eficiencia = totalEfetivo / totalMin
+
+%deslocamento = totalPerda / totalMin
+
+série por dia com categorias
+
+RBAC: técnico só vê/cria do próprio tecnico_id; admin/gestor tudo.
+
+2.2 Rotas / Deslocamento
+# 1) Calcular rota e planejar deslocamento
+POST /api/route/plan
+body: { tecnicoId, origin:{lat,lng}, destination:{lat,lng}, agendaId? }
+resp: { travelId, distance_m, duration_sec_est, provider }
+
+# 2) Iniciar deslocamento (técnico clicou "Iniciar rota")
+POST /api/route/start
+body: { travelId, started_at? }   # marca status=enroute
+
+# 3) Chegada (técnico clicou "Cheguei")
+POST /api/route/arrive
+body: { travelId, arrived_at? }   # calcula duration_sec_real = arrived - started
+
+# 4) Reconciliar tempo (cria/atualiza time_entry PERDA automaticamente)
+POST /api/route/reconcile
+body: { travelId }
+
+
+Regras de reconciliação:
+
+Se duration_sec_real existir → usar real; senão usar duration_sec_est.
+
+Converter para minutos arredondados (mín. 1).
+
+Criar/atualizar time_entries com:
+
+category=perda, activity = "Deslocamento até o cliente (planejado)",
+
+source = route_estimate (ou gps se real),
+
+work_date = started_at (ou hoje),
+
+travel_id vinculado.
+
+Caching: ao plan, cachear resposta de rota por origin|dest|provider por ROUTE_CACHE_TTL_SEC.
+
+Provedores suportados:
+
+ORS: /v2/directions/driving-car ou matrix para múltiplos técnicos.
+
+Google (fallback): Directions/Distance Matrix.
+
+2.3 Matrix técnicos próximos (admin escolhe endereço)
+GET /api/route/matrix?lat=..&lng=..
+resp: [{ tecnicoId, nome, last_lat, last_lng, distance_m, duration_sec_est }]
+
+
+Usa última posição conhecida do técnico (colunas technicians.last_location_lat/lng já previstas no projeto).
+
+Ordena por duration_sec_est.
+
+3) Dashboard (React) — refactor
+
+Substitua o dashboard por cards modulares em client/src/pages/Dashboard.tsx:
+
+3.1 Cards
+
+📍 Endereço & Técnicos Próximos (admin/gestor)
+
+Collapsible “Pesquisar endereço”
+
+Input com autocomplete (“Shopping Palladium, Curitiba…”)
+
+Ao buscar:
+
+mapa (MapLibre) central no destino,
+
+lista “técnicos por tempo de chegada (ETA)” usando /route/matrix
+
+botão “Planear rota” em cada técnico → chama /route/plan e abre modal
+
+botão “Agendar visita” (integra Agenda) → já associa agendaId ao travelId
+
+🧭 Controle de Deslocamento (técnico)
+
+Se houver travelId planejado hoje:
+
+botão Iniciar rota → /route/start
+
+depois botão Cheguei → /route/arrive → em seguida o front chama /route/reconcile (gera PERDA automática)
+
+Mostra linha do tempo (previsto vs realizado)
+
+⏱️ Timer Rápido (Efetivo/Adicional)
+
+Combobox Atividade (filtrada por categoria)
+
+Botões Iniciar / Parar
+
+Ao parar: abre modal para editar minutos e observações, grava em /api/time-entries (source=timer)
+
+📈 KPIs do Mês
+
+Total Efetivo, Total Adicional, Total Perda
+
+Eficiência (%), % Deslocamento
+
+Badges: se % Deslocamento > 30% → “Atenção: alto deslocamento”
+
+📊 Gráficos
+
+Pizza (Efetivo/Adicional/Perda)
+
+Linha diária (minutos por dia, empilhado)
+
+🏅 Ranking (Gestor)
+
+Tabela por técnico: Eficiência, %Deslocamento, Total horas mês
+
+3.2 UX/Fluxos chave
+
+Fluxo admin: busca endereço → vê ETA por técnico → “Planear rota” → (opcional) “Agendar visita” → técnico recebe card de deslocamento.
+
+Fluxo técnico: “Iniciar rota” → “Cheguei” → sistema lança PERDA; depois inicia timer Efetivo (sugestão automática).
+
+Fallback manual: card de “Ajustar tempo de deslocamento” permite editar minutos (com log).
+
+4) Integrações com Agenda
+
+Ao Agendar visita, criar compromisso (já existe módulo Agenda).
+
+travel_segments.agenda_id guarda vínculo.
+
+Quando agenda vira “concluída”, sugerir lançar Efetivo igual à duração do compromisso (confirm modal).
+
+5) Segurança & RBAC (front/back)
+
+admin|gestor: todos os cards + ranking + matrix técnicos.
+
+técnico: apenas seus timers, seu deslocamento e seus KPIs.
+
+Auditar (JSONB antes/depois) em time_entries e travel_segments.
+
+6) Testes (E2E manual rápido)
+
+Admin busca “Shopping Palladium Curitiba” → vê lista por ETA → planeja rota p/ Técnico A.
+
+Técnico A abre Dashboard → “Iniciar rota” → “Cheguei” → PERDA criada automaticamente.
+
+Técnico inicia Timer Efetivo (visita) por 20 min → parar → conferir totais do dia.
+
+Gestor vê KPIs do mês e ranking; % Deslocamento atualizado.
+
+7) Entrega
+
+Migrations Drizzle + seeds
+
+Rotas criadas e documentadas
+
+Dashboard refeito com os 6 cards
+
+Integração MapLibre + ORS (fallback Google)
+
+Cache de rotas
+
+README com:
+
+variáveis .env,
+
+como rodar migrations/seeds,
+
+como obter chave do ORS,
+
+exemplos de chamadas API.
+
+Importante: sempre que route/plan for acionado, pré-crie o travel_segment e NÃO lance time_entry ainda. Só lance/ajuste após arrive (real) ou via reconcile (estimado), garantindo que o deslocamento alimente automaticamente a categoria PERDA no dashboard.

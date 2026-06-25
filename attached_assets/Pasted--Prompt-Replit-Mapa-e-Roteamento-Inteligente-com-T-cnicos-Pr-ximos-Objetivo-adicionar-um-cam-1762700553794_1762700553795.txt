@@ -1,0 +1,128 @@
+🧠 Prompt Replit — “Mapa e Roteamento Inteligente com Técnicos Próximos”
+
+Objetivo: adicionar um campo recolhido na tela de Mapas e Rotas que permita pesquisar um endereço (via API de mapas), identificar técnicos próximos e cruzar disponibilidade de horários com a agenda de cada técnico, permitindo agendar a visita automaticamente.
+
+🏗️ Contexto do Sistema
+
+O sistema ASTEC é full-stack TypeScript:
+
+Frontend: React + Vite + Tailwind + shadcn/ui + TanStack Query + Wouter
+
+Backend: Node.js + Express + Drizzle ORM (PostgreSQL)
+
+Banco: Tabelas tecnicos, agendas, demandas, enderecos
+
+Funções atuais: cadastro de cliente, mapa com localização, agenda técnica
+
+Perfis: admin, gestor, tecnico
+
+Autenticação: JWT + roles
+
+Meta: versão 1.0.0 com rastreamento de técnicos e agendamento no mapa
+
+🧩 Requisitos da Nova Função
+
+Interface (frontend React):
+
+No painel “Mapa e Rotas”, incluir um painel recolhido (Accordion ou Collapsible) com o título “📍 Pesquisar Endereço”.
+
+Ao clicar, expandir um campo de busca com input e botão “Pesquisar”.
+
+Usar MapLibre + OpenStreetMap + OpenRouteService API (ou alternativa gratuita).
+
+Exibir o mapa interativo centralizado no endereço pesquisado.
+
+Mostrar marcadores dos técnicos ativos (coordenadas armazenadas no banco).
+
+Ao selecionar um endereço:
+
+Mostrar distância e tempo estimado de cada técnico até o local.
+
+Sinalizar técnicos com status “disponível” e janelas livres na agenda.
+
+Botão “📅 Agendar Visita” → abre modal com data/hora sugerida (pré-preenchida pela disponibilidade cruzada).
+
+Visual opcional: filtro “Técnicos por proximidade” + ordenação crescente por distância.
+
+Backend (Node + Express + Drizzle ORM):
+
+Criar rota GET /api/mapa/tecnicos-proximos?lat=...&lng=...
+
+Consulta técnicos com coordenadas recentes (coluna last_location POINT ou lat/lng).
+
+Calcula distância via fórmula haversine ou integração com API (OpenRouteService Distance Matrix).
+
+Filtra técnicos disponíveis no horário atual (agendas.status = 'livre').
+
+Retorna array de técnicos com { id, nome, distancia_km, tempo_estimado_min, horarios_livres }.
+
+Criar rota POST /api/agendar-visita:
+
+Recebe { tecnico_id, cliente_id, endereco, data_hora }
+
+Cria registro na tabela agendas e atualiza status do técnico.
+
+Retorna confirmação + push notification (futuro WebSocket).
+
+Banco de Dados (Drizzle / PostgreSQL):
+
+Adicionar campos:
+
+tecnicos.last_location_lat, tecnicos.last_location_lng
+
+agendas.status ENUM('livre', 'em_servico', 'indisponivel')
+
+enderecos (tabela auxiliar para salvar histórico de locais pesquisados).
+
+View/consulta agregada: técnicos disponíveis + distância.
+
+Integrações Futuras (já preparar estrutura):
+
+Suporte a API do Google Maps como fallback.
+
+Atualização automática da posição do técnico (mobile app → via WebSocket).
+
+Exibir polígono de raio de ação configurável (ex: até 20 km).
+
+⚙️ Tecnologias Sugeridas
+
+Frontend:
+
+react-map-gl ou react-maplibre-gl
+
+@tanstack/react-query para chamadas à API
+
+@radix-ui/react-collapsible (para o painel recolhido)
+
+framer-motion para animação de expansão
+
+Backend:
+
+axios para requisições externas
+
+geolib para cálculos de distância
+
+drizzle-orm + postgres para persistência
+
+dotenv para armazenar chaves das APIs
+
+💡 Fluxo Final Esperado
+
+Admin abre Mapa e Rotas.
+
+Expande painel “Pesquisar Endereço”.
+
+Digita “Shopping Palladium Curitiba”.
+
+Mapa centraliza → marcadores de técnicos aparecem.
+
+Sistema exibe lista:
+
+João - 3.2 km - livre 14h às 16h  
+Maria - 4.5 km - livre 15h às 18h  
+Carlos - 7.1 km - em serviço
+
+
+Admin clica “Agendar Visita” → abre modal → confirma.
+
+Sistema agenda e adiciona automaticamente na agenda do técnico.

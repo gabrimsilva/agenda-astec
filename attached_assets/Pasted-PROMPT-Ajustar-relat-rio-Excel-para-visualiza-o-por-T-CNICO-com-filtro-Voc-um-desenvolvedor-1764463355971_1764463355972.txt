@@ -1,0 +1,160 @@
+PROMPT – Ajustar relatório Excel para visualização por TÉCNICO (com filtro)
+
+Você é um desenvolvedor sênior responsável por evoluir o relatório de detalhamento por atividade do meu sistema de agendamento/controle de horas dos técnicos.
+
+Hoje o sistema já:
+
+Gera e exporta uma planilha Excel com o layout de “DETALHAMENTO POR ATIVIDADE”;
+
+A planilha tem blocos com faixas coloridas, por exemplo:
+
+TRABALHO EFETIVO
+
+TRABALHO ADICIONAL
+
+PERDA/NÃO PRODUTIVO
+
+Dentro de cada bloco existem colunas como:
+
+Atividade
+
+Automática
+
+Horas
+
+Minutos
+
+Lançamentos
+
+O relatório atual é geral, somando/agrupando as informações de todos os técnicos.
+
+OBJETIVO DA MELHORIA
+
+Quero manter o mesmo layout visual da planilha exportada (mesmos blocos, cores, títulos e ordem de colunas), mas agora:
+
+Os dados devem ser gerados por técnico, e
+
+A planilha deve permitir que, usando o filtro do Excel, eu consiga ver rapidamente o relatório apenas de um técnico específico (por exemplo, “Gabriel”).
+
+Em resumo:
+
+Ao invés de apenas um relatório geral somando todos, quero um relatório em que eu possa filtrar por nome do técnico e ver somente as linhas e totais daquele técnico, usando o próprio filtro avançado do Excel.
+
+O QUE VOCÊ DEVE IMPLEMENTAR
+1. Incluir o campo TÉCNICO na base que alimenta o Excel
+
+No backend, ajuste a consulta que gera o relatório para que cada linha de atividade contenha também:
+
+id_tecnico
+
+nome_tecnico
+
+Toda linha que hoje é gerada apenas por tipo de atividade (ex.: “Visita técnica”, “Treinamento técnico”, “Deslocamento até cliente”) deve agora ser calculada por técnico, ou seja:
+
+“Visita técnica” do técnico Gabriel,
+
+“Visita técnica” do técnico João,
+
+etc.
+
+Os cálculos de:
+
+Horas
+
+Minutos
+
+Lançamentos
+continuam com a mesma lógica de hoje, porém agrupados por técnico + atividade + categoria (Trabalho efetivo / adicional / perda).
+
+2. Ajustar o layout da planilha (mantendo o visual)
+
+Mantenha as faixas coloridas e títulos exatamente como hoje:
+
+“TRABALHO EFETIVO”
+
+“TRABALHO ADICIONAL”
+
+“PERDA/NÃO PRODUTIVO”
+
+Em cada bloco, altere o cabeçalho das colunas para incluir a coluna do técnico, por exemplo:
+
+Para cada seção, o cabeçalho deve ser:
+
+Técnico
+
+Atividade
+
+Automática
+
+Horas
+
+Minutos
+
+Lançamentos
+
+Cada linha deve trazer um técnico específico.
+Exemplo de linhas dentro de “TRABALHO EFETIVO”:
+
+Técnico	Atividade	Automática	Horas	Minutos	Lançamentos
+Gabriel	Visita técnica (preventiva ou testes)	Não	0h 30m	30	1
+Gabriel	Especificações técnicas	Não	1h 0m	60	1
+João	Visita técnica (preventiva ou testes)	Não	0h 45m	45	1
+
+Visual geral, cores, fontes, bordas e títulos devem seguir o padrão existente na planilha atual.
+
+3. Transformar os blocos em Tabelas com Filtro (Excel)
+
+Cada bloco de dados (TRABALHO EFETIVO, TRABALHO ADICIONAL, PERDA/NÃO PRODUTIVO) deve ser formatado como Tabela do Excel (Excel Table), com:
+
+Linha de cabeçalho,
+
+AutoFiltro habilitado.
+
+Garanta que a coluna “Técnico” tenha o filtro padrão do Excel (setinha de filtro), permitindo:
+
+Selecionar um técnico específico (ex.: “Gabriel”),
+
+Ou múltiplos técnicos, se desejado.
+
+O comportamento esperado é:
+
+Quando o usuário filtrar a coluna “Técnico” por “Gabriel”,
+
+O Excel deve exibir somente as linhas daquele técnico em todos os blocos (efetivo, adicional, perda),
+
+Mantendo o layout e totais por linha como já são calculados.
+
+Se for mais fácil, você pode:
+
+Usar uma única tabela contínua para todos os blocos, com uma coluna adicional Categoria (“Trabalho efetivo”, “Trabalho adicional”, “Perda/Não produtivo”)
+
+E aplicar estilos de cor por categoria (mantendo visual parecido com o atual).
+Mas prefira manter o visual segmentado em blocos como na planilha que já existe hoje.
+
+4. Manter compatibilidade com o relatório atual
+
+Não remova nenhuma informação já existente.
+
+Não altere a lógica de cálculo de horas/minutos/lançamentos, somente mude o agrupamento para ser por técnico.
+
+Mantenha o mesmo formato de arquivo (XLSX) e a mesma biblioteca/utilitário que já está sendo usado para gerar o Excel (por exemplo, ExcelJS, PhpSpreadsheet, etc.).
+
+ENTREGÁVEIS ESPERADOS
+
+Exportação Excel com o mesmo layout visual atual (faixas coloridas por categoria), agora com:
+
+Coluna Técnico em cada bloco,
+
+Linhas calculadas por técnico + atividade.
+
+Dados organizados em tabelas com AutoFiltro, permitindo:
+
+Filtrar pela coluna Técnico e ver o relatório individual de cada técnico (ex.: apenas “Gabriel”).
+
+Código organizado e comentado explicando:
+
+Onde a consulta foi alterada para trazer o nome do técnico,
+
+Onde a planilha foi ajustada para incluir a coluna Técnico e a tabela com filtro.
+
+Implemente tudo isso diretamente no projeto atual, sem mudar a stack ou quebrar as exportações existentes.

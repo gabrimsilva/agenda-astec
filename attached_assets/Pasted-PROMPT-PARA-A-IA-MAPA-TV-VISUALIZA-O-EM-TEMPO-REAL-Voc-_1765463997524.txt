@@ -1,0 +1,292 @@
+PROMPT PARA A IA (MAPA TV – VISUALIZAÇÃO EM TEMPO REAL)
+
+Você é um desenvolvedor sênior especializado em geolocalização, mapas interativos e dashboards em tempo real.
+Quero que você implemente uma derivação do módulo de “Mapa e Rotas” já existente no sistema, criando uma tela exclusiva para exibição em TV, focada apenas na visualização dos técnicos em tempo real.
+
+1. Contexto e objetivo
+
+Já existe no sistema um módulo de Mapa e Rotas que:
+
+Calcula rotas;
+
+Mostra técnicos no mapa;
+
+Faz cruzamento de distância/tempo entre técnico, base e atividades.
+
+Agora precisamos de uma nova tela dedicada à TV (chame de “Mapa TV” ou “Painel Mapa TV”), que será exibida em uma TV fixa, em modo tela cheia, somente para visualização, sem interação do usuário.
+
+Objetivo:
+
+Exibir no mapa todos os técnicos com geolocalização em tempo real;
+
+Permitir filtro por CEP (e eventualmente por raio/distância);
+
+Exibir lista de técnicos mais próximos daquele CEP, considerando:
+
+Distância em linha reta;
+
+Distância por rota;
+
+Tempo estimado até o local;
+
+Proximidade da base ou da atividade (como já existe hoje no módulo atual).
+
+Essa tela será ideal para ficar em uma TV na sala de controle/gestão, servindo como painel de monitoramento em tempo real.
+
+2. Stack e bibliotecas sugeridas (traga o que há de melhor hoje)
+
+Use a melhor combinação possível entre qualidade visual, performance e custo:
+
+Frontend em TypeScript + React (SPA), compatível com ambiente web atual do sistema.
+
+Biblioteca de mapa:
+
+Preferencial: MapLibre GL JS ou Mapbox GL JS (caso já use Mapbox no sistema).
+
+Se for possível e fizer sentido, habilitar:
+
+Visualização 3D (edifícios extrudados/terrain 3D quando disponível);
+
+Tilt/rotação suave do mapa (leve, sem exagero, adequado para TV).
+
+Cálculo de rotas e distâncias:
+
+Se já existe backend para isso, reutilizar.
+
+Caso contrário, sugerir uso de OpenRouteService, OSRM ou outra API equivalente.
+
+Atualização em tempo real:
+
+Preferir WebSockets ou Server-Sent Events (SSE) para receber posições de técnicos em tempo quase real.
+
+Caso não tenha ainda, implementar um fallback com polling (por exemplo, a cada 15–30 segundos).
+
+Explique brevemente, em comentários no código ou no README, por que escolheu essas libs e como podemos trocar/configurar a fonte de tiles/rotas se necessário.
+
+3. Requisitos funcionais – Mapa TV
+
+Rota/tela dedicada
+
+Criar uma rota específica, por exemplo:
+
+/mapa-tv (ou /dashboard/mapa-tv),
+
+Componente React: MapaTvScreen (ou similar).
+
+Ao acessar essa rota, a aplicação deve:
+
+Usar layout de tela cheia, sem menus laterais pesados;
+
+Esconder barra de navegação desnecessária (modo “TV dashboard”).
+
+Visualização do mapa
+
+Mapa em full screen (usando toda a área útil).
+
+Estilo visual:
+
+Tema escuro (dark) ideal para TV;
+
+Contraste alto para marcadores e textos.
+
+Se possível, habilitar:
+
+3D buildings/terrain;
+
+Opção de inclinar o mapa levemente para dar sensação de 3D.
+
+O mapa deve:
+
+Exibir todos os técnicos ativos com ícones/markers personalizados;
+
+Diferenciar status do técnico por cor ou badge:
+
+Livre / Disponível;
+
+Em rota;
+
+Em atividade;
+
+Offline (sem atualização recente).
+
+Geolocalização dos técnicos em tempo real
+
+Consumir um endpoint (mockar se necessário) como:
+
+GET /api/tecnicos/localizacoes
+
+Resposta com: id, nome, status, latitude, longitude, ultimaAtualizacao, base, atividadeAtual, etc.
+
+Atualização:
+
+Via WebSocket (por exemplo: /ws/tecnicos-localizacoes);
+
+Ou via polling (por exemplo, a cada 10–30 segundos).
+
+Sempre que houver atualização:
+
+Atualizar posição do técnico no mapa;
+
+Atualizar lista de técnicos e indicadores.
+
+Filtro por CEP e cálculo de proximidade
+
+Em um painel lateral ou barra fixa (por exemplo, à direita ou na parte inferior da tela):
+
+Campo para informar um CEP;
+
+Botão “Aplicar” / “Buscar”.
+
+Ao informar o CEP:
+
+Geocodificar o CEP (buscar lat/long);
+
+Marcar esse ponto no mapa (ex.: ícone de alvo ou pin especial);
+
+Calcular:
+
+Distância em linha reta entre o CEP e cada técnico;
+
+Opcional: distância por rota e tempo estimado (via API de rotas).
+
+Listar os técnicos ordenados do mais próximo para o mais distante, com colunas como:
+
+Nome do técnico;
+
+Status;
+
+Distância (km);
+
+Tempo estimado (min);
+
+Base de origem;
+
+Atividade mais próxima (quando fizer sentido).
+
+Filtros de contexto (base / atividade / tempo real)
+
+Manter a mesma lógica do módulo atual:
+
+Possibilidade de filtrar proximidade:
+
+Por base (técnicos mais próximos de determinada base);
+
+Por atividade (técnicos mais próximos da atividade X);
+
+Por posição atual (real-time).
+
+Incluir opções de filtro em um pequeno painel:
+
+Radio buttons ou dropdown:
+
+ Proximidade por posição atual (default);
+
+ Proximidade por base;
+
+ Proximidade por atividade.
+
+Quando um filtro estiver ativo, deixar claro visualmente (ex.: label ou highlight).
+
+4. Requisitos de UX específicos para TV
+
+A tela será exibida em uma TV fixa, então:
+
+Não depender de mouse/teclado.
+
+Layout clean, sem inputs pequenos demais.
+
+Atualização automática sem intervenção do usuário.
+
+Evitar popups/modal que fiquem bloqueando o mapa.
+
+Itens desejáveis:
+
+Auto-pan: o mapa deve se ajustar automaticamente para enquadrar:
+
+Todos os técnicos, ou
+
+Os técnicos próximos ao CEP selecionado.
+
+Auto-refresh suave:
+
+Ao atualizar dados, animar os marcadores levemente em vez de “pular” de posição.
+
+Proteção contra burn-in (opcional):
+
+Pequena movimentação/zoom suave a cada X minutos, mantendo o foco geral.
+
+Preferir fontes legíveis em 1080p:
+
+Títulos ~18–24px;
+
+Corpo ~14–16px;
+
+Legendas claras.
+
+5. Detalhes técnicos e arquitetura
+
+Crie:
+
+Componente principal MapaTvScreen ou similar;
+
+Componentes auxiliares:
+
+TechMarker (marcador do técnico);
+
+TechListSidebar (lista dos técnicos ordenada por proximidade);
+
+CepFilterPanel (filtro + campo CEP).
+
+Organização:
+
+Seguir boas práticas de separação de responsabilidades:
+
+Hook para dados em tempo real (useTecnicosRealtime() ou similar);
+
+Hook para cálculo de distâncias/rotas;
+
+Serviço de API separado (services/mapaTvService.ts).
+
+Configurações:
+
+Centralizar em arquivo .env ou config:
+
+Chaves de API (Mapbox/OpenRouteService/etc.);
+
+Intervalo de atualização (se polling);
+
+Zoom inicial e coordenadas de foco (ex.: centro da região de atuação).
+
+Entrega:
+
+Código completo dos componentes, hooks e serviços;
+
+Rotas atualizadas para incluir /mapa-tv;
+
+Instruções rápidas no README:
+
+Como configurar chaves de API;
+
+Como rodar localmente;
+
+Como acessar a rota da TV.
+
+6. Qualidade, performance e boas práticas
+
+Otimizar renderização:
+
+Usar memoização sempre que necessário;
+
+Evitar re-render desnecessário de todos os markers.
+
+Tratar erros de API:
+
+Mostrar aviso discreto em caso de falha de atualização;
+
+Tentar reconexão automática (especialmente em WebSockets).
+
+Garantir:
+
+Compatibilidade com resolução 1920x1080 (mínimo);
+
+Layout responsivo e estável (sem “pular” ou quebrar com o tempo).

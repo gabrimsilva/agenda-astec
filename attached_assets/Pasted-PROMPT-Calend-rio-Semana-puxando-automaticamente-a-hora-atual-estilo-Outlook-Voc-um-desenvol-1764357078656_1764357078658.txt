@@ -1,0 +1,171 @@
+PROMPT – Calendário Semana puxando automaticamente a hora atual (estilo Outlook)
+
+Você é um desenvolvedor sênior responsável por evoluir o calendário de agendamento de atividades dos técnicos do meu sistema.
+
+Hoje o sistema já possui:
+
+Visão semanal (filtro “Semana” ou “Semana útil”)
+
+Grade de horários (linhas com 09:00, 10:00, 11:00, etc.)
+
+Colunas por dia da semana (segunda a sexta, por exemplo)
+
+Botão “Hoje” (se já existir, manter)
+
+Agendamentos sendo exibidos como blocos na grade (agenda dos técnicos)
+
+Eu quero que você implemente uma melhoria parecida com o comportamento do Outlook, mostrado no print que enviei, onde:
+
+Na visão de semana, o calendário destaca o horário atual
+
+E posiciona a tela automaticamente próximo desse horário, para evitar rolar manualmente.
+
+1. Objetivo da melhoria
+
+Quando o usuário selecionar o filtro “Semana” (ou abrir a visão semanal do calendário):
+
+O sistema deve identificar a data e hora atuais (baseado no fuso horário configurado na aplicação).
+
+Na coluna do dia atual, exibir:
+
+Uma linha/indicador horizontal na posição da hora atual (como o traço azul do Outlook).
+
+A visão do calendário deve:
+
+Rolar automaticamente (scroll) para que a linha da hora atual fique visível (preferencialmente centralizada na viewport da grade, se possível).
+
+Isso é apenas um auxílio visual:
+
+Não cria evento,
+
+Não altera nenhum agendamento,
+
+Serve apenas para o usuário “cair” direto na faixa da hora atual quando abre a semana.
+
+2. Comportamento desejado
+2.1. Ao abrir a visão semanal
+
+Ao entrar na visão Semana / Semana útil:
+
+Se o dia atual estiver dentro do intervalo exibido (ex.: semana corrente),
+
+Desenhar a linha da hora atual na coluna do dia atual.
+
+Fazer o scroll automático da grade até a linha correspondente à hora atual (ex.: se agora é 16:20, rolar para perto da faixa das 16h).
+
+Se a visão semanal mostrar outra semana (ex.: semana passada ou semana futura que não contém o dia de hoje):
+
+Não desenhar a linha da hora atual.
+
+Não é necessário rolar.
+
+2.2. Atualização dinâmica (opcional, mas desejável)
+
+Caso o usuário permaneça muito tempo na tela, é desejável (se não ficar pesado) que:
+
+A linha da hora atual avance conforme o tempo real (ex.: a cada minuto),
+
+Assim como acontece em alguns calendários.
+
+Se isso for complexo demais no contexto atual, priorize pelo menos:
+
+Desenhar a linha correta ao carregar a tela
+
+E rolar para esse horário uma vez.
+
+3. Implementação técnica (genérica, respeitando a stack atual)
+
+Descobrir o horário atual
+
+Usar new Date() (ou equivalente, dependendo da stack)
+
+Converter para o fuso/dia que o calendário está usando (se já houver padronização, siga o padrão).
+
+Calcular a posição da linha da hora atual
+
+Agrade da agenda já tem a altura de cada “slot” de horário (ex.: 30 min por linha, 60 min por linha etc.).
+
+Use essa relação para calcular o offset em pixels da hora atual em relação ao topo da grade (ex.: 16h → pos = (16 - 9) * ALTURA_LINHA se começa às 9h).
+
+Se o calendário já possui utilitários internos para mapear horário → posição, reaproveite-os.
+
+Renderizar a linha da hora atual
+
+Na coluna correspondente ao dia atual, renderizar:
+
+Uma div ou elemento de overlay atravessando a largura da coluna do dia.
+
+Estilo recomendado (seguir padrão visual do sistema):
+
+Linha fina
+
+Cor destacada (como o azul usado para “hoje” no calendário)
+
+Essa linha não interfere nos eventos já renderizados (pode ser um overlay absoluto por cima da grade).
+
+Scroll automático
+
+Depois de renderizar a grade da semana, calcular:
+
+A posição vertical da linha da hora atual dentro do container que possui scroll.
+
+Ajustar o scrollTop desse container para que:
+
+A linha da hora atual apareça aproximadamente no meio da área visível ou, no mínimo, visível sem precisar rolar manualmente.
+
+Exemplos (em JS genérico):
+
+const container = document.getElementById('calendar-scroll-container');
+const currentTimePosition = ...; // calcular em px
+container.scrollTop = Math.max(currentTimePosition - container.clientHeight / 2, 0);
+
+
+Botão “Hoje” (se existir)
+
+Se o usuário clicar em “Hoje” enquanto estiver em outra semana:
+
+Mudar a visão para a semana atual,
+
+Reaplicar a lógica:
+
+Desenhar a linha da hora atual,
+
+Scroll automático para esse horário.
+
+4. Requisitos importantes
+
+Não mudar a biblioteca de calendário utilizada hoje (React Big Calendar, FullCalendar, componente próprio, etc.).
+
+Não quebrar a lógica atual de:
+
+Arrastar eventos
+
+Criar agendamento
+
+Alterar horário via drag & drop
+
+A linha da hora atual é somente visual, não deve:
+
+Interferir em cliques,
+
+Impedir seleção de slots,
+
+Ficar sobre eventos de forma que inviabilize a interação (use z-index com cuidado).
+
+5. Entregáveis esperados
+
+Linha de “hora atual” desenhada na visão semanal (quando a semana exibida contém o dia de hoje).
+
+Scroll automático ao abrir a visão semanal, levando o usuário para perto da hora atual.
+
+Integração com o botão “Hoje” (se houver), para reposicionar a visão na semana atual e na hora atual.
+
+Código comentado brevemente explicando:
+
+Onde foi criada a linha da hora atual,
+
+Onde é feito o cálculo da posição,
+
+Onde é aplicado o scroll.
+
+Implemente tudo isso dentro do projeto atual, respeitando a arquitetura, padrões de código e stack existente.

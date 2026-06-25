@@ -1,0 +1,312 @@
+PROMPT – Implementar fluxo de RAT (Relatório de Atividade Técnica) pós-visita
+
+Você é um desenvolvedor sênior responsável por evoluir o meu sistema de agendamento e execução de visitas técnicas (web + PWA).
+Agora preciso que você implemente todo o fluxo estrutural de um relatório chamado RAT – Relatório de Atividade Técnica, usado pelos técnicos após a visita.
+
+Importante: ainda não temos o modelo final da RAT.
+Portanto, implemente a estrutura completa (backend + frontend + armazenamento + envio), com um formulário modelo básico e expansível, para depois ajustarmos os campos.
+
+Mantenha 100% a stack, arquitetura e padrões já utilizados no projeto.
+Não reescreva nada do zero, apenas evolua o que já existe.
+
+1. Gatilho da RAT ao finalizar a atividade
+
+Hoje, o técnico:
+
+Vai a campo,
+
+Executa a visita agendada,
+
+Clica em Concluir / finaliza a atividade.
+
+A partir desse ponto, você deve:
+
+Logo após a conclusão da atividade (após o fluxo de “trabalho realizado? sim/não”), exibir um pop-up/modal com a pergunta:
+
+“Iniciar RAT para esta visita?”
+[Sim] [Não]
+
+Comportamento:
+
+Se o técnico clicar em “Não” → segue fluxo atual, nada muda.
+
+Se o técnico clicar em “Sim” → abrir o formulário RAT associado àquela atividade.
+
+Essa lógica deve funcionar tanto:
+
+Na versão web (desktop),
+
+Quanto no PWA (uso em celular).
+
+2. Formulário de RAT (estrutura inicial, expansível)
+
+Crie um novo formulário padrão de RAT com campos genéricos, pensando em um relatório técnico pós-visita.
+
+Sugestão de estrutura mínima (pode ajustar nomes, mas mantenha algo equivalente):
+
+Dados automáticos (não editáveis):
+
+Técnico responsável (nome)
+
+Cliente
+
+Data/hora da visita (da atividade concluída)
+
+Código/ID da atividade
+
+Seção – Informações da visita:
+
+Tipo de atendimento (texto ou select)
+
+Descrição do problema inicial (textarea)
+
+Serviços realizados (textarea)
+
+Peças/trocas/ajustes realizados (textarea)
+
+Observações gerais (textarea)
+
+Seção – Situação final:
+
+Situação do equipamento após visita (textarea ou select)
+
+Recomendações futuras (textarea)
+
+Seção – Confirmação:
+
+Nome do contato do cliente (texto)
+
+Campo para e-mail do cliente (texto – obrigatório para envio por e-mail)
+
+Campo para telefone/WhatsApp do cliente (texto – obrigatório para envio por WhatsApp)
+
+O layout deve ser:
+
+Responsivo,
+
+Fácil de preencher em tela pequena (PWA) e em desktop,
+
+Utilizando os mesmos componentes e estilo já usados no sistema.
+
+3. Backend – modelo de dados e endpoints da RAT
+
+Implemente a estrutura de dados para armazenar as RATs.
+
+Sugestão de tabela (ajuste nomes conforme padrão do projeto):
+
+rats (ou relatorios_rat):
+
+id
+
+atividade_id (FK para a atividade/visita)
+
+tecnico_id (FK usuário técnico)
+
+cliente_id (se existir FK para cliente)
+
+dados_formulario (JSON ou campos específicos se preferir, mas sugira JSON para ser flexível)
+
+created_at (data/hora de criação da RAT)
+
+updated_at
+
+enviada (boolean)
+
+enviada_em (timestamp)
+
+canal_envio (enum/texto: "whatsapp", "email", "ambos", "nenhum")
+
+arquivo_url ou arquivo_path (para armazenar PDF/HTML gerado, se aplicável)
+
+Crie endpoints REST para:
+
+Criar RAT (salvar rascunho/concluída)
+
+POST /api/rat
+
+Corpo contendo:
+
+atividade_id
+
+Campos do formulário (ou JSON completo)
+
+Essa rota cria a RAT e associa à atividade.
+
+Atualizar RAT
+
+PUT /api/rat/{id}
+
+Para permitir ajustes antes do envio (se necessário).
+
+Listar RATs (para o módulo de histórico)
+
+GET /api/rat?tecnico=...&cliente=...&data_inicio=...&data_fim=...
+
+Com filtros de período, técnico, cliente etc.
+
+Detalhar RAT
+
+GET /api/rat/{id}
+
+Retorna todos os dados, inclusive link para visualização/download.
+
+Registrar envio (WhatsApp/E-mail)
+
+POST /api/rat/{id}/enviar
+
+Corpo:
+
+canal: "whatsapp", "email" ou "ambos"
+
+Dados de contato (se necessário)
+
+Atualizar:
+
+enviada = true
+
+enviada_em = now()
+
+canal_envio com o valor correto.
+
+4. Geração do arquivo/visualização da RAT
+
+Implemente uma forma de visualizar a RAT em formato:
+
+HTML responsivo ou
+
+PDF gerado automaticamente (via lib já usada no projeto, se existir).
+
+Requisitos:
+
+O técnico, ao finalizar o preenchimento, deve ver um botão do tipo:
+
+“Salvar RAT”
+
+Depois de salvar, tela com opção:
+
+“Enviar por WhatsApp”
+
+“Enviar por E-mail”
+
+“Ver RAT” (visualização/preview)
+
+A visualização deve funcionar:
+
+No PWA (celular)
+
+Na web (desktop)
+
+O arquivo/visualização deve ficar associado ao registro da RAT (campo arquivo_url ou equivalente).
+
+5. Envio rápido via WhatsApp e E-mail
+
+Implemente a estrutura para envio. Se já existir integração, reutilize.
+Caso não exista, pelo menos deixe o fluxo preparado (funções/rotas) para plugarmos depois a integração real.
+
+5.1. Envio por E-mail
+
+Botão: “Enviar por E-mail”
+
+Comportamento:
+
+Usar o e-mail do cliente preenchido no formulário RAT (ou campo padrão do cadastro de cliente).
+
+Enviar:
+
+Link para visualizar a RAT e/ou
+
+Anexo (PDF) se já houver geração de PDF.
+
+Registrar no backend:
+
+enviada = true
+
+enviada_em = now()
+
+canal_envio inclui "email".
+
+5.2. Envio por WhatsApp
+
+Botão: “Enviar por WhatsApp”
+
+Comportamento (mínimo estrutural):
+
+Montar uma URL padrão do WhatsApp (Web ou app) com mensagem e link da RAT, por exemplo:
+
+https://wa.me/<telefone_formatado>?text=<mensagem_com_link>
+
+Abrir essa URL no navegador (web) ou no PWA, conforme ambiente.
+
+Registrar no backend:
+
+enviada = true (se considerar envio efetivo)
+
+enviada_em = now()
+
+canal_envio inclui "whatsapp".
+
+6. Módulo / Menu de RAT (histórico e consulta)
+
+Crie um novo módulo/menu chamado algo como “RAT” ou “Relatórios Técnicos” no sistema administrativo.
+
+Funcionalidades:
+
+Listagem de RATs
+
+Colunas sugeridas:
+
+ID RAT
+
+Técnico
+
+Cliente
+
+Data/hora da visita (da atividade)
+
+Data/hora de criação da RAT
+
+Data/hora de envio
+
+Canal de envio (WhatsApp, E-mail, Ambos, Não enviado)
+
+Filtros:
+
+Período (data da visita ou data de criação da RAT)
+
+Técnico
+
+Cliente
+
+Status de envio
+
+Ações na listagem:
+
+Ver detalhes da RAT
+
+Baixar/abrir arquivo (HTML/PDF)
+
+Reenviar (WhatsApp/E-mail) se necessário
+
+Permissões:
+
+Seguir a mesma lógica de RBAC já usada (por exemplo, somente perfis de gestor/admin podem ver o histórico completo; técnico vê apenas as RATs dele).
+
+7. Requisitos gerais
+
+Não alterar a stack (framework front-end, libs de PWA, backend etc.).
+
+Reutilizar:
+
+Componentes visuais já usados para formulários e modais,
+
+Padrão de chamadas à API (fetch/axios, etc.),
+
+Padrão de rotas e controllers existente.
+
+A implementação deve:
+
+Ser responsiva (funcionar bem em PWA e web),
+
+Não quebrar o fluxo atual de agendamento e conclusão de atividades,
+
+Deixar o fluxo de RAT isolado e organizado para futuras melhorias (novos campos, anexos de fotos, assinatura digital, etc.).

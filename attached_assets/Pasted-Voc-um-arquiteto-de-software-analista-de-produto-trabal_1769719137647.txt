@@ -1,0 +1,222 @@
+Você é um arquiteto de software + analista de produto trabalhando no sistema ASTEC (Agenda do Técnico). 
+IMPORTANTE: NÃO IMPLEMENTE NADA. NÃO GERE CÓDIGO. NÃO EXECUTE MIGRAÇÕES. NÃO ALTERE ARQUIVOS.
+Seu trabalho é APENAS elaborar um PLANO de solução (UX + regras + dados + APIs) para eu aprovar.
+
+CONTEXTO
+Já existe na Agenda do Técnico:
+- Botão “Iniciar navegação” (abre GPS e já existe lógica de estimar tempo).
+- Fluxo de “Iniciar atividade” (muda status para “em execução”).
+- Botão “Concluir atividade” (abre modal existente de tempo de execução).
+- Existe um modal atual de tempo de execução e queremos MANTER como está, apenas adicionar sugestões/infos sem quebrar UX.
+- Há sugestão/atalho para criar RAT após a execução (já existe ou está sendo desenhado) — incluir no plano como recomendação sem mudar o modal atual.
+
+OBJETIVO
+Dividir o agendamento em 3 etapas (IDA → EXECUÇÃO → VOLTA), adicionando:
+1) Sugestão de tempo do GPS (ETA) nos modais de IDA e RETORNO (editável).
+2) Estimativa de execução baseada no horário de início.
+3) Sugestões no momento de concluir para “criar RAT”, sem alterar o modal existente (apenas complementar com sugestões/atalhos).
+4) Resolver de forma eficiente a etapa 3 (VOLTA), garantindo a regra crítica:
+   - O tempo de VOLTA de uma atividade nunca deve impactar o tempo de IDA da próxima atividade.
+   - O tempo de IDA de uma atividade só nasce quando o técnico clica “Iniciar navegação” daquela atividade.
+
+ENTREGÁVEL ESPERADO (PLANO ESTRUTURADO)
+Entregue um documento com:
+A) Fluxo de UX detalhado (passo-a-passo por etapa)
+B) Máquina de estados (atividade e pós-conclusão)
+C) Modelagem de dados (2 opções + recomendação)
+D) Contratos de API (endpoints/payloads) SEM implementação
+E) Regras/invariantes e validações (anti-duplicidade e anti-mistura de tempos)
+F) Plano para Etapa 3 (proposta eficiente + alternativa)
+G) Integração das sugestões de RAT ao concluir (sem mexer no modal atual)
+H) Edge cases + decisões
+I) Checklist de testes
+
+=====================================================
+ETAPA 1 — NAVEGAÇÃO → MODAL DE TEMPO DE IDA (COM ETA)
+=====================================================
+Requisito funcional:
+- Ao clicar “Iniciar navegação”:
+  1) manter o fluxo atual de abrir GPS
+  2) capturar/obter ETA (tempo estimado) do trajeto até o destino
+- Quando a pessoa for “Iniciar atividade”, deve aparecer ANTES um modal de registro de tempo de deslocamento (IDA):
+  - Mostrar “Estimativa do GPS: X min” (se existir)
+  - Campo “Tempo realizado (min)” pré-preenchido com X e EDITÁVEL
+  - Manter opções existentes de “tipo de deslocamento”
+  - Ao confirmar, registrar tempo de IDA para a atividade
+
+No plano, defina:
+- Qual é o melhor momento para abrir esse modal:
+  Opção 1: Abrir ao clicar “Iniciar atividade” (recomendado para reduzir atrito)
+  Opção 2: Abrir logo após “Iniciar navegação” (bom para registrar ida cedo, mas pode gerar modal em excesso)
+- Quais timestamps/eventos serão gravados:
+  - navigation_started_at (clique iniciar navegação)
+  - ida_recorded_at (confirmação modal ida)
+  - execution_started_at (início real da atividade)
+- Como lidar com ETA indisponível (sem chave, sem sinal, erro): campo vazio, editável, com aviso discreto.
+
+=====================================================
+ETAPA 2 — CONCLUIR → MODAL EXECUÇÃO (COM ESTIMATIVA) + SUGESTÃO RAT
+=====================================================
+Requisito funcional:
+- A atividade já está “em execução”, e tempo de IDA já foi registrado.
+- Ao clicar “Concluir atividade”:
+  - Abrir o modal de tempo de execução EXATAMENTE como ele é hoje (não alterar estrutura).
+  - Adicionar apenas:
+    1) Uma informação/sugestão de “Tempo estimado” calculada por:
+       (agora - execution_started_at) em minutos
+       → esse valor serve como sugestão para o preenchimento (sem mudar o layout principal do modal)
+    2) Sugestões/atalho para criar RAT após registrar execução:
+       - Ex.: após salvar execução, mostrar um mini “callout”/toast/segunda camada (não dentro do modal principal, se isso alterar muito)
+       - Ou um “Próximo passo recomendado: Criar RAT” com botões:
+         [Criar RAT agora] [Depois]
+       - MANTER o modal existente como está atualmente.
+
+No plano, explique:
+- Onde entram as sugestões de RAT sem “poluir” o modal:
+  Opção A (recomendada): pós-salvamento do modal → painel “Próximo passo”
+  Opção B: um bloco discreto no rodapé do modal (somente texto + botão), sem alterar campos existentes
+- Regras: RAT só pode ser sugerida quando status virar concluída (ou quando execução for registrada).
+
+=====================================================
+ETAPA 3 — PÓS-CONCLUSÃO (VOLTA) SEM AFETAR PRÓXIMA IDA
+=====================================================
+Problema a resolver:
+Após concluir a atividade, o técnico pode:
+1) Voltar para BASE (registrar retorno)
+2) Continuar para PRÓXIMA atividade (sem registrar retorno como ida)
+3) Encerrar/ficar disponível
+
+Regra crítica:
+- O tempo de retorno (volta) NÃO é “tempo de ida” da próxima atividade.
+- O tempo de ida da próxima atividade só será registrado quando o técnico clicar “Iniciar navegação” daquela próxima atividade.
+
+PROPOSTA PRINCIPAL (recomendada no plano):
+- Após concluir execução (e tratar sugestão RAT), mostrar um modal/painel “Próximo passo” com 3 ações grandes (TV/uso rápido):
+  1) “Voltar para base”
+  2) “Ir para próxima atividade”
+  3) “Encerrar / Disponível”
+
+Comportamentos:
+1) VOLTAR PARA BASE
+- Abrir GPS para a base do técnico (endereço/latlng do perfil).
+- Capturar ETA (se possível).
+- Abrir modal “Tempo de retorno à base” (igual ao de IDA):
+  - mostrar ETA
+  - tempo editável
+  - tipo de deslocamento
+- Salvar como registro separado: retorno_base (vinculado à atividade concluída + base_id).
+- Não altera nada da próxima atividade.
+
+2) IR PARA PRÓXIMA ATIVIDADE
+- Não abrir modal de retorno.
+- Apenas direcionar para a agenda (ou destacar a próxima).
+- O tempo entre a atividade concluída e a próxima é “tempo de transição” não contabilizado por padrão.
+- Quando ele clicar “Iniciar navegação” da próxima, roda a ETAPA 1 normal.
+
+3) ENCERRAR / DISPONÍVEL
+- Finaliza o fluxo, sem retorno.
+- Opcional: setar status do técnico “disponível”.
+
+ALTERNATIVA (para equipes que querem medir deslocamento entre atividades):
+- Introduzir um tipo opcional “deslocamento_entre_atividades” (não é ida nem retorno_base).
+- Mas por padrão, manter desligado (feature flag) para não gerar confusão.
+- Essa alternativa deve ser descrita, mas NÃO recomendada como default agora (evitar complexidade).
+
+No plano, responda:
+- Qual UX é mais eficiente (modal vs bottom-sheet vs painel fixo)?
+- Como evitar duplo-clique e duplicidade de registros.
+- O que acontece se o técnico escolher “Ir para próxima” e depois decidir “Voltar para base” (permitir registro manual de retorno avulso?).
+
+=====================================================
+MODELAGEM DE DADOS (PROPOR 2 OPÇÕES + RECOMENDAR 1)
+=====================================================
+OPÇÃO 1 — Tabela tipada de registros de tempo (simples e forte)
+- time_records:
+  - id
+  - activity_id
+  - type: 'ida' | 'execucao' | 'retorno_base'
+  - minutes_reported
+  - gps_eta_minutes (nullable)
+  - deslocamento_tipo (nullable)  // só para ida/retorno
+  - base_id (nullable, obrigatório quando type='retorno_base')
+  - created_at
+- Prós: fácil consultar, claro, evita mistura.
+- Contras: menos flexível para logs/auditoria completa.
+
+OPÇÃO 2 — Event log (auditoria e evolução)
+- activity_events:
+  - id
+  - activity_id
+  - event_type: NAV_START | IDA_RECORDED | EXEC_START | EXEC_RECORDED | RETURN_BASE_RECORDED | NEXT_STEP_SELECTED | RAT_SUGGESTED | RAT_CREATED
+  - payload JSON (eta, minutes, tipo, base_id, etc.)
+  - created_at
+- Prós: histórico perfeito, ótimo para BI e reprocessamento.
+- Contras: consultas um pouco mais complexas.
+
+RECOMENDAÇÃO:
+- Indique qual opção encaixa melhor no ASTEC agora, considerando simplicidade e evolução futura.
+
+=====================================================
+CONTRATOS DE API (DESCREVER, NÃO IMPLEMENTAR)
+=====================================================
+Definir endpoints/payloads sugeridos (ou extensão dos existentes), por exemplo:
+- POST /api/activities/:id/navigation/start
+  payload: { startedAt, originLatLng?, destLatLng?, gpsEtaMinutes? }
+- POST /api/activities/:id/travel/ida
+  payload: { minutesReported, gpsEtaMinutes?, deslocamentoTipo }
+- POST /api/activities/:id/execution/start
+  payload: { startedAt }
+- POST /api/activities/:id/execution/finish
+  payload: { minutesReported, suggestedMinutes, finishedAt }
+- POST /api/activities/:id/travel/return-base
+  payload: { baseId, minutesReported, gpsEtaMinutes?, deslocamentoTipo }
+
+Validações a definir no plano:
+- IDA só pode ser registrada quando atividade está “agendada/navegando”, não concluída.
+- EXEC só pode ser registrada quando em execução.
+- RETORNO_BASE só pode ser após concluir (ou estado pós-conclusão).
+- Idempotência: impedir duplicar registros (ex.: 2x ida para mesma atividade).
+
+=====================================================
+REGRAS / INVARIANTES (OBRIGATÓRIO)
+=====================================================
+- retorno_base nunca pode ser interpretado como ida de outra atividade.
+- ida sempre vinculada à atividade específica e acionada pelo clique “Iniciar navegação” daquela atividade.
+- execução sempre calculável por execution_started_at; se não existir, definir fallback (pedir preenchimento manual e registrar exceção).
+- toda sugestão (ETA, duração) é editável; sempre salvar valor final informado (minutes_reported) e guardar o sugerido separadamente (gps_eta_minutes / suggested_minutes) quando existir.
+
+=====================================================
+EDGE CASES (LISTAR COM DECISÕES)
+=====================================================
+- ETA indisponível → modal abre com campo vazio + editável.
+- Usuário fecha modal ida → bloquear iniciar atividade? ou permitir e marcar “ida pendente”?
+- Concluir atividade sem ida registrada → permitir e gerar alerta “ida não registrada”.
+- Voltar para base sem base definida no perfil → pedir seleção da base (ou desabilitar botão).
+- Técnicos offline / sem GPS → sem ETA, mas registra manual.
+- Duplicidade por clique duplo → front trava botão + back idempotente.
+
+=====================================================
+TESTES (CHECKLIST)
+=====================================================
+- Etapa 1:
+  - Iniciar navegação → clicar iniciar atividade → modal ida aparece com ETA → editar → salvar.
+- Etapa 2:
+  - Concluir → modal execução aparece → sugestão correta (agora - start) → salvar → sugestão de criar RAT aparece.
+- Etapa 3:
+  - Escolher “Voltar para base” → abre GPS → modal retorno com ETA → editar → salvar retorno_base.
+  - Escolher “Ir para próxima atividade” → não cria retorno → ida da próxima só ao clicar iniciar navegação dela.
+  - Garantir que retorno_base não altera nenhum campo/registro da próxima atividade.
+
+FORMATO DE RESPOSTA
+Entregue o plano em tópicos com títulos:
+1) Visão geral
+2) UX por etapa (com sequência)
+3) Máquina de estados
+4) Modelagem de dados (2 opções + recomendação)
+5) API / Contratos
+6) Regras críticas
+7) Etapa 3 (proposta final + alternativa)
+8) RAT (como sugerir sem mexer no modal)
+9) Edge cases
+10) Testes
+Sem código.

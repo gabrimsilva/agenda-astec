@@ -1,0 +1,147 @@
+PROMPT — Subcategorias no Cadastro de Tipos de Atividade (Agenda de Técnicos)
+
+Objetivo:
+Evoluir o cadastro de Tipos de Atividade da agenda de técnicos para suportar categorias principais e subcategorias, mantendo toda a estrutura atual funcional.
+
+Regras Gerais
+
+NÃO remover nada do que já existe.
+
+Manter:
+
+Aba de Configurações
+
+Tela de Tipos de Atividade
+
+Botão Incluir
+
+A funcionalidade atual deve continuar funcionando para quem não usar subcategorias.
+
+Nova Estrutura Lógica
+
+Hoje:
+
+Tipo de Atividade = Item único (ex: Termografia, RC, Visita Técnica)
+
+Novo modelo:
+
+Categoria Principal
+
+Subcategoria (opcional)
+
+Exemplo:
+
+Categoria Principal	Subcategoria
+Visita Técnica	Termografia
+Visita Técnica	Treinamento
+Visita Técnica	Teste
+Visita Técnica	RC
+Visita Técnica	Outros
+Alterações no Banco de Dados
+
+Adicionar suporte hierárquico na tabela de tipos de atividade.
+
+Sugestão de campos:
+
+id
+
+name
+
+description
+
+parent_id (nullable)
+
+active
+
+created_at
+
+updated_at
+
+Regras:
+
+parent_id = NULL → é categoria principal
+
+parent_id != NULL → é subcategoria
+
+Alterações na Tela de Configuração
+
+Ao clicar em Incluir Tipo de Atividade:
+
+Adicionar campo:
+
+Categoria Pai (Opcional)
+
+Select dropdown
+
+Lista apenas categorias principais
+
+Se vazio → cria categoria principal
+
+Se preenchido → cria subcategoria
+
+Alterações no Agendamento
+
+Fluxo novo:
+
+Usuário seleciona Tipo de Atividade
+
+Se possuir subcategorias:
+
+Exibir Submenu / Dropdown secundário
+
+Se não possuir:
+
+Prossegue normalmente
+
+Regras de UX
+
+Não exigir subcategoria.
+
+Evitar múltiplos níveis (somente 1 nível de hierarquia).
+
+Manter visual limpo.
+
+Dropdown dependente somente quando necessário.
+
+API / Backend
+
+Endpoints devem retornar:
+
+[
+  {
+    id,
+    name,
+    description,
+    children: []
+  }
+]
+
+Compatibilidade
+
+Registros antigos continuam válidos.
+
+Atividades existentes viram automaticamente Categoria Principal.
+
+Benefícios Esperados
+
+Organização
+
+Escalabilidade
+
+Melhor filtragem
+
+Melhor relatórios
+
+Mais clareza na agenda
+
+Resultado esperado:
+Sistema permitindo selecionar:
+
+Visita Técnica
+   ├── Termografia
+   ├── Treinamento
+   ├── Teste
+   └── RC
+
+
+Sem quebrar funcionalidades atuais.

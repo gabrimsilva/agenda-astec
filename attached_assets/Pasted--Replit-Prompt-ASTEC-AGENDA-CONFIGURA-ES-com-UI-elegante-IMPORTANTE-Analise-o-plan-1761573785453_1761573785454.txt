@@ -1,0 +1,251 @@
+🛠️ Replit Prompt — ASTEC | “AGENDA” + “CONFIGURAÇÕES” (com UI elegante)
+
+IMPORTANTE: Analise o plano e gere apenas diffs/arquivos. NÃO execute nada até eu responder OK Mx para cada etapa.
+
+🎯 Objetivo
+
+Implementar:
+
+AGENDA: calendário visual (mês/semana/dia), lista de usuários à esquerda, calendário à direita, e form abaixo para criar atividade (com dropdown de tipos vindos de Configurações).
+
+CONFIGURAÇÕES: abas horizontais Atividades, Usuários, RBAC.
+
+Atividades: CRUD com categoria e cor discreta.
+
+Usuários: CRUD (nome, região, email, senha, nível, ativo). Níveis: Administrador e Técnico (mapear para admin e assistente).
+
+RBAC: exibir permissões atuais (admin vê tudo; técnico só a própria agenda).
+
+🧭 Regras de Execução
+
+Stack: React + TS + Vite + Tailwind + Radix/shadcn + TanStack Query | Express + TS + Drizzle + Postgres (Neon).
+
+Somente analisar e apresentar diffs.
+
+A cada módulo/etapa, perguntar: “Confirmar execução? (OK Mx)”.
+
+Após confirmação, aplicar mudanças de forma atômica e reportar logs curtos.
+
+🎨 Diretrizes Visuais (elegante, atrativo e consistente)
+
+Base (não alterar tema global):
+
+Tailwind + shadcn/ui + Radix UI, tipografia Inter (UI) e JetBrains Mono (trechos técnicos), dark/light respeitando ThemeProvider.
+
+Paleta existente do ASTEC (Primary azul profissional). Usar cores de categoria apenas como acento (dots, bordas finas, badges tênues), sem saturação exagerada.
+
+Componentização & Estilo:
+
+Utilizar Cards do shadcn com rounded-2xl, shadow-sm (ou md no hover), p-4 a p-6, gap-4, grid para evitar clutter.
+
+Abas horizontais (Radix Tabs) com indicadores sutis: underline com border-b e data-state=active usando font-medium.
+
+Botões: shadcn <Button> variantes default|secondary|outline. Ícones Lucide 16–18px antes do label (spacing gap-2).
+
+Inputs: Input, Select, Textarea shadcn; espaçamento vertical consistente (8–12px). Placeholders sóbrios.
+
+Feedback: use-toast (não intrusivo), loading skeletons em listas/tabelas, empty states com ícone, título curto e CTA.
+
+Acessibilidade: foco visível (focus:ring), aria-labels em botões icônicos, contraste AA.
+
+Motion: transições sutis com Framer Motion (fade/slide 120–160ms) em abertura de dialogs e troca de tabs; desabilitar animações pesadas.
+
+Responsividade:
+
+md:: sidebar (lista usuários) fixa à esquerda (largura ~320px) + calendário fluido;
+
+<md: sidebar colapsável acima do calendário (Accordion Radix), bottom nav segue padrão ASTEC.
+
+Calendário (react-big-calendar):
+
+Título do evento com dot colorido (4px) à esquerda para categoria:
+
+Efetivo → verde (e.g., #22c55e)
+
+Adicional → amarelo (#eab308)
+
+Perda → vermelho (#ef4444)
+
+Fundo do evento neutro; borda lateral esquerda 2px com a mesma cor do dot (sutil).
+
+Tooltip ao hover com título, tipo e horário.
+
+M0 — Verificações & Planejamento (ANÁLISE APENAS)
+
+Validar monorepo client/ e server/.
+
+Conferir tabelas:
+
+activityTypes(id, name, category enum[efetivo, adicional, perda], color, icon, displayOrder)
+
+activities(...) (conforme esquema ASTEC)
+
+users, technicians
+
+Mapear níveis de UI → backend: “Administrador” → admin | “Técnico” → assistente.
+
+Dependências sugeridas (client): react-big-calendar, date-fns.
+
+Planejar arquivos, rotas e componentes (listar diffs). Sem executar.
+
+Aguardar OK M0.
+
+M1 — SERVER (API) — Endpoints e RBAC mínimos (ANÁLISE → EXEC após OK)
+
+Activity Types (Config → Agenda dropdown):
+
+GET /api/activity-types
+
+POST /api/activity-types (admin)
+
+PUT /api/activity-types/:id (admin)
+
+DELETE /api/activity-types/:id (admin)
+
+Activities (Agenda):
+
+GET /api/activities?userId=&dateFrom=&dateTo=
+
+admin vê todos; assistente só seus próprios.
+
+POST /api/activities
+
+PUT /api/activities/:id
+
+DELETE /api/activities/:id
+
+Users (Config → Usuários):
+
+GET /api/users (admin)
+
+POST /api/users (admin) — { name, region, email, password, role, active }
+
+PUT /api/users/:id (admin)
+
+PATCH /api/users/:id/toggle (admin)
+
+RBAC Middlewares
+
+roleMiddleware('admin')
+
+agendaScopeMiddleware:
+
+admin → full; assistente → userId === req.user.id
+
+Arquivos (server/)
+
+routes/activities.ts, routes/activityTypes.ts, routes/users.ts
+
+middleware/rbac.ts
+
+storage/* (Drizzle)
+
+Aguardar OK M1.
+
+M2 — CLIENT — “CONFIGURAÇÕES” (ANÁLISE → EXEC após OK)
+
+Página Settings.tsx com Tabs horizontais (Radix + shadcn): Atividades | Usuários | RBAC.
+
+Cabeçalho: título + descrição curta; divider border-b.
+
+Aba Atividades
+
+Card com tabela: Nome | Categoria | Cor | Ações.
+
+Button “Nova Atividade” → Dialog (nome, categoria, cor).
+
+Categoria com badges discretas:
+
+Efetivo → bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20
+
+Adicional → bg-amber-50 text-amber-700 dark:bg-amber-900/20
+
+Perda → bg-rose-50 text-rose-700 dark:bg-rose-900/20
+
+Validação Zod, toasts, skeletons e empty state.
+
+Aba Usuários
+
+Tabela: Nome | Região | Email | Nível | Ativo | Ações.
+
+Dialog de Novo/Editar com inputs shadcn; Select de nível (“Administrador”, “Técnico”) → mapear a admin e assistente.
+
+Toggle Ativo (Switch shadcn).
+
+Aba RBAC
+
+Cards explicativos minimalistas com ícone e lista de permissões vigentes (somente leitura).
+
+Arquivos (client/)
+
+pages/Settings.tsx
+
+components/settings/{ActivitiesTab,UsersTab,RBACTab}.tsx
+
+lib/api/{activityTypes,users}.ts
+
+Aguardar OK M2.
+
+M3 — CLIENT — “AGENDA” (ANÁLISE → EXEC após OK)
+
+Layout
+
+Grid md:grid-cols-[320px_1fr] gap-4
+
+Esquerda: Card UsersList com busca; item de usuário usando Avatar + nome + badge nível. Selecionado com bg-muted sutil.
+
+Direita: Card CalendarView (react-big-calendar) com toolbar compacta.
+
+Abaixo (full width): Card NewActivityForm.
+
+Calendário
+
+Evento com dot 4px colorido e borda-esquerda 2px na cor do tipo (verde/amarelo/vermelho).
+
+Tooltip ao hover; onSelectEvent abre dialog para editar.
+
+Administrador pode alternar usuários; Técnico fica fixo no próprio.
+
+Form “Nova Atividade”
+
+Campos: Usuário, Tipo (dropdown /api/activity-types), Título, Descrição, Data, Hora Inicial, Hora Final.
+
+Ao salvar: invalidate queries → evento aparece de imediato.
+
+Validação Zod + toasts.
+
+Arquivos (client/)
+
+pages/Agenda.tsx
+
+components/agenda/{UsersList,CalendarView,NewActivityForm}.tsx
+
+lib/api/agenda.ts
+
+Aguardar OK M3.
+
+M4 — Seeds & Qualidade (ANÁLISE → EXEC após OK)
+
+Seed opcional activityTypes:
+
+Efetivo #22c55e, Adicional #eab308, Perda #ef4444
+
+Testes manuais roteirizados (admin/assistente), skeletons e empty states verificados.
+
+Aguardar OK M4.
+
+M5 — Documentação rápida (ANÁLISE → EXEC após OK)
+
+Atualizar README com rotas, permissões, telas, variáveis e screenshots.
+
+Aguardar OK M5.
+
+✅ Critérios de Aceite (funcional + visual)
+
+AGENDA: lista lateral de usuários (limpa, navegável), calendário responsivo com dots coloridos por categoria, criação/edição de atividades fluida.
+
+CONFIGURAÇÕES: abas horizontais elegantes; Atividades com CRUD e cores discretas; Usuários com CRUD e níveis mapeados; RBAC informativo.
+
+UI/UX: tipografia consistente, espaçamentos regulares, toasts não intrusivos, skeletons/empty states, foco visível, acessibilidade básica e dark mode suportado.
+
+RBAC: admin vê tudo; assistente apenas a própria agenda.
