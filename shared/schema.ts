@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, pgEnum, decimal, boolean, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, pgEnum, decimal, boolean, unique, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -132,6 +132,17 @@ export const activityTypes = pgTable("activity_types", {
   requiresRat: boolean("requires_rat").default(false).notNull(),
   categorization: activityCategorizationEnum("categorization"), // Categorização manual do tipo (independente da categoria pai)
   locations: text("locations").array(), // Locais de realização permitidos para este tipo (cliente, renner, home_office, outro, trajeto)
+  isHomeOffice: boolean("is_home_office"), // Coluna legada (não usada pelo código atual; mantida no schema para preservar dados em bancos antigos)
+});
+
+// Tabela de log de migração (criada/gerenciada pelo server/migrate.ts).
+// Declarada aqui para que o `drizzle-kit push` NÃO tente removê-la.
+export const migrationLog = pgTable("_migration_log", {
+  id: serial("id").primaryKey(),
+  version: varchar("version", { length: 50 }).notNull(),
+  appliedAt: timestamp("applied_at").defaultNow(),
+  description: text("description"),
+  success: boolean("success").default(true),
 });
 
 // Segments table (Negócios de clientes)
