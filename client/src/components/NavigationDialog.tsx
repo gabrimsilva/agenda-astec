@@ -148,6 +148,8 @@ export function NavigationDialog({
     if (!open) return;
 
     setGpsStatus("checking");
+    // Reseta o modo manual ao (re)abrir para não herdar estado de uma falha anterior de GPS
+    setUseManualAddress(false);
     
     if (!navigator.geolocation) {
       setGpsStatus("unavailable");
@@ -162,6 +164,8 @@ export function NavigationDialog({
           lng: position.coords.longitude,
         });
         setGpsStatus("available");
+        // GPS funcionou: garante que estamos no modo GPS (habilita os botões de navegação)
+        setUseManualAddress(false);
         toast({
           title: "GPS detectado!",
           description: "Sua localização atual será usada como ponto de partida.",
