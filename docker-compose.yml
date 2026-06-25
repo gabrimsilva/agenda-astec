@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: astec-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: astec
+      POSTGRES_PASSWORD: astec
+      POSTGRES_DB: astec
+    volumes:
+      - astec_pgdata:/var/lib/postgresql/data
+    # Porta exposta no host para acesso externo opcional (psql/debug).
+    # Mapeada em 5433 para nao conflitar com outros Postgres no host.
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astec -d astec"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        # ID do OneSignal (notificacoes push) embutido no frontend em build-time.
+        VITE_ONESIGNAL_APP_ID: "ad91611f-1d9f-4ba8-a077-e05b5bd55108"
+    container_name: astec-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      DB_DRIVER: pg
+      DATABASE_URL: postgresql://astec:astec@db:5432/astec
+      # IMPORTANTE: troque por um segredo forte e unico para producao.
+      SESSION_SECRET: "troque-este-segredo-em-producao-2f9c7a1e5b4d8063"
+    ports:
+      - "5000:5000"
+
+volumes:
+  astec_pgdata:

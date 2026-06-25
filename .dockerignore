@@ -1,0 +1,24 @@
+# Dependências e build (reinstaladas/regeneradas dentro da imagem)
+node_modules
+dist
+dist-ssr
+
+# Git e artefatos de ambiente do Replit
+.git
+.cache
+.config
+.local
+.upm
+.agents
+
+# Segredos locais (o container usa as variáveis do docker-compose)
+.env
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Logs
+*.log

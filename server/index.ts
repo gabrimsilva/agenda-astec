@@ -2,7 +2,7 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { seedActivityTypes } from "./seed";
+import { seedActivityTypes, seedDefaultAdmin } from "./seed";
 import { setupWebSocket } from "./ws";
 import { runMigrations } from "./migrate";
 import { closeBrowser } from "./browser-pool";
@@ -64,6 +64,13 @@ app.use((req, res, next) => {
   } catch (error: any) {
     console.error("⚠️  Database seeding failed - app will start without seeded data:", error.message);
     console.log("⚠️  Continuing startup - check database connection if issues persist");
+  }
+
+  // Ensure there is always a default admin to log in (idempotent: only creates if missing)
+  try {
+    await seedDefaultAdmin();
+  } catch (error: any) {
+    console.error("⚠️  Default admin seeding failed:", error.message);
   }
   
   const server = await registerRoutes(app);
