@@ -897,16 +897,10 @@ export default function RATs() {
   }
 
   return (
-    <div className="pb-20 md:pb-6">
-      <div className="container mx-auto p-4 max-w-4xl">
-        {/* Header sticky com hide-on-scroll para mobile */}
-        <div 
-          className={`
-            sticky top-0 z-50 bg-background pb-4 -mx-4 px-4 border-b shadow-sm
-            transition-transform duration-300 ease-in-out
-            ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
-          `}
-        >
+    <div className="flex flex-col h-full pb-20 md:pb-6">
+      <div className="container mx-auto px-4 max-w-4xl w-full flex flex-col flex-1 min-h-0">
+        {/* Header fixo no topo (não rola junto com a lista) */}
+        <div className="shrink-0 z-50 bg-background pt-4 pb-4 -mx-4 px-4 border-b shadow-sm">
           <div className="flex items-center justify-between gap-2 mb-4 pt-2 flex-wrap">
             <div className="flex items-center gap-2 min-w-0">
               <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
@@ -1071,6 +1065,8 @@ export default function RATs() {
           </Collapsible>
         </div>
 
+        {/* Área rolável: somente a lista rola, o header acima fica fixo */}
+        <div className="flex-1 min-h-0 overflow-auto -mx-4 px-4 pt-4">
         {/* Erro ao carregar RATs */}
         {ratsError && !ratsRetrying && (
           <Card className="mb-4">
@@ -1408,6 +1404,7 @@ export default function RATs() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       <RATFormDialog
