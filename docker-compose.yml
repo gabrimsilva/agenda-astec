@@ -38,7 +38,8 @@ services:
       # IMPORTANTE: troque por um segredo forte e unico para producao.
       SESSION_SECRET: "troque-este-segredo-em-producao-2f9c7a1e5b4d8063"
     ports:
-      - "5000:5000"
+      - "80:5000"     # acesso pelo dominio sem :5000 (http://astecagenda.rennercoatings.com)
+      - "5000:5000"   # mantido para debug/acesso direto
 
 volumes:
   astec_pgdata:
