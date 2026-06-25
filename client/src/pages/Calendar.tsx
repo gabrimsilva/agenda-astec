@@ -165,10 +165,6 @@ export default function Calendar() {
   const [lastSlotDate, setLastSlotDate] = useState<Date>(new Date());
   const isRightClickRef = useRef(false);
   
-  // Ref para o container do calendário e altura dinâmica
-  const calendarCardRef = useRef<HTMLDivElement>(null);
-  const [calendarHeight, setCalendarHeight] = useState<number>(600);
-  
   // Estado para hora atual (atualizado a cada minuto) - para indicador de hora atual
   const [currentTime, setCurrentTime] = useState(new Date());
   const timeScrollRef = useRef<boolean>(false); // Flag para evitar múltiplos scrolls
@@ -184,32 +180,6 @@ export default function Calendar() {
   const [typeFilter, setTypeFilter] = useState<string>("todos");
   const [periodFilter, setPeriodFilter] = useState<string>("todos");
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Calcular altura dinâmica do calendário baseado no viewport
-  useEffect(() => {
-    const calculateHeight = () => {
-      if (calendarCardRef.current) {
-        const rect = calendarCardRef.current.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        // Altura disponível = viewport - posição do card - padding inferior
-        const availableHeight = viewportHeight - rect.top - 40;
-        // Mínimo de 500px para garantir visibilidade
-        setCalendarHeight(Math.max(500, availableHeight));
-      }
-    };
-    
-    // Calcular inicialmente e em resize
-    calculateHeight();
-    window.addEventListener('resize', calculateHeight);
-    
-    // Recalcular após um pequeno delay para garantir que o DOM está pronto
-    const timer = setTimeout(calculateHeight, 100);
-    
-    return () => {
-      window.removeEventListener('resize', calculateHeight);
-      clearTimeout(timer);
-    };
-  }, [showFilters, view]);
   
   // Atualizar hora atual a cada minuto para mover o indicador de tempo
   useEffect(() => {
@@ -2169,11 +2139,11 @@ export default function Calendar() {
           }
         }
       `}</style>
-      <div className="flex flex-col pb-20 md:pb-6" data-testid="page-calendar">
+      <div className="flex flex-col h-full gap-4 pb-20 md:pb-6" data-testid="page-calendar">
 
         {/* Filtros Avançados */}
         {showFilters && (
-          <Card className="p-4">
+          <Card className="p-4 shrink-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Campo de Busca */}
               <div className="lg:col-span-2">
@@ -2273,7 +2243,7 @@ export default function Calendar() {
 
         {/* Card de Resumo de Produtividade */}
         {(showFilters || periodFilter !== "todos") && (
-          <Card className="p-4">
+          <Card className="p-4 shrink-0">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-semibold">Resumo de Produtividade</h3>
@@ -2398,7 +2368,7 @@ export default function Calendar() {
           </Card>
         )}
 
-        <Card ref={calendarCardRef} className="flex flex-col min-h-0" style={{ height: `${calendarHeight}px`, maxHeight: `${calendarHeight}px` }}>
+        <Card className="flex flex-col flex-1 min-h-0">
         <div className="p-2 border-b flex flex-wrap gap-2 items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
