@@ -2052,7 +2052,9 @@ export default function Calendar() {
           flex: 1;
           display: flex;
           flex-direction: column;
-          overflow: visible !important;
+          overflow: hidden !important;
+          width: 100% !important;
+          max-width: 100% !important;
         }
         
         .calendar-container .rbc-month-header {
@@ -2062,6 +2064,18 @@ export default function Calendar() {
         .calendar-container .rbc-month-row {
           flex: 1;
           min-height: 0;
+          overflow: hidden !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+
+        /* Garante que as linhas internas (datas e eventos) nunca estourem a largura,
+         * mesmo na visão "Todos os técnicos" com muitos eventos por dia. */
+        .calendar-container .rbc-month-row .rbc-row-bg,
+        .calendar-container .rbc-month-row .rbc-row-content,
+        .calendar-container .rbc-month-row .rbc-row {
+          width: 100% !important;
+          max-width: 100% !important;
         }
         
         /* =============================================
