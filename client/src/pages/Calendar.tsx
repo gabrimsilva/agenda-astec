@@ -1950,13 +1950,10 @@ export default function Calendar() {
           animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
         
-        /* Remover overflow do calendário para não cortar tooltip - apenas para mês e agenda */
-        .rbc-month-view,
+        /* Tooltips são renderizados via portal (createPortal no body), então o mês
+         * NÃO precisa de overflow visível — isso só causava a grade estourar na
+         * visão "Todos os técnicos". A visão de agenda pode manter overflow visível. */
         .rbc-agenda-view {
-          overflow: visible !important;
-        }
-        
-        .rbc-events-container {
           overflow: visible !important;
         }
         
