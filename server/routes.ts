@@ -129,6 +129,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     .then(() => console.log("[DB] idx_rats_created_at ready"))
     .catch((e: any) => console.warn("[DB] index creation skipped:", e.message));
 
+  // Index for the per-technician RAT list query (WHERE technician_id = ... ORDER BY created_at DESC).
+  db.execute(sql`CREATE INDEX IF NOT EXISTS idx_rats_technician_created ON rats(technician_id, created_at DESC)`)
+    .then(() => console.log("[DB] idx_rats_technician_created ready"))
+    .catch((e: any) => console.warn("[DB] index creation skipped:", e.message));
+
   // Health check endpoint for Autoscale deployments
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
@@ -6241,17 +6246,49 @@ _Segue em anexo o relatório completo em PDF._`;
     }
   });
 
-  // Pre-warm the admin RATs cache 4 seconds after startup
-  // so the first user to open the RATs page gets a <5ms response
-  setTimeout(async () => {
+  // ── Pre-warm + keep-warm do cache de RATs ────────────────────────────────
+  // Garante que a lista de RATs sempre carregue instantaneamente. O cache em
+  // memória zera a cada restart do container; aqui ele é reaquecido com retry
+  // (caso o banco ainda não esteja pronto logo após o deploy) e mantido quente
+  // por um refresh periódico dentro do TTL — o usuário nunca pega cache frio,
+  // exceto no primeiro ou segundo segundo de vida do servidor.
+  const warmAdminRatsCache = async (): Promise<boolean> => {
     try {
       const data = await db.select(getRatsLightSelect()).from(rats).orderBy(desc(rats.createdAt));
       _ratsCache.set("admin", { data, ts: Date.now() });
-      console.log(`[RATs cache] startup pre-warm complete (${data.length} RATs, ${JSON.stringify(data).length} bytes cached for admin)`);
+      return true;
     } catch (err: any) {
-      console.warn("[RATs cache] startup pre-warm failed:", err.message);
+      console.warn("[RATs cache] admin warm failed:", err.message);
+      return false;
     }
-  }, 4000);
+  };
+
+  // Aquecimento inicial: tenta a cada 2s (até ~1 min) até o primeiro sucesso.
+  (async () => {
+    for (let attempt = 0; attempt < 30; attempt++) {
+      await new Promise((r) => setTimeout(r, attempt === 0 ? 1000 : 2000));
+      if (await warmAdminRatsCache()) {
+        console.log(`[RATs cache] startup pre-warm complete (tentativa ${attempt + 1})`);
+        break;
+      }
+    }
+  })();
+
+  // Keep-warm: reaquece dentro do TTL (55s) para o cache nunca esfriar.
+  // Mantém o admin sempre quente e reaquece qualquer cache de técnico já carregado.
+  setInterval(() => {
+    warmAdminRatsCache().catch(() => {});
+    for (const key of _ratsCache.keys()) {
+      if (key.startsWith("tech:")) {
+        const techId = key.slice("tech:".length);
+        _bgRefreshRatsCache(key, async () =>
+          db.select(getRatsLightSelect()).from(rats)
+            .where(eq(rats.technicianId, techId))
+            .orderBy(desc(rats.createdAt))
+        ).catch(() => {});
+      }
+    }
+  }, 45_000);
 
   const httpServer = createServer(app);
   return httpServer;
