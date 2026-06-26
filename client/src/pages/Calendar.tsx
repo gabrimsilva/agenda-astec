@@ -31,7 +31,7 @@ import { useActivityRealtime } from "@/hooks/useActivityRealtime";
 import { z } from "zod";
 import type { Activity, User, ActivityType, Client, Technician } from "@shared/schema";
 import { ActivityClientContact } from "@/components/activities/ActivityClientContact";
-import { ActivityTypeSelector, DateTimeFields, DescriptionField, ActivityLocationSelector } from "@/components/activities/ActivityFormFields";
+import { ActivityTypeSelector, DateTimeFields, DescriptionField, ActivityLocationSelector, getActivityTypeLocations } from "@/components/activities/ActivityFormFields";
 import { RescheduleModal } from "@/components/RescheduleModal";
 
 moment.locale("pt-br");
@@ -660,6 +660,12 @@ export default function Calendar() {
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
+    // "Executado em" é obrigatório quando o tipo de atividade possui locais configurados
+    const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
+    if (locs.length > 0 && !(data.location && data.location.trim())) {
+      form.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
+      return;
+    }
     if (isEditing && selectedActivity) {
       updateMutation.mutate({ id: selectedActivity.id, data });
     } else {

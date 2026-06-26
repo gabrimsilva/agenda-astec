@@ -38,23 +38,23 @@ export function ActivityTypeSelector({
   // Lista única (sem cores e sem separação por categoria efetivo/adicional/perda).
   // Mantém apenas a relação categoria principal > subcategoria por indentação.
   const activeTypes = activityTypes.filter((t) => t.isActive !== false);
-  const mainTypes = activeTypes
-    .filter((t) => !(t as any).parentId)
-    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   const childTypes = activeTypes.filter((t) => (t as any).parentId);
+  const mainIds = new Set(activeTypes.filter((t) => !(t as any).parentId).map((t) => t.id));
+
+  // Itens de nível superior = tipos sem pai + subcategorias órfãs (pai inexistente/inativo).
+  // Tudo em ordem alfabética; cada pai real é seguido por seus filhos (também A→Z).
+  const topLevel = activeTypes
+    .filter((t) => !(t as any).parentId || !mainIds.has((t as any).parentId))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   const orderedTypes: { type: ActivityType; isChild: boolean }[] = [];
-  mainTypes.forEach((main) => {
-    orderedTypes.push({ type: main, isChild: false });
+  topLevel.forEach((t) => {
+    orderedTypes.push({ type: t, isChild: false });
     childTypes
-      .filter((child) => (child as any).parentId === main.id)
+      .filter((child) => (child as any).parentId === t.id)
       .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
       .forEach((child) => orderedTypes.push({ type: child, isChild: true }));
   });
-  // Subcategorias órfãs (cujo pai não existe ou está inativo)
-  childTypes
-    .filter((child) => !mainTypes.find((main) => main.id === (child as any).parentId))
-    .forEach((orphan) => orderedTypes.push({ type: orphan, isChild: false }));
 
   return (
     <FormField
@@ -107,6 +107,22 @@ interface ActivityLocationSelectorProps {
   fieldName?: string;
 }
 
+// Retorna os locais de realização configurados para um tipo de atividade.
+// Subcategorias herdam os locais da categoria pai. Usado tanto pelo seletor
+// quanto pela validação de obrigatoriedade nos formulários.
+export function getActivityTypeLocations(
+  activityTypes: ActivityType[],
+  typeId?: string | null,
+): string[] {
+  if (!typeId) return [];
+  const type = activityTypes.find((t) => t.id === typeId);
+  if (!type) return [];
+  const source = (type as any).parentId
+    ? activityTypes.find((t) => t.id === (type as any).parentId) ?? type
+    : type;
+  return (((source as any)?.locations as string[]) || []).filter((l) => l && l.trim());
+}
+
 // Dropdown de "Local de Realização" exibido abaixo do Tipo de Atividade.
 // Lista os locais definidos no tipo selecionado; subcategorias puxam da categoria pai.
 export function ActivityLocationSelector({
@@ -117,11 +133,7 @@ export function ActivityLocationSelector({
 }: ActivityLocationSelectorProps) {
   const selectedTypeId = form.watch(typeFieldName);
   const selectedType = activityTypes.find((t) => t.id === selectedTypeId);
-  // Subcategorias herdam os locais da categoria pai
-  const sourceType = selectedType && (selectedType as any).parentId
-    ? activityTypes.find((t) => t.id === (selectedType as any).parentId) ?? selectedType
-    : selectedType;
-  const locations: string[] = ((sourceType as any)?.locations as string[]) || [];
+  const locations: string[] = getActivityTypeLocations(activityTypes, selectedTypeId);
   const currentValue = form.watch(fieldName);
 
   // Limpa o local selecionado quando o tipo muda e o valor atual não está mais disponível
@@ -140,8 +152,14 @@ export function ActivityLocationSelector({
       name={fieldName}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Executado em:</FormLabel>
-          <Select onValueChange={field.onChange} value={field.value || undefined}>
+          <FormLabel>Executado em: *</FormLabel>
+          <Select
+            onValueChange={(v) => {
+              field.onChange(v);
+              form.clearErrors(fieldName);
+            }}
+            value={field.value || undefined}
+          >
             <FormControl>
               <SelectTrigger data-testid="select-activity-location">
                 <SelectValue placeholder="Selecione o local" />

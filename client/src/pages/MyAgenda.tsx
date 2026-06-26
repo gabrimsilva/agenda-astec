@@ -1,7 +1,7 @@
 import { DailyRouteView } from "@/components/DailyRouteView";
 import { NavigationDialog } from "@/components/NavigationDialog";
 import { ActivityClientContact } from "@/components/activities/ActivityClientContact";
-import { ActivityTypeSelector, AddressFields, DateTimeFields, DescriptionField, CepSearchField, ActivityLocationSelector } from "@/components/activities/ActivityFormFields";
+import { ActivityTypeSelector, AddressFields, DateTimeFields, DescriptionField, CepSearchField, ActivityLocationSelector, getActivityTypeLocations } from "@/components/activities/ActivityFormFields";
 import { RATFormDialog } from "@/components/rats/RATFormDialog";
 import { SimplifiedRATFormDialog } from "@/components/rats/SimplifiedRATFormDialog";
 import { RATConfirmDialog } from "@/components/rats/RATConfirmDialog";
@@ -1032,6 +1032,11 @@ export default function MyAgenda() {
 
   // Handler para criar atividade
   const onSubmitActivity = async (data: z.infer<typeof formSchema>) => {
+    const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
+    if (locs.length > 0 && !(data.location && data.location.trim())) {
+      form.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
+      return;
+    }
     await createActivityMutation.mutateAsync(data);
   };
 
@@ -1619,7 +1624,13 @@ export default function MyAgenda() {
   // Handler para submit do formulário de edição
   const onSubmitEditActivity = async (data: z.infer<typeof formSchema>) => {
     if (!activityBeingEdited) return;
-    
+
+    const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
+    if (locs.length > 0 && !(data.location && data.location.trim())) {
+      editForm.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
+      return;
+    }
+
     const activity = allActivities.find(a => a.id === activityBeingEdited);
     const isMultiDay = activity && !!(activity as any).endDate;
     
