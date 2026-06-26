@@ -3234,6 +3234,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const NO_LOCATION = "Não informado";
       const categoryOrder = ["efetivo", "adicional", "perda"] as const;
 
+      // Resolve o "Local de Realização" de forma consistente com a categorização:
+      // quando o tipo (ou o pai, no caso de subcategoria) tem UM único local configurado,
+      // esse local é autoritativo e reflete a configuração atual do tipo — mesmo para
+      // lançamentos antigos cujo location não foi gravado. Se o tipo tiver vários locais
+      // possíveis, usa o local efetivamente registrado na hora; senão, "Não informado".
+      const resolveLocation = (activityTypeId: string, recordedLocation: string | null): string => {
+        const t: any = typeMap.get(activityTypeId);
+        if (t) {
+          const source: any = t.parentId ? (typeMap.get(t.parentId) ?? t) : t;
+          const locs: string[] = Array.isArray(source.locations)
+            ? source.locations.filter((l: string) => l && l.trim())
+            : [];
+          if (locs.length === 1) return locs[0].trim();
+        }
+        if (recordedLocation && recordedLocation.trim()) return recordedLocation.trim();
+        return NO_LOCATION;
+      };
+
       // Agrega: categoria -> local -> minutos
       const catMap: Record<string, { total: number; locations: Record<string, number> }> = {};
       const byLocationMap: Record<string, number> = {};
@@ -3243,7 +3261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const e of entries) {
         const cat = e.category as string;
-        const loc = (e.location && e.location.trim()) ? e.location.trim() : NO_LOCATION;
+        const loc = resolveLocation(e.activityTypeId, e.location);
         if (!catMap[cat]) catMap[cat] = { total: 0, locations: {} };
         catMap[cat].total += e.minutes;
         catMap[cat].locations[loc] = (catMap[cat].locations[loc] || 0) + e.minutes;
