@@ -79,7 +79,7 @@ export function ActivityTypeSelector({
                   </SelectValue>
                 </SelectTrigger>
               </FormControl>
-              <SelectContent className="max-w-[calc(100vw-2rem)]">
+              <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                 {orderedTypes.map(({ type, isChild }) => (
                   <SelectItem
                     key={type.id}
@@ -87,7 +87,7 @@ export function ActivityTypeSelector({
                     data-testid={`option-type-${type.id}`}
                     className={cn("whitespace-normal", isChild ? "pl-8" : "pl-4")}
                   >
-                    <span className="text-left">{isChild ? `└ ${type.name}` : type.name}</span>
+                    <span className="text-left break-words">{isChild ? `└ ${type.name}` : type.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
