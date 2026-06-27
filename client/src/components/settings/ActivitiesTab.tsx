@@ -37,6 +37,7 @@ const formSchema = z.object({
   isActive: z.boolean().default(true),
   parentId: z.string().optional().nullable(),
   requiresRat: z.boolean().default(false),
+  requiresTravel: z.boolean().default(true),
   categorization: z.string().optional().nullable(),
   locations: z.array(z.string()).optional().default([]),
 });
@@ -102,6 +103,7 @@ export default function ActivitiesTab() {
   const [parentName, setParentName] = useState("");
   const [parentCategory, setParentCategory] = useState<"efetivo" | "adicional" | "perda">("efetivo");
   const [parentRequiresRat, setParentRequiresRat] = useState(false);
+  const [parentRequiresTravel, setParentRequiresTravel] = useState(true);
   const [parentCategorization, setParentCategorization] = useState<string | null>(null);
   const [parentLocations, setParentLocations] = useState<string[]>([]);
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
@@ -135,6 +137,7 @@ export default function ActivitiesTab() {
       isActive: true,
       parentId: null,
       requiresRat: parentRequiresRat,
+      requiresTravel: parentRequiresTravel,
       categorization: parentCategorization,
       locations: parentLocations,
     });
@@ -197,6 +200,7 @@ export default function ActivitiesTab() {
       isActive: true,
       parentId: null,
       requiresRat: false,
+      requiresTravel: true,
       categorization: null,
       locations: [],
     },
@@ -296,6 +300,9 @@ export default function ActivitiesTab() {
             {(type as any).requiresRat && (
               <Badge variant="secondary" className="text-xs">RAT</Badge>
             )}
+            {(type as any).requiresTravel === false && (
+              <Badge variant="outline" className="text-xs">Sem trajeto</Badge>
+            )}
             {!type.isActive && (
               <Badge variant="outline" className="text-xs text-muted-foreground">Inativo</Badge>
             )}
@@ -332,6 +339,7 @@ export default function ActivitiesTab() {
   const onSubmit = (values: FormValues) => {
     let category = values.category;
     let requiresRat = values.requiresRat;
+    let requiresTravel = values.requiresTravel;
     let categorization = values.categorization;
     let locations = values.locations;
     if (values.parentId) {
@@ -339,6 +347,7 @@ export default function ActivitiesTab() {
       if (parent) {
         category = parent.category as "efetivo" | "adicional" | "perda";
         requiresRat = !!(parent as any).requiresRat;
+        requiresTravel = (parent as any).requiresTravel ?? true;
         // Categorização é herdada da categoria pai (assim como o Requer RAT)
         categorization = (parent as any).categorization ?? null;
         // Local de realização também é herdado da categoria pai
@@ -349,6 +358,7 @@ export default function ActivitiesTab() {
       ...values,
       category,
       requiresRat,
+      requiresTravel,
       categorization,
       locations,
       color: categoryColorPalette[category][0],
@@ -373,6 +383,7 @@ export default function ActivitiesTab() {
       isActive: type.isActive ?? true,
       parentId: (type as any).parentId || null,
       requiresRat: (type as any).requiresRat ?? false,
+      requiresTravel: (type as any).requiresTravel ?? true,
       categorization: (type as any).categorization || null,
       locations: (type as any).locations || [],
     });
@@ -390,6 +401,7 @@ export default function ActivitiesTab() {
       isActive: true,
       parentId: null,
       requiresRat: false,
+      requiresTravel: true,
       categorization: null,
       locations: [],
     });
@@ -416,7 +428,7 @@ export default function ActivitiesTab() {
               {showInactive ? "Ocultar inativos" : `Mostrar inativos (${inactiveCount})`}
             </Button>
           )}
-          <Dialog open={parentDialogOpen} onOpenChange={(open) => { setParentDialogOpen(open); if (!open) { setParentName(""); setParentCategory("efetivo"); setParentRequiresRat(false); setParentCategorization(null); setParentLocations([]); } }}>
+          <Dialog open={parentDialogOpen} onOpenChange={(open) => { setParentDialogOpen(open); if (!open) { setParentName(""); setParentCategory("efetivo"); setParentRequiresRat(false); setParentRequiresTravel(true); setParentCategorization(null); setParentLocations([]); } }}>
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="button-new-parent-category">
                 <FolderPlus className="w-4 h-4 mr-2" />
@@ -511,6 +523,19 @@ export default function ActivitiesTab() {
                     checked={parentRequiresRat}
                     onCheckedChange={setParentRequiresRat}
                     data-testid="switch-parent-requires-rat"
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Requer cálculo de trajeto</p>
+                    <p className="text-xs text-muted-foreground">
+                      Quando desativado, a atividade é apenas iniciada e concluída (sem IDA/VOLTA)
+                    </p>
+                  </div>
+                  <Switch
+                    checked={parentRequiresTravel}
+                    onCheckedChange={setParentRequiresTravel}
+                    data-testid="switch-parent-requires-travel"
                   />
                 </div>
               </div>
@@ -717,6 +742,43 @@ export default function ActivitiesTab() {
                       checked={!!(types?.find((t: any) => t.id === watchParentId) as any)?.requiresRat}
                       disabled
                       data-testid="switch-requires-rat-inherited"
+                    />
+                  </div>
+                )}
+                {!watchParentId ? (
+                  <FormField
+                    control={form.control}
+                    name="requiresTravel"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Requer cálculo de trajeto</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Quando desativado, a atividade é apenas iniciada e concluída (sem IDA/VOLTA)
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="switch-requires-travel"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg border p-3 opacity-60">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Requer cálculo de trajeto</p>
+                      <p className="text-xs text-muted-foreground">
+                        Herdado da categoria pai
+                      </p>
+                    </div>
+                    <Switch
+                      checked={(types?.find((t: any) => t.id === watchParentId) as any)?.requiresTravel ?? true}
+                      disabled
+                      data-testid="switch-requires-travel-inherited"
                     />
                   </div>
                 )}

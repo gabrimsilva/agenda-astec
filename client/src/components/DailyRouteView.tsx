@@ -97,6 +97,7 @@ interface RouteStop {
   actualReturnMinutes?: number | null;
   nextActivityTravelMinutes?: number | null; // Tempo de IDA da próxima atividade (= VOLTA desta)
   isLastActivity?: boolean; // Se é a última atividade do dia
+  skipTravel?: boolean; // Tipo configurado SEM cálculo de trajeto (sem IDA/VOLTA)
 }
 
 interface DailyRouteViewProps {
@@ -487,8 +488,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                                     );
                                   }
                                   
-                                  // Home office: no VOLTA needed, show dash like IDA
-                                  if (stop.isHomeOffice) {
+                                  // Home office ou tipo sem trajeto: sem VOLTA, mostra traço
+                                  if (stop.isHomeOffice || stop.skipTravel) {
                                     return (
                                       <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
                                         <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">VOLTA</div>
@@ -619,6 +620,7 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                             {(stop.statusLabel === "concluido" || stop.statusLabel === "concluidoSemSucesso") && 
                              stop.isLastActivity && 
                              !stop.isHomeOffice &&
+                             !stop.skipTravel &&
                              (stop.actualReturnMinutes === null || stop.actualReturnMinutes === undefined) && 
                              onRegisterReturn && (
                               <motion.div

@@ -130,6 +130,7 @@ export const activityTypes = pgTable("activity_types", {
   isActive: boolean("is_active").default(true).notNull(),
   parentId: varchar("parent_id"), // null = categoria principal, preenchido = subcategoria
   requiresRat: boolean("requires_rat").default(false).notNull(),
+  requiresTravel: boolean("requires_travel").default(true).notNull(), // se false, fluxo do técnico pula IDA/VOLTA (só inicia e conclui execução)
   categorization: activityCategorizationEnum("categorization"), // Categorização manual do tipo (independente da categoria pai)
   locations: text("locations").array(), // Locais de realização permitidos para este tipo (cliente, renner, home_office, outro, trajeto)
   isHomeOffice: boolean("is_home_office"), // Coluna legada (não usada pelo código atual; mantida no schema para preservar dados em bancos antigos)

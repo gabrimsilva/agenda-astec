@@ -484,6 +484,8 @@ export default function MyAgenda() {
       // Check if activity is "adicional" category or home office (base)
       const isAdicional = activityType?.category === "adicional";
       const isHomeOffice = activity.clientName === "Base do técnico (Home office)";
+      // Tipo configurado para NÃO calcular trajeto: pula IDA/VOLTA (só inicia e conclui)
+      const skipTravel = (activityType as any)?.requiresTravel === false;
       
       // Lista de tipos de atividade que requerem RAT
       const typesRequiringRat = [
@@ -543,8 +545,9 @@ export default function MyAgenda() {
           contactPhone: (activity as any).client.contactPhone,
           contactEmail: (activity as any).client.contactEmail,
         } : undefined,
-        hideNavigation: isAdicional || isHomeOffice,
+        hideNavigation: isAdicional || isHomeOffice || skipTravel,
         isHomeOffice,
+        skipTravel,
         ratStatus,
         ratSentAt,
         navigationStartTime: activity.navigationStartTime ? String(activity.navigationStartTime) : null,
@@ -1350,8 +1353,10 @@ export default function MyAgenda() {
     if (!completedActivityForNextStep) return;
     
     const isHomeOfficeActivity = completedActivityForNextStep.clientName === "Base do técnico (Home office)";
+    const noTravelType = activityTypes.find((at) => at.id === completedActivityForNextStep.activityTypeId) as any;
+    const skipReturn = isHomeOfficeActivity || noTravelType?.requiresTravel === false;
     
-    if (isHomeOfficeActivity) {
+    if (skipReturn) {
       setNextStepPanelOpen(false);
       await finalizeEndJourney();
       return;
@@ -1390,8 +1395,10 @@ export default function MyAgenda() {
   // V3: Handler para abrir modal de retorno à base (via NextStepPanel)
   const handleOpenReturnBaseModal = async () => {
     const isHomeOfficeActivity = completedActivityForNextStep?.clientName === "Base do técnico (Home office)";
+    const noTravelType = activityTypes.find((at) => at.id === completedActivityForNextStep?.activityTypeId) as any;
+    const skipReturn = isHomeOfficeActivity || noTravelType?.requiresTravel === false;
     
-    if (isHomeOfficeActivity) {
+    if (skipReturn) {
       setNextStepPanelOpen(false);
       try {
         await selectNextStepMutation.mutateAsync({
@@ -1400,7 +1407,7 @@ export default function MyAgenda() {
         });
         toast({
           title: "Retorno registrado",
-          description: "Atividade home office finalizada.",
+          description: "Atividade finalizada.",
         });
         setCompletedActivityForNextStep(null);
       } catch (error: any) {
