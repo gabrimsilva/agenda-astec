@@ -38,8 +38,9 @@ services:
       # IMPORTANTE: troque por um segredo forte e unico para producao.
       SESSION_SECRET: "troque-este-segredo-em-producao-2f9c7a1e5b4d8063"
     ports:
-      - "80:5000"     # acesso pelo dominio sem :5000 (http://astecagenda.rennercoatings.com)
-      - "5000:5000"   # mantido para debug/acesso direto
+      # A porta 80/443 e servida pelo reverse proxy (deploy/proxy) que termina o TLS.
+      # O ASTEC publica apenas a 5000 no host; o proxy o alcanca via host.docker.internal:5000.
+      - "5000:5000"
 
 volumes:
   astec_pgdata:

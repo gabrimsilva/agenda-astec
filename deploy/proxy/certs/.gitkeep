@@ -1,0 +1,4 @@
+# Coloque aqui (na VM) os arquivos extraidos do .pfx:
+#   rennercoatings.crt  (certificado + cadeia)
+#   rennercoatings.key  (chave privada)
+# Estes arquivos NAO sao versionados (ver ../.gitignore).

@@ -1,0 +1,20 @@
+# Reverse proxy (nginx) que termina o TLS para as aplicações da Renner Coatings.
+# - Escuta nas portas 80 (redireciona p/ HTTPS) e 443 (TLS).
+# - Repassa o tráfego para cada app pela porta publicada no host, via host-gateway.
+#
+# Subir:   docker compose -f deploy/proxy/docker-compose.yml up -d
+# Recarregar config:  docker exec rhsa-proxy nginx -s reload
+services:
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: rhsa-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    # Permite que o nginx alcance as apps publicadas em 127.0.0.1:<porta> no host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

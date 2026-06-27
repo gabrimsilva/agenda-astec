@@ -1,0 +1,5 @@
+# Nunca versionar chaves/certificados (segredos)
+certs/*.key
+certs/*.crt
+certs/*.pem
+certs/*.pfx
