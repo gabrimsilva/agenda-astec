@@ -1317,44 +1317,10 @@ export default function Reports() {
               return (
                 <div className="mt-6 space-y-6">
                   {!isAssistente && report && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Horas por Categoria de Tempo</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Categoria</TableHead>
-                              <TableHead className="text-right">Horas</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow style={{ backgroundColor: "#BBF7D0" }}>
-                              <TableCell className="font-bold">Efetivo</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totals.efetivo)}</TableCell>
-                            </TableRow>
-                            <TableRow style={{ backgroundColor: "#FDE68A" }}>
-                              <TableCell className="font-bold">Adicional</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totals.adicional)}</TableCell>
-                            </TableRow>
-                            <TableRow style={{ backgroundColor: "#FECACA" }}>
-                              <TableCell className="font-bold">Perda</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totals.perda)}</TableCell>
-                            </TableRow>
-                            <TableRow style={{ backgroundColor: "#DDD6FE" }}>
-                              <TableCell className="font-bold">TOTAL</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totalMinutes)}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Distribuição de Tempo</CardTitle>
+                        <CardTitle className="text-base">Agregação de Valor</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={320}>
@@ -1382,38 +1348,10 @@ export default function Reports() {
                   )}
 
                   {!isAssistente && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Horas por Categorização da Atividade</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Categorização</TableHead>
-                              <TableHead className="text-right">Horas</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {locationReport.byCategorization.map((c) => (
-                              <TableRow key={c.categorization}>
-                                <TableCell>{c.categorization}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatHoursClock(c.minutes)}</TableCell>
-                              </TableRow>
-                            ))}
-                            <TableRow style={{ backgroundColor: "#DDD6FE" }}>
-                              <TableCell className="font-bold">TOTAL</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(locationReport.grandTotalMinutes)}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">% por Categorização da Atividade</CardTitle>
+                        <CardTitle className="text-base">% por Tipo de Atividade</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={320}>
@@ -1430,49 +1368,7 @@ export default function Reports() {
                   </div>
                   )}
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {!isAssistente && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Horas por Local da Realização</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Local da Realização</TableHead>
-                              <TableHead className="text-right">Horas</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {locationReport.categories.flatMap((cat) => [
-                              <TableRow key={cat.category} style={{ backgroundColor: catMeta[cat.category]?.color || "#e5e7eb" }}>
-                                <TableCell className="font-bold">{catMeta[cat.category]?.label || cat.category}</TableCell>
-                                <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(cat.totalMinutes)}</TableCell>
-                              </TableRow>,
-                              ...cat.locations.map((loc) => (
-                                <TableRow key={`${cat.category}-${loc.location}`}>
-                                  <TableCell className="pl-8">{loc.location}</TableCell>
-                                  <TableCell className="text-right tabular-nums">{formatHoursClock(loc.minutes)}</TableCell>
-                                </TableRow>
-                              )),
-                            ])}
-                            <TableRow style={{ backgroundColor: "#DDD6FE" }}>
-                              <TableCell className="font-bold">TOTAL</TableCell>
-                              <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(locationReport.grandTotalMinutes)}</TableCell>
-                            </TableRow>
-                            {locationReport.byLocation.map((loc) => (
-                              <TableRow key={`total-${loc.location}`}>
-                                <TableCell className="pl-8">{loc.location}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatHoursClock(loc.minutes)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                    )}
-
+                  <div className="grid grid-cols-1 gap-6">
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-base">% por Local da Realização</CardTitle>
