@@ -1,0 +1,32 @@
+# Relay SMTP (Postfix) da VM — disparo de e-mail centralizado.
+# Os apps na VM enviam para "mail-relay" (porta 25 sem auth, ou 587) pela rede
+# Docker, e o relay encaminha para o Office 365 (smtp.office365.com:587, STARTTLS,
+# autenticado). Assim os apps não precisam carregar as credenciais do O365.
+#
+# Local na VM: /home/super/mail-relay/
+# Subir/aplicar:  docker compose up -d
+# A senha do relayhost vem do arquivo .env (NÃO versionado): RELAYHOST_PASSWORD=...
+services:
+  mail:
+    image: boky/postfix
+    container_name: mail-relay
+    restart: unless-stopped
+    environment:
+      RELAYHOST: "[smtp.office365.com]:587"
+      RELAYHOST_USERNAME: "alertas@renner.com.br"
+      RELAYHOST_PASSWORD: "${RELAYHOST_PASSWORD}"
+      ALLOWED_SENDER_DOMAINS: "renner.com.br"
+      POSTFIX_smtp_tls_security_level: "encrypt"
+      POSTFIX_mynetworks: "172.16.0.0/12 127.0.0.0/8 [::1]/128"
+      POSTFIX_inet_protocols: "ipv4"
+    networks:
+      - astec
+      - credito
+
+networks:
+  astec:
+    external: true
+    name: agenda-astec_default
+  credito:
+    external: true
+    name: credito-cobranca_default
