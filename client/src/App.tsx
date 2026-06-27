@@ -85,11 +85,11 @@ function PageHeader() {
   return (
     <>
       {/* Desktop Header */}
-      <header className="hidden md:flex items-center justify-between sticky top-0 z-50 bg-background border-b">
+      <header className="hidden md:flex items-center justify-between sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-3 p-3">
           <SidebarTrigger data-testid="button-sidebar-toggle" />
           <div>
-            <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+            <h1 className="text-lg font-bold tracking-tight leading-tight">{title}</h1>
             {subtitle && (
               <p className="text-xs text-muted-foreground leading-tight">{subtitle}</p>
             )}
@@ -102,8 +102,8 @@ function PageHeader() {
         </div>
       </header>
       {/* Mobile Header */}
-      <header className="md:hidden flex items-center justify-between p-3 sticky top-0 z-50 bg-background border-b">
-        <span className="font-bold text-base">{title || "ASTEC"}</span>
+      <header className="md:hidden flex items-center justify-between p-3 sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+        <span className="font-bold text-base tracking-tight">{title || "ASTEC"}</span>
         <div className="flex items-center gap-2">
           <NotificationBell />
           <FieldModeToggle />

@@ -56,16 +56,28 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 p-4">
-      <div className="w-full max-w-sm lg:max-w-md space-y-6 lg:space-y-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 dark:bg-[#0B1220] px-4 py-12">
+      {/* Brilhos ambientes (blobs desfocados) */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-rose-300/25 dark:bg-rose-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-emerald-200/20 dark:bg-emerald-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 rounded-full bg-rose-200/20 dark:bg-rose-400/10 blur-3xl" />
+      {/* Textura de pontinhos (dot grid) */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }}
+      />
+      <div className="relative z-10 w-full max-w-sm lg:max-w-md space-y-6 lg:space-y-8">
         {/* Logo e Header */}
         <div className="flex flex-col items-center gap-4 lg:gap-5">
           {/* Logo Container */}
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl blur-xl opacity-20 animate-pulse" />
+            <div className="absolute inset-0 rounded-2xl blur-xl opacity-50 animate-pulse" style={{ background: 'radial-gradient(circle, rgba(225,29,72,0.65), transparent 70%)' }} />
             <div 
               className="relative h-20 w-20 lg:h-24 lg:w-24 flex items-center justify-center rounded-2xl shadow-xl"
-              style={{ backgroundColor: '#d31527' }}
+              style={{ backgroundColor: '#E11D48' }}
             >
               <img 
                 src="/renner-logo.png" 
@@ -77,14 +89,14 @@ export default function Login() {
           
           {/* Title */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent">
+            <h1 className="text-4xl lg:text-5xl font-bold text-slate-800 dark:text-white tracking-tight">
               ASTEC
             </h1>
             <div className="space-y-1">
-              <p className="text-sm lg:text-base text-muted-foreground font-medium">
+              <p className="text-sm lg:text-base text-slate-500 dark:text-slate-300 font-medium">
                 Sistema de Agenda - Assistentes Técnicos
               </p>
-              <p className="text-xs lg:text-sm font-semibold" style={{ color: '#d31527' }}>
+              <p className="text-xs lg:text-sm font-semibold tracking-wide" style={{ color: '#E11D48' }}>
                 RENNER COATINGS
               </p>
             </div>
@@ -92,7 +104,9 @@ export default function Login() {
         </div>
 
         {/* Login Card */}
-        <Card className="border-0 shadow-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-900/5 overflow-hidden">
+          {/* Barra de gradiente no topo do card (detalhe do RDS/crédito) */}
+          <div className="h-1 w-full bg-gradient-to-r from-rose-500 via-rose-400 to-emerald-400" />
           <CardHeader className="p-5 lg:p-6 pb-2">
             <CardTitle className="text-xl lg:text-2xl font-semibold">Bem-vindo</CardTitle>
             <CardDescription className="text-sm">
@@ -115,7 +129,7 @@ export default function Login() {
                   disabled={isLoading}
                   data-testid="input-email"
                   autoComplete="email"
-                  className="h-11 lg:h-12 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-red-500 focus:ring-red-500/20 transition-all"
+                  className="h-11 lg:h-12 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-primary/20 transition-all"
                 />
               </div>
               <div className="space-y-2">
@@ -132,7 +146,7 @@ export default function Login() {
                   disabled={isLoading}
                   data-testid="input-password"
                   autoComplete="current-password"
-                  className="h-11 lg:h-12 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-red-500 focus:ring-red-500/20 transition-all"
+                  className="h-11 lg:h-12 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-primary/20 transition-all"
                 />
               </div>
             </CardContent>
@@ -141,7 +155,7 @@ export default function Login() {
                 type="submit"
                 className="w-full h-11 lg:h-12 text-sm lg:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 style={{ 
-                  backgroundColor: '#d31527',
+                  backgroundColor: '#E11D48',
                   color: 'white'
                 }}
                 disabled={isLoading}
@@ -169,7 +183,7 @@ export default function Login() {
                   <div className="flex items-center gap-2 text-[10px] lg:text-xs text-muted-foreground/70">
                     <span>© {new Date().getFullYear()}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                    <span className="font-medium" style={{ color: '#d31527' }}>
+                    <span className="font-medium" style={{ color: '#E11D48' }}>
                       Versão {APP_VERSION}
                     </span>
                   </div>

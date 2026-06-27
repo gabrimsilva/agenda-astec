@@ -934,6 +934,7 @@ export default function Reports() {
       color: "text-green-600 dark:text-green-400",
       bgColor: "bg-green-50 dark:bg-green-950/30",
       borderColor: "border-green-200 dark:border-green-800",
+      accent: "#10B981",
     },
     adicional: {
       title: "Trabalho Adicional",
@@ -941,6 +942,7 @@ export default function Reports() {
       color: "text-yellow-600 dark:text-yellow-400",
       bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
       borderColor: "border-yellow-200 dark:border-yellow-800",
+      accent: "#F59E0B",
     },
     perda: {
       title: "Tempo Não Produtivo",
@@ -948,6 +950,7 @@ export default function Reports() {
       color: "text-red-600 dark:text-red-400",
       bgColor: "bg-red-50 dark:bg-red-950/30",
       borderColor: "border-red-200 dark:border-red-800",
+      accent: "#DC2626",
     },
   };
 
@@ -1067,18 +1070,24 @@ export default function Reports() {
                 return (
                   <Card
                     key={category}
-                    className={`border-2 ${info.borderColor} ${info.bgColor}`}
+                    className="relative overflow-hidden hover-elevate"
                     data-testid={`card-category-${category}`}
                   >
+                    <div className="absolute left-0 top-0 h-full w-1.5" style={{ backgroundColor: info.accent }} />
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Icon className={`h-5 w-5 ${info.color}`} />
-                          <span className="text-base font-semibold">{info.title}</span>
+                          <div
+                            className="flex h-8 w-8 items-center justify-center rounded-lg"
+                            style={{ backgroundColor: `${info.accent}1A`, color: info.accent }}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{info.title}</span>
                         </div>
-                        <Badge 
-                          variant="secondary" 
-                          className="text-xs"
+                        <Badge
+                          className="text-xs border-transparent"
+                          style={{ backgroundColor: `${info.accent}1A`, color: info.accent }}
                           data-testid={`percentage-${category}`}
                         >
                           {report.percentages[category].toFixed(1)}%
@@ -1087,7 +1096,7 @@ export default function Reports() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div>
-                        <div className={`text-3xl font-bold ${info.color}`} data-testid={`total-${category}`}>
+                        <div className="text-3xl font-bold tabular-nums" style={{ color: info.accent }} data-testid={`total-${category}`}>
                           {formatMinutes(report.totals[category])}
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">

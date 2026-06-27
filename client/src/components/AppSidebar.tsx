@@ -11,6 +11,8 @@ import {
   UserCircle,
   FileBarChart,
   Monitor,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +25,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -110,6 +113,27 @@ const assistenteMenuItems = [
   },
 ];
 
+// Botão circular flutuante para recolher/expandir o menu (padrão do crédito)
+function SidebarCollapseButton() {
+  const { toggleSidebar, state } = useSidebar();
+  return (
+    <button
+      type="button"
+      onClick={toggleSidebar}
+      aria-label={state === "collapsed" ? "Expandir menu" : "Recolher menu"}
+      title={state === "collapsed" ? "Expandir menu" : "Recolher menu"}
+      className="absolute top-16 -right-3 z-20 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-background text-foreground shadow-md transition hover:bg-accent md:flex"
+      data-testid="button-collapse-sidebar"
+    >
+      {state === "collapsed" ? (
+        <ChevronRight className="h-3.5 w-3.5" />
+      ) : (
+        <ChevronLeft className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+}
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
@@ -138,15 +162,16 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 flex items-center justify-center rounded-md" style={{ backgroundColor: '#d31527' }}>
+    <Sidebar collapsible="icon">
+      <SidebarCollapseButton />
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:p-2">
+        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+          <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-md" style={{ backgroundColor: '#E11D48' }}>
             <img src="/renner-logo.png" alt="Renner" className="h-8 w-8 object-contain p-1" />
           </div>
-          <div>
+          <div className="group-data-[collapsible=icon]:hidden">
             <h2 className="text-lg font-semibold">ASTEC</h2>
-            <p className="text-xs text-muted-foreground">Sistema de Agenda</p>
+            <p className="text-xs text-sidebar-foreground/60">Sistema de Agenda</p>
           </div>
         </div>
       </SidebarHeader>
@@ -173,42 +198,42 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 space-y-4">
+      <SidebarFooter className="p-4 space-y-4 group-data-[collapsible=icon]:p-2">
         {user && (
           <>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
               <Avatar>
                 <AvatarImage src={user.avatarUrl || userTechnician?.avatarUrl || ""} />
-                <AvatarFallback data-testid="text-user-initials">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold" data-testid="text-user-initials">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                 <p className="text-sm font-medium truncate" data-testid="text-user-name">
                   {user.name}
                 </p>
-                <p className="text-xs text-muted-foreground capitalize" data-testid="text-user-role">
+                <p className="text-xs text-sidebar-foreground/60 capitalize" data-testid="text-user-role">
                   {user.role}
                 </p>
               </div>
             </div>
 
             {userTechnician && (
-              <div className="text-xs space-y-1 px-2 py-2 rounded-md bg-muted" data-testid="info-technician">
-                <p className="text-muted-foreground">Equipe: {userTechnician.team}</p>
-                <p className="text-muted-foreground">Base: {userTechnician.baseCity}</p>
+              <div className="text-xs space-y-1 px-2 py-2 rounded-md bg-sidebar-accent group-data-[collapsible=icon]:hidden" data-testid="info-technician">
+                <p className="text-sidebar-foreground/70">Equipe: {userTechnician.team}</p>
+                <p className="text-sidebar-foreground/70">Base: {userTechnician.baseCity}</p>
               </div>
             )}
 
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full group-data-[collapsible=icon]:px-0"
               onClick={handleLogout}
               data-testid="button-logout"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+              <LogOut className="h-4 w-4 mr-2 group-data-[collapsible=icon]:mr-0" />
+              <span className="group-data-[collapsible=icon]:hidden">Sair</span>
             </Button>
           </>
         )}
