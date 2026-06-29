@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -563,6 +564,32 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
                   )}
                 />
               </div>
+            </div>
+
+            {/* Status do Cliente */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Status</h3>
+              <FormField
+                control={form.control}
+                name="active"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Cliente Ativo</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Clientes inativos ficam ocultos/apagados nas listagens e seleções
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value ?? true}
+                        onCheckedChange={field.onChange}
+                        data-testid="switch-client-active"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
 
             <DialogFooter>
