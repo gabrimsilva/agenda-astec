@@ -231,12 +231,19 @@ export default function PainelTV() {
         else if (tech.status === "online" && tech.gpsStatus === "ativo") statusKey = "online";
         else statusKey = "offline";
 
-        const location = current
-          ? [current.clientCity, current.clientState].filter(Boolean).join("/") ||
-            tech.lastLocation?.city ||
-            tech.baseCity ||
-            ""
-          : tech.lastLocation?.city || tech.baseCity || "";
+        // Cidade/UF da ATIVIDADE do agendamento (não a base/localização do
+        // técnico). Usa a atividade atual; se não houver, a próxima/pendente.
+        const locationActivity = current || nextVisit;
+        let location = "";
+        if (locationActivity) {
+          const city = (locationActivity.clientCity || "").trim();
+          const state = (locationActivity.clientState || "").trim();
+          if (city && state && !city.toUpperCase().includes(state.toUpperCase())) {
+            location = `${city}/${state}`;
+          } else {
+            location = city || state;
+          }
+        }
 
         const totalToday = techActivities.length;
         const doneToday = techActivities.filter((a) => a.status === "concluido").length;
