@@ -1315,6 +1315,14 @@ export default function MyAgenda() {
 
   // V3: Handler para abrir painel de próximo passo após conclusão
   const handleOpenNextStepPanel = (activity: Activity) => {
+    const isHomeOfficeActivity = activity.clientName === "Base do técnico (Home office)";
+    const noTravelType = activityTypes.find((at) => at.id === activity.activityTypeId) as any;
+    // Sem trajeto (ou home office): não há próximo passo/encerrar jornada — só conclui (tempo de execução já registrado).
+    if (isHomeOfficeActivity || noTravelType?.requiresTravel === false) {
+      setCompletedActivityForNextStep(null);
+      setNextStepPanelOpen(false);
+      return;
+    }
     setCompletedActivityForNextStep(activity);
     setNextStepPanelOpen(true);
   };
