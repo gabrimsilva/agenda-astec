@@ -6369,7 +6369,7 @@ function generateSimplifiedRatHtml(rat: any, technician: any, formData: any): st
     const sigSrc = rat.technicianSignature.startsWith('data:') ? rat.technicianSignature : `data:image/png;base64,${rat.technicianSignature}`;
     signatureHtml = `<div style="text-align: center; margin-top: 40px; page-break-inside: avoid;">
       <div style="display: inline-block; text-align: center;">
-        <img src="${sigSrc}" style="max-width: 280px; max-height: 100px; display: block; margin: 0 auto;" />
+        <img src="${sigSrc}" style="max-width: 280px; max-height: 100px; display: block; margin: 0 auto; background-color: #ffffff;" />
         <div style="border-top: 1px solid #000; width: 280px; margin: 5px auto 0; padding-top: 5px; font-size: 9pt;">
           ${techName}
         </div>
@@ -6649,7 +6649,7 @@ function generateRatHtml(rat: any, technician: any, formData: any): string {
     const sigSrc = rat.technicianSignature.startsWith('data:') ? rat.technicianSignature : `data:image/png;base64,${rat.technicianSignature}`;
     signatureHtml = `<div style="text-align: center; margin-top: 40px;">
       <div style="display: inline-block; text-align: center;">
-        <img src="${sigSrc}" style="max-width: 280px; max-height: 100px; display: block; margin: 0 auto;" />
+        <img src="${sigSrc}" style="max-width: 280px; max-height: 100px; display: block; margin: 0 auto; background-color: #ffffff;" />
         <div style="border-top: 1px solid #000; width: 280px; margin: 5px auto 0; padding-top: 5px; font-size: 9pt;">
           ${techName2}
         </div>
