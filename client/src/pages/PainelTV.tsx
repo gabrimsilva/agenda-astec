@@ -49,6 +49,7 @@ interface Activity {
   title: string;
   scheduledDate: string;
   scheduledTime?: string;
+  endTime?: string;
   status: string; // planejado | aCaminho | emExecucao | concluido | reprovado | cancelado
   technicianId: string;
   clientName?: string;
@@ -58,20 +59,21 @@ interface Activity {
   clientState?: string | null;
 }
 
-type StatusKey = "emExecucao" | "aCaminho" | "online" | "offline";
+type StatusKey = "emExecucao" | "aCaminho" | "scheduled" | "online" | "offline";
 
 const STATUS_META: Record<StatusKey, { label: string; dot: string; text: string; rank: number }> = {
   emExecucao: { label: "Em atividade", dot: "bg-orange-500", text: "text-orange-300", rank: 0 },
   aCaminho: { label: "Em rota", dot: "bg-blue-500", text: "text-blue-300", rank: 1 },
-  online: { label: "Disponível", dot: "bg-emerald-500", text: "text-emerald-300", rank: 2 },
-  offline: { label: "Offline", dot: "bg-slate-500", text: "text-slate-400", rank: 3 },
+  scheduled: { label: "Em horário", dot: "bg-amber-400", text: "text-amber-300", rank: 2 },
+  online: { label: "Disponível", dot: "bg-emerald-500", text: "text-emerald-300", rank: 3 },
+  offline: { label: "Offline", dot: "bg-slate-500", text: "text-slate-400", rank: 4 },
 };
 
-function getStatusKey(tech: TechnicianStatus): StatusKey {
-  if (tech.currentActivityStatus === "emExecucao") return "emExecucao";
-  if (tech.currentActivityStatus === "aCaminho") return "aCaminho";
-  if (tech.status === "online" && tech.gpsStatus === "ativo") return "online";
-  return "offline";
+function toMinutes(value?: string | null): number | null {
+  if (!value) return null;
+  const m = value.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
 }
 
 function formatTime(value?: string | null): string {
@@ -170,7 +172,15 @@ export default function PainelTV() {
 
   // Monta linhas: por técnico, junta atividades do dia
   const rows = useMemo(() => {
-    const nowMs = now.getTime();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const isRealClient = (name?: string) =>
+      !!name && name.trim() !== "" && name !== "Cliente Desconhecido";
+
+    // Nome a exibir na coluna "Cliente atual": cliente real, senão o título
+    // da atividade (ex.: Home office / "Base do técnico").
+    const displayName = (a: Activity) =>
+      isRealClient(a.clientName) ? (a.clientName as string) : a.title || "—";
 
     return technicians
       .map((tech) => {
@@ -178,31 +188,53 @@ export default function PainelTV() {
           .filter((a) => a.technicianId === tech.technicianId)
           .filter((a) => a.status !== "cancelado" && a.status !== "reprovado");
 
-        // Atividade atual: em execução tem prioridade, depois a caminho
-        const current =
+        // 1) Atividade atual por check-in real (GPS/status)
+        let current =
           techActivities.find((a) => a.status === "emExecucao") ||
           techActivities.find((a) => a.status === "aCaminho") ||
           null;
+        let bySchedule = false;
 
-        // Próxima visita: atividade planejada mais próxima (por horário)
-        const upcoming = techActivities
-          .filter((a) => a.status === "planejado")
-          .sort((a, b) => formatTime(a.scheduledTime).localeCompare(formatTime(b.scheduledTime)));
+        // 2) Se não houver check-in, usa a AGENDA: atividade cuja janela de
+        //    horário (início~fim) contém o horário atual. Espelha o calendário.
+        if (!current) {
+          current =
+            techActivities.find((a) => {
+              if (a.status === "concluido") return false;
+              const start = toMinutes(a.scheduledTime);
+              const end = toMinutes(a.endTime);
+              if (start === null) return false;
+              const effectiveEnd = end !== null && end > start ? end : start + 60;
+              return nowMinutes >= start && nowMinutes <= effectiveEnd;
+            }) || null;
+          if (current) bySchedule = true;
+        }
 
-        // Tenta achar a próxima cujo horário ainda não passou; senão pega a primeira planejada
+        // Próxima visita: próxima atividade planejada que ainda não começou
+        // (excluindo a atual), ordenada por horário.
         const nextVisit =
-          upcoming.find((a) => {
-            const t = formatTime(a.scheduledTime);
-            if (!t) return false;
-            const [h, m] = t.split(":").map(Number);
-            const actMs = new Date(now).setHours(h, m, 0, 0);
-            return actMs >= nowMs - 60 * 60 * 1000; // tolera 1h passada
-          }) || upcoming[0] || null;
+          techActivities
+            .filter((a) => a.status === "planejado" && a.id !== current?.id)
+            .filter((a) => {
+              const start = toMinutes(a.scheduledTime);
+              return start === null || start >= nowMinutes;
+            })
+            .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0))[0] ||
+          null;
 
-        const statusKey = getStatusKey(tech);
+        // Status: check-in real > em horário (agenda) > disponível > offline
+        let statusKey: StatusKey;
+        if (tech.currentActivityStatus === "emExecucao") statusKey = "emExecucao";
+        else if (tech.currentActivityStatus === "aCaminho") statusKey = "aCaminho";
+        else if (bySchedule) statusKey = "scheduled";
+        else if (tech.status === "online" && tech.gpsStatus === "ativo") statusKey = "online";
+        else statusKey = "offline";
 
         const location = current
-          ? [current.clientCity, current.clientState].filter(Boolean).join("/")
+          ? [current.clientCity, current.clientState].filter(Boolean).join("/") ||
+            tech.lastLocation?.city ||
+            tech.baseCity ||
+            ""
           : tech.lastLocation?.city || tech.baseCity || "";
 
         const totalToday = techActivities.length;
@@ -212,7 +244,9 @@ export default function PainelTV() {
           tech,
           statusKey,
           current,
+          currentDisplayName: current ? displayName(current) : null,
           nextVisit,
+          nextVisitName: nextVisit ? displayName(nextVisit) : null,
           location,
           totalToday,
           doneToday,
@@ -226,7 +260,7 @@ export default function PainelTV() {
   }, [technicians, activities, now]);
 
   const activeCount = rows.filter(
-    (r) => r.statusKey === "emExecucao" || r.statusKey === "aCaminho"
+    (r) => r.statusKey === "emExecucao" || r.statusKey === "aCaminho" || r.statusKey === "scheduled"
   ).length;
 
   if (isLoading) {
@@ -366,7 +400,7 @@ export default function PainelTV() {
                     {row.current ? (
                       <div className="flex items-center gap-2 min-w-0">
                         <Building2 className="h-4 w-4 text-slate-500 shrink-0" />
-                        <span className="text-base truncate">{row.current.clientName}</span>
+                        <span className="text-base truncate">{row.currentDisplayName}</span>
                       </div>
                     ) : (
                       <span className="text-slate-500">—</span>
@@ -403,7 +437,7 @@ export default function PainelTV() {
                             {formatTime(row.nextVisit.scheduledTime) || "—"}
                           </div>
                           <div className="text-sm text-slate-400 truncate">
-                            {row.nextVisit.clientName}
+                            {row.nextVisitName}
                           </div>
                         </div>
                       </div>

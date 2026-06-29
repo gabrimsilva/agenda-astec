@@ -720,6 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           longitude: parseFloat(activity.longitude || "0"),
           scheduledDate: activity.scheduledDate,
           scheduledTime: activity.startTime,
+          endTime: activity.endTime,
           status: activity.status,
           activityTypeName: activity.activityType?.name || "Atividade",
           clientCity: activity.client?.city || (activity as any).city || null,
