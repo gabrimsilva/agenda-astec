@@ -295,16 +295,15 @@ export default function RATs() {
     }
   };
 
-  const filteredRats = useMemo(() => {
+  // Base filtrada por TODOS os filtros, EXCETO o status.
+  // Usada tanto para a contagem dos cards quanto como base da lista,
+  // garantindo que cards e lista fiquem sempre consistentes.
+  const baseFilteredRats = useMemo(() => {
     let filtered = rats;
 
     // Filter by technician (admin only)
     if (isAdmin && technicianFilter !== "all") {
       filtered = filtered.filter((rat) => rat.technicianId === technicianFilter);
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((rat) => rat.status === statusFilter);
     }
 
     // Filter by sent status
@@ -357,10 +356,20 @@ export default function RATs() {
       );
     }
 
-    return filtered.sort((a, b) => 
+    return filtered;
+  }, [rats, sentFilter, typeFilter, searchQuery, technicianFilter, isAdmin, startDate, endDate]);
+
+  const filteredRats = useMemo(() => {
+    let filtered = baseFilteredRats;
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((rat) => rat.status === statusFilter);
+    }
+
+    return [...filtered].sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  }, [rats, statusFilter, sentFilter, typeFilter, searchQuery, technicianFilter, isAdmin, startDate, endDate]);
+  }, [baseFilteredRats, statusFilter]);
 
   // Reset display page whenever the filtered list changes (new filter applied)
   const PAGE_SIZE = 50;
@@ -413,21 +422,14 @@ export default function RATs() {
     return activitiesWithoutRat;
   }, [activitiesWithoutRat, isAdmin, technicianFilter]);
 
-  const ratsForDisplay = useMemo(() => {
-    if (isAdmin && technicianFilter !== "all") {
-      return rats.filter((rat) => rat.technicianId === technicianFilter);
-    }
-    return rats;
-  }, [rats, isAdmin, technicianFilter]);
-
   const statusCounts = useMemo(() => {
-    const counts = ratsForDisplay.reduce((acc, rat) => {
+    const counts = baseFilteredRats.reduce((acc, rat) => {
       acc[rat.status] = (acc[rat.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     return counts;
-  }, [ratsForDisplay]);
+  }, [baseFilteredRats]);
 
   // MOBILE FIX: Track input modality (touch vs pointer) for hybrid devices
   useEffect(() => {
@@ -920,7 +922,7 @@ export default function RATs() {
                 </Button>
               )}
               <Badge variant="outline" className="text-sm" data-testid="badge-total-rats">
-                {ratsForDisplay.length} RATs
+                {baseFilteredRats.length} RATs
               </Badge>
             </div>
           </div>
