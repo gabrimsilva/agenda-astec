@@ -210,16 +210,17 @@ export default function PainelTV() {
           if (current) bySchedule = true;
         }
 
-        // Próxima visita: próxima atividade planejada que ainda não começou
-        // (excluindo a atual), ordenada por horário.
+        // Próxima visita / pendência: atividades planejadas (não concluídas) que
+        // não sejam a atual. Prioriza as que ainda vão começar; se todas já
+        // passaram do horário, mostra a mais antiga pendente (em atraso) para
+        // que o agendamento não desapareça do painel.
+        const pending = techActivities
+          .filter((a) => a.status === "planejado" && a.id !== current?.id)
+          .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0));
+
         const nextVisit =
-          techActivities
-            .filter((a) => a.status === "planejado" && a.id !== current?.id)
-            .filter((a) => {
-              const start = toMinutes(a.scheduledTime);
-              return start === null || start >= nowMinutes;
-            })
-            .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0))[0] ||
+          pending.find((a) => (toMinutes(a.scheduledTime) ?? 0) >= nowMinutes) ||
+          pending[0] ||
           null;
 
         // Status: check-in real > em horário (agenda) > disponível > offline
