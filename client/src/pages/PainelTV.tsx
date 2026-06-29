@@ -393,6 +393,12 @@ export default function PainelTV() {
                       <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
                       {meta.label}
                     </div>
+                    {row.current && formatTime(row.current.scheduledTime) && (
+                      <div className="mt-1 ml-5 text-sm text-slate-400 tabular-nums">
+                        {formatTime(row.current.scheduledTime)}
+                        {formatTime(row.current.endTime) && ` às ${formatTime(row.current.endTime)}`}
+                      </div>
+                    )}
                   </td>
 
                   {/* Cliente atual */}
