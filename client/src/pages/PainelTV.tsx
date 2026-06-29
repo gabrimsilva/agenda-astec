@@ -367,7 +367,7 @@ export default function PainelTV() {
                   data-testid={`row-tech-${row.tech.technicianId}`}
                 >
                   {/* Técnico */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     <div className="flex items-center gap-3">
                       <span
                         className="h-10 w-1.5 rounded-full shrink-0"
@@ -388,7 +388,7 @@ export default function PainelTV() {
                   </td>
 
                   {/* Status */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     <div className={`flex items-center gap-2 font-medium ${meta.text}`}>
                       <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
                       {meta.label}
@@ -396,11 +396,11 @@ export default function PainelTV() {
                   </td>
 
                   {/* Cliente atual */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     {row.current ? (
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Building2 className="h-4 w-4 text-slate-500 shrink-0" />
-                        <span className="text-base truncate">{row.currentDisplayName}</span>
+                      <div className="flex items-start gap-2">
+                        <Building2 className="h-4 w-4 text-slate-500 shrink-0 mt-1" />
+                        <span className="text-base break-words whitespace-normal">{row.currentDisplayName}</span>
                       </div>
                     ) : (
                       <span className="text-slate-500">—</span>
@@ -408,9 +408,9 @@ export default function PainelTV() {
                   </td>
 
                   {/* Atividade */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     {row.current ? (
-                      <span className="text-base text-slate-200 truncate block">
+                      <span className="text-base text-slate-200 break-words whitespace-normal">
                         {row.current.activityTypeName}
                       </span>
                     ) : (
@@ -419,16 +419,16 @@ export default function PainelTV() {
                   </td>
 
                   {/* Cidade/UF */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     {row.location ? (
-                      <span className="text-base text-slate-300">{row.location}</span>
+                      <span className="text-base text-slate-300 break-words whitespace-normal">{row.location}</span>
                     ) : (
                       <span className="text-slate-500">—</span>
                     )}
                   </td>
 
                   {/* Próxima visita */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 align-top">
                     {row.nextVisit ? (
                       <div className="flex items-start gap-2 min-w-0">
                         <CalendarClock className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
@@ -436,7 +436,7 @@ export default function PainelTV() {
                           <div className="text-base font-medium tabular-nums">
                             {formatTime(row.nextVisit.scheduledTime) || "—"}
                           </div>
-                          <div className="text-sm text-slate-400 truncate">
+                          <div className="text-sm text-slate-400 break-words whitespace-normal">
                             {row.nextVisitName}
                           </div>
                         </div>
