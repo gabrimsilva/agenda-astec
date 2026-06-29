@@ -722,6 +722,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           scheduledTime: activity.startTime,
           status: activity.status,
           activityTypeName: activity.activityType?.name || "Atividade",
+          clientCity: activity.client?.city || (activity as any).city || null,
+          clientState: activity.client?.state || (activity as any).state || null,
           technicianId: activity.technicianId,
           technicianName: activity.technician?.name || "Técnico",
           technicianColor: activity.technician?.color || "#3b82f6",

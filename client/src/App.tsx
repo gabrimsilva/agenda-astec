@@ -35,6 +35,7 @@ import Login from "@/pages/Login";
 import GPSTest from "@/pages/GPSTest";
 import IconGenerator from "@/pages/IconGenerator";
 import MapaTV from "@/pages/MapaTV";
+import PainelTV from "@/pages/PainelTV";
 import { useAuth } from "@/hooks/useAuth";
 import { useDbWarmup } from "@/hooks/useDbWarmup";
 import { useLocation as useWouterLocation } from "wouter";
@@ -154,6 +155,7 @@ function App() {
                 <Switch>
                   <Route path="/login" component={Login} />
                   <Route path="/mapa-tv" component={MapaTV} />
+                  <Route path="/painel-tv" component={PainelTV} />
                   <Route>
                     {() => <MainLayout />}
                   </Route>

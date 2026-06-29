@@ -10,7 +10,7 @@ import {
   Navigation,
   UserCircle,
   FileBarChart,
-  Monitor,
+  LayoutDashboard,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -68,9 +68,9 @@ const adminMenuItems = [
     icon: MapPin,
   },
   {
-    title: "Mapa TV",
-    url: "/mapa-tv",
-    icon: Monitor,
+    title: "Painel TV",
+    url: "/painel-tv",
+    icon: LayoutDashboard,
   },
   {
     title: "Perfil",
