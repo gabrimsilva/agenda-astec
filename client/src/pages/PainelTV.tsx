@@ -407,7 +407,7 @@ export default function PainelTV() {
                     {row.current ? (
                       <div className="flex items-start gap-2">
                         <Building2 className="h-4 w-4 text-slate-500 shrink-0 mt-1" />
-                        <span className="text-base break-words whitespace-normal">{row.currentDisplayName}</span>
+                        <span className="text-base line-clamp-2">{row.currentDisplayName}</span>
                       </div>
                     ) : (
                       <span className="text-slate-500">—</span>
@@ -417,7 +417,7 @@ export default function PainelTV() {
                   {/* Atividade */}
                   <td className="px-6 py-4 align-top">
                     {row.current ? (
-                      <span className="text-base text-slate-200 break-words whitespace-normal">
+                      <span className="text-base text-slate-200 line-clamp-2">
                         {row.current.activityTypeName}
                       </span>
                     ) : (
@@ -428,7 +428,7 @@ export default function PainelTV() {
                   {/* Cidade/UF */}
                   <td className="px-6 py-4 align-top">
                     {row.location ? (
-                      <span className="text-base text-slate-300 break-words whitespace-normal">{row.location}</span>
+                      <span className="text-base text-slate-300 line-clamp-2">{row.location}</span>
                     ) : (
                       <span className="text-slate-500">—</span>
                     )}
@@ -443,7 +443,7 @@ export default function PainelTV() {
                           <div className="text-base font-medium tabular-nums">
                             {formatTime(row.nextVisit.scheduledTime) || "—"}
                           </div>
-                          <div className="text-sm text-slate-400 break-words whitespace-normal">
+                          <div className="text-sm text-slate-400 line-clamp-2">
                             {row.nextVisitName}
                           </div>
                         </div>
