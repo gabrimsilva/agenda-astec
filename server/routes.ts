@@ -714,7 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           id: activity.id,
           title: activity.title,
-          clientName: activity.client?.name || "Cliente Desconhecido",
+          clientName: activity.client?.name || activity.clientName || "Cliente Desconhecido",
           address: activity.address || "",
           latitude: parseFloat(activity.latitude || "0"),
           longitude: parseFloat(activity.longitude || "0"),

@@ -177,10 +177,10 @@ export default function PainelTV() {
     const isRealClient = (name?: string) =>
       !!name && name.trim() !== "" && name !== "Cliente Desconhecido";
 
-    // Nome a exibir na coluna "Cliente atual": cliente real, senão o título
-    // da atividade (ex.: Home office / "Base do técnico").
+    // Nome a exibir na coluna "Cliente atual": mesmo valor do campo "Cliente"
+    // da atividade (já inclui "Base do técnico (Home office)" quando aplicável).
     const displayName = (a: Activity) =>
-      isRealClient(a.clientName) ? (a.clientName as string) : a.title || "—";
+      isRealClient(a.clientName) ? (a.clientName as string) : a.clientName || a.title || "—";
 
     return technicians
       .map((tech) => {
