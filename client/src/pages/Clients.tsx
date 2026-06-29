@@ -307,7 +307,11 @@ export default function Clients() {
                   </TableRow>
                 ) : (
                   clients.map((client) => (
-                    <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
+                    <TableRow
+                      key={client.id}
+                      data-testid={`row-client-${client.id}`}
+                      className={client.active === false ? "opacity-50" : undefined}
+                    >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
