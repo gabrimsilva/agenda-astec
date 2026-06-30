@@ -258,9 +258,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                   {stop.status === "pending" && stop.statusLabel !== "aCaminho" && !stop.hideNavigation && (
                     <div className="px-4 pb-3">
                       <Button 
-                        className="w-full gap-2"
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                         size="sm"
-                        variant="default"
                         onClick={(e) => {
                           e.stopPropagation();
                           onStartSingleNavigation?.(stop.id);
@@ -295,9 +294,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                   {stop.hideNavigation && !stop.isHomeOffice && stop.status === "pending" && stop.statusLabel === "planejado" && (
                     <div className="px-4 pb-3">
                       <Button 
-                        className="w-full gap-2"
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                         size="sm"
-                        variant="default"
                         onClick={(e) => {
                           e.stopPropagation();
                           onCheckIn?.(stop.id);
@@ -314,9 +312,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                   {stop.isHomeOffice && stop.status === "pending" && stop.statusLabel === "planejado" && (
                     <div className="px-4 pb-3">
                       <Button 
-                        className="w-full gap-2"
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                         size="sm"
-                        variant="default"
                         onClick={(e) => {
                           e.stopPropagation();
                           onCheckIn?.(stop.id);
