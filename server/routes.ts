@@ -1295,8 +1295,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Default to current month
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        // Importante: incluir o último dia do mês inteiro (até 23:59:59.999),
+        // senão atividades do último dia após a meia-noite ficam de fora.
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         activities = await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
       }
       
