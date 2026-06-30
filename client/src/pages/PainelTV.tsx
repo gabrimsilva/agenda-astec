@@ -216,17 +216,13 @@ export default function PainelTV() {
           if (current) bySchedule = true;
         }
 
-        // Próxima visita / pendência: atividades planejadas (não concluídas) que
-        // não sejam a atual. Prioriza as que ainda vão começar; se todas já
-        // passaram do horário, mostra a mais antiga pendente (em atraso) para
-        // que o agendamento não desapareça do painel.
-        const pending = techActivities
-          .filter((a) => a.status === "planejado" && a.id !== current?.id)
-          .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0));
-
+        // Próxima visita: somente atividades FUTURAS (que ainda vão começar).
+        // Atividades passadas não aparecem aqui (passam a contar como feitas).
         const nextVisit =
-          pending.find((a) => (toMinutes(a.scheduledTime) ?? 0) >= nowMinutes) ||
-          pending[0] ||
+          techActivities
+            .filter((a) => a.status === "planejado" && a.id !== current?.id)
+            .filter((a) => (toMinutes(a.scheduledTime) ?? Infinity) > nowMinutes)
+            .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0))[0] ||
           null;
 
         // Status: check-in real > em horário (agenda) > disponível > offline
@@ -252,7 +248,17 @@ export default function PainelTV() {
         }
 
         const totalToday = techActivities.length;
-        const doneToday = techActivities.filter((a) => a.status === "concluido").length;
+        // Considera "feita" toda atividade concluída OU cuja janela de horário
+        // já terminou (técnicos sem check-in: assume-se pelo horário agendado).
+        const doneToday = techActivities.filter((a) => {
+          if (a.status === "concluido") return true;
+          if (a.status === "emExecucao" || a.status === "aCaminho") return false;
+          const start = toMinutes(a.scheduledTime);
+          const end = toMinutes(a.endTime);
+          if (start === null) return false;
+          const effectiveEnd = end !== null && end > start ? end : start + 60;
+          return nowMinutes > effectiveEnd;
+        }).length;
 
         return {
           tech,
