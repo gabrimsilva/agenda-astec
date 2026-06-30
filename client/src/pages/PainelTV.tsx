@@ -93,16 +93,21 @@ export default function PainelTV() {
   const socketRef = useRef<Socket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  // Data "hoje" derivada do relógio (vira o dia automaticamente à meia-noite,
+  // mesmo com o painel aberto direto na TV). Como é string, a query só refaz
+  // quando o dia realmente muda.
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const activitiesQueryUrl = `/api/map/activities?startDate=${today}&endDate=${today}&resolveCity=1`;
 
   const { data: technicians = [], isLoading } = useQuery<TechnicianStatus[]>({
     queryKey: ["/api/technicians/status"],
     refetchInterval: 30000,
+    refetchIntervalInBackground: true, // continua atualizando mesmo sem foco (TV/kiosk)
   });
 
   const { data: activities = [] } = useQuery<Activity[]>({
-    queryKey: ["/api/map/activities", today, today],
+    queryKey: ["/api/map/activities", today],
     queryFn: async () => {
       const token = localStorage.getItem("astec_token");
       const res = await fetch(activitiesQueryUrl, {
@@ -112,6 +117,7 @@ export default function PainelTV() {
       return res.json();
     },
     refetchInterval: 30000,
+    refetchIntervalInBackground: true, // continua atualizando mesmo sem foco (TV/kiosk)
   });
 
   // Relógio (atualiza a cada segundo)
@@ -145,7 +151,7 @@ export default function PainelTV() {
       setLastUpdate(new Date());
     });
     socket.on("activity_update", () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/map/activities", today, today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/map/activities", today] });
       setLastUpdate(new Date());
     });
 
@@ -195,45 +201,32 @@ export default function PainelTV() {
           null;
         let bySchedule = false;
 
-        // 2) Se não houver check-in, usa a AGENDA.
+        // 2) Sem check-in, usa a AGENDA: atividade cuja janela de horário
+        //    (início~fim) contém o horário atual. Respeita o agendamento.
         if (!current) {
-          // 2a) Atividade cuja janela de horário (início~fim) contém agora.
-          const inWindow = techActivities.find((a) => {
-            if (a.status === "concluido") return false;
-            const start = toMinutes(a.scheduledTime);
-            const end = toMinutes(a.endTime);
-            if (start === null) return false;
-            const effectiveEnd = end !== null && end > start ? end : start + 60;
-            return nowMinutes >= start && nowMinutes <= effectiveEnd;
-          });
-
-          if (inWindow) {
-            current = inWindow;
-            bySchedule = true;
-          } else {
-            // 2b) Atividade que já começou (início <= agora) e não foi concluída:
-            //     o técnico deveria estar nela. Pega a de início mais recente.
-            const started = techActivities
-              .filter((a) => a.status === "planejado")
-              .filter((a) => {
-                const s = toMinutes(a.scheduledTime);
-                return s !== null && s <= nowMinutes;
-              })
-              .sort((a, b) => (toMinutes(b.scheduledTime) ?? 0) - (toMinutes(a.scheduledTime) ?? 0));
-            if (started[0]) {
-              current = started[0];
-              bySchedule = true;
-            }
-          }
+          current =
+            techActivities.find((a) => {
+              if (a.status === "concluido") return false;
+              const start = toMinutes(a.scheduledTime);
+              const end = toMinutes(a.endTime);
+              if (start === null) return false;
+              const effectiveEnd = end !== null && end > start ? end : start + 60;
+              return nowMinutes >= start && nowMinutes <= effectiveEnd;
+            }) || null;
+          if (current) bySchedule = true;
         }
 
-        // Próxima visita: próxima atividade planejada que ainda vai começar
-        // (início > agora), excluindo a atual.
+        // Próxima visita / pendência: atividades planejadas (não concluídas) que
+        // não sejam a atual. Prioriza as que ainda vão começar; se todas já
+        // passaram do horário, mostra a mais antiga pendente (em atraso) para
+        // que o agendamento não desapareça do painel.
+        const pending = techActivities
+          .filter((a) => a.status === "planejado" && a.id !== current?.id)
+          .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0));
+
         const nextVisit =
-          techActivities
-            .filter((a) => a.status === "planejado" && a.id !== current?.id)
-            .filter((a) => (toMinutes(a.scheduledTime) ?? Infinity) > nowMinutes)
-            .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0))[0] ||
+          pending.find((a) => (toMinutes(a.scheduledTime) ?? 0) >= nowMinutes) ||
+          pending[0] ||
           null;
 
         // Status: check-in real > em horário (agenda) > disponível > offline
