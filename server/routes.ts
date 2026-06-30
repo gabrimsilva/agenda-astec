@@ -17,8 +17,12 @@ import { seedActivityTypes, seedDefaultAdmin } from "./seed";
 import { parseGoogleMapsUrl, isValidCoordinates } from "./utils/geo";
 import { parseExcelData, EXPECTED_COLUMNS } from "./utils/excel";
 import { broadcastLocationUpdate, broadcastActivityUpdate } from "./ws";
-import { geocodeAddress, reverseGeocode } from "./services/geocoding";
+import { geocodeAddress, reverseGeocode, reverseGeocodeDetailed } from "./services/geocoding";
 import { calculateRoute, calculateOptimizedRoute, generateNavigationLinks, type Waypoint } from "./services/routing";
+
+// Cache simples de reverse geocoding por coordenada (evita repetir chamadas
+// para a mesma localização entre polls do Painel TV). Chave: lat,lng arredondados.
+const reverseGeoCache = new Map<string, { city: string | null; state: string | null }>();
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -723,14 +727,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           endTime: activity.endTime,
           status: activity.status,
           activityTypeName: activity.activityType?.name || "Atividade",
-          clientCity: activity.client?.city || (activity as any).city || null,
-          clientState: activity.client?.state || (activity as any).state || null,
+          // Local da visita: prioriza cidade/UF da própria atividade; cai para o
+          // cadastro do cliente apenas quando a atividade não tiver.
+          clientCity: (activity as any).city || activity.client?.city || null,
+          clientState: (activity as any).state || activity.client?.state || null,
           technicianId: activity.technicianId,
           technicianName: activity.technician?.name || "Técnico",
           technicianColor: activity.technician?.color || "#3b82f6",
         };
       });
-      
+
+      // Quando solicitado (Painel TV), resolve cidade/UF faltante via reverse
+      // geocoding das coordenadas da atividade, usando cache por coordenada.
+      if (req.query.resolveCity === "1") {
+        for (const act of enrichedActivities) {
+          if ((act.clientCity && act.clientState) || !act.latitude || !act.longitude) continue;
+          if (Math.abs(act.latitude) < 0.5 && Math.abs(act.longitude) < 0.5) continue;
+          const key = `${act.latitude.toFixed(4)},${act.longitude.toFixed(4)}`;
+          let resolved = reverseGeoCache.get(key);
+          if (!resolved) {
+            try {
+              const geo = await reverseGeocodeDetailed(act.latitude, act.longitude);
+              resolved = { city: geo.city, state: geo.state };
+              reverseGeoCache.set(key, resolved);
+            } catch {
+              resolved = { city: null, state: null };
+            }
+          }
+          act.clientCity = act.clientCity || resolved.city;
+          act.clientState = act.clientState || resolved.state;
+        }
+      }
+
       res.json(enrichedActivities);
     } catch (error: any) {
       console.error("Error fetching map activities:", error);

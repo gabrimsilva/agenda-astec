@@ -94,7 +94,7 @@ export default function PainelTV() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const activitiesQueryUrl = `/api/map/activities?startDate=${today}&endDate=${today}`;
+  const activitiesQueryUrl = `/api/map/activities?startDate=${today}&endDate=${today}&resolveCity=1`;
 
   const { data: technicians = [], isLoading } = useQuery<TechnicianStatus[]>({
     queryKey: ["/api/technicians/status"],
