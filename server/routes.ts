@@ -1472,13 +1472,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Minimal endpoint just for the Datasul profile (tiny body avoids corporate WAF blocking large PUTs)
-  app.patch("/api/technicians/:id/datasul-profile", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+  // Minimal endpoint just for the Datasul profile (tiny body avoids corporate WAF blocking large PUTs).
+  // Uses POST because the corporate WAF blocks PUT/PATCH methods.
+  app.post("/api/technicians/:id/datasul-profile", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       const raw = req.body?.datasulUsername;
       const datasulUsername = raw === undefined || raw === null || raw === "" ? null : String(raw).trim();
       const user = await storage.updateTechnicianDatasulProfile(req.params.id, datasulUsername);
       res.json({ datasulUsername: user.datasulUsername });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // POST alias for updating a technician (corporate WAF blocks PUT), same logic as the PUT above.
+  app.post("/api/technicians/:id/update", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const data = updateUserAndTechnicianSchema.parse(req.body);
+      const result = await storage.updateUserAndTechnician(req.params.id, data);
+      res.json(result.technician);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

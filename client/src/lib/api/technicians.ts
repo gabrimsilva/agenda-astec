@@ -25,12 +25,13 @@ export async function createUserAndTechnician(data: any): Promise<{ user: any; t
 }
 
 export async function updateTechnician(id: string, data: any): Promise<Technician> {
-  const response = await apiRequest("PUT", `/api/technicians/${id}`, data);
+  // POST alias (corporate WAF blocks PUT/PATCH methods)
+  const response = await apiRequest("POST", `/api/technicians/${id}/update`, data);
   return response.json();
 }
 
 export async function updateTechnicianDatasulProfile(id: string, datasulUsername: string): Promise<{ datasulUsername: string | null }> {
-  const response = await apiRequest("PATCH", `/api/technicians/${id}/datasul-profile`, { datasulUsername });
+  const response = await apiRequest("POST", `/api/technicians/${id}/datasul-profile`, { datasulUsername });
   return response.json();
 }
 
