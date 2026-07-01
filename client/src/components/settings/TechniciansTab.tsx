@@ -152,7 +152,10 @@ export default function TechniciansTab() {
 
   const onSubmit = (values: FormValues) => {
     if (editingTechnician) {
-      updateMutation.mutate({ id: editingTechnician.id, data: values });
+      // Não reenvia avatarUrl (pode ser um base64 grande que dispara WAF/proxy);
+      // omitir preserva o avatar atual no banco.
+      const { avatarUrl, ...rest } = values;
+      updateMutation.mutate({ id: editingTechnician.id, data: rest });
     } else {
       // When creating, validate that password and role are provided
       if (!values.password || !values.role) {
@@ -163,7 +166,8 @@ export default function TechniciansTab() {
         });
         return;
       }
-      createMutation.mutate(values);
+      const { avatarUrl, ...rest } = values;
+      createMutation.mutate(rest as FormValues);
     }
   };
 
