@@ -474,6 +474,7 @@ export default function TechniciansTab() {
                           <Input 
                             type="password" 
                             {...field} 
+                            autoComplete="new-password"
                             data-testid="input-password" 
                             placeholder={editingTechnician ? "Deixe em branco para manter a atual" : "Mínimo 6 caracteres"} 
                           />
@@ -518,7 +519,14 @@ export default function TechniciansTab() {
                         placeholder="usuário do Datasul (ex.: gmsilva)"
                         {...field}
                         value={field.value || ""}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        name="datasul-perfil-field"
                         data-testid="input-datasul-username"
+                        data-1p-ignore
+                        data-lpignore="true"
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
