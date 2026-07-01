@@ -446,7 +446,7 @@ export default function TechniciansTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent key={editingTechnician?.id ?? "new"} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingTechnician ? "Editar Usuário" : "Adicionar Usuário"}
