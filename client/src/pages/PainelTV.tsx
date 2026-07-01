@@ -59,15 +59,25 @@ interface Activity {
   clientState?: string | null;
 }
 
-type StatusKey = "emExecucao" | "aCaminho" | "scheduled" | "online" | "offline";
+type StatusKey = "scheduled" | "indisponivel" | "ferias" | "disponivel";
 
 const STATUS_META: Record<StatusKey, { label: string; dot: string; text: string; rank: number }> = {
-  emExecucao: { label: "Em atividade", dot: "bg-orange-500", text: "text-orange-300", rank: 0 },
-  aCaminho: { label: "Em rota", dot: "bg-blue-500", text: "text-blue-300", rank: 1 },
-  scheduled: { label: "Em horário", dot: "bg-amber-400", text: "text-amber-300", rank: 2 },
-  online: { label: "Disponível", dot: "bg-emerald-500", text: "text-emerald-300", rank: 3 },
-  offline: { label: "Offline", dot: "bg-slate-500", text: "text-slate-400", rank: 4 },
+  scheduled: { label: "Em horário", dot: "bg-amber-400", text: "text-amber-300", rank: 0 },
+  indisponivel: { label: "Indisponível", dot: "bg-fuchsia-500", text: "text-fuchsia-300", rank: 1 },
+  ferias: { label: "De férias", dot: "bg-purple-500", text: "text-purple-300", rank: 2 },
+  disponivel: { label: "Disponível", dot: "bg-emerald-500", text: "text-emerald-300", rank: 3 },
 };
+
+interface AgendaBlock {
+  id: string;
+  technicianId: string;
+  blockType: "ferias" | "compromisso";
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  description: string | null;
+}
 
 function toMinutes(value?: string | null): number | null {
   if (!value) return null;
@@ -118,6 +128,20 @@ export default function PainelTV() {
     },
     refetchInterval: 30000,
     refetchIntervalInBackground: true, // continua atualizando mesmo sem foco (TV/kiosk)
+  });
+
+  const { data: agendaBlocks = [] } = useQuery<AgendaBlock[]>({
+    queryKey: ["/api/agenda-blocks", today],
+    queryFn: async () => {
+      const token = localStorage.getItem("astec_token");
+      const res = await fetch(`/api/agenda-blocks?startDate=${today}&endDate=${today}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
   });
 
   // Relógio (atualiza a cada segundo)
@@ -225,17 +249,48 @@ export default function PainelTV() {
             .sort((a, b) => (toMinutes(a.scheduledTime) ?? 0) - (toMinutes(b.scheduledTime) ?? 0))[0] ||
           null;
 
-        // Status: check-in real > em horário (agenda) > disponível > offline
+        // Bloqueios de agenda do técnico que cobrem hoje (férias / compromisso)
+        const techBlocks = agendaBlocks.filter((b) => b.technicianId === tech.technicianId);
+        const feriasBlock = techBlocks.find((b) => b.blockType === "ferias");
+        const compromissoNow = techBlocks.find((b) => {
+          if (b.blockType !== "compromisso") return false;
+          const s = toMinutes(b.startTime);
+          const e = toMinutes(b.endTime);
+          if (s === null || e === null) return true; // compromisso sem hora = dia todo
+          return nowMinutes >= s && nowMinutes <= e;
+        });
+
+        // Status (apenas 4): De férias > Indisponível (compromisso) >
+        // Em horário (atividade agora) > Disponível (horário vago / fora de atendimento).
         let statusKey: StatusKey;
-        if (tech.currentActivityStatus === "emExecucao") statusKey = "emExecucao";
-        else if (tech.currentActivityStatus === "aCaminho") statusKey = "aCaminho";
-        else if (bySchedule) statusKey = "scheduled";
-        else if (tech.status === "online" && tech.gpsStatus === "ativo") statusKey = "online";
-        else statusKey = "offline";
+        let statusDetail: string | null = null;
+        if (feriasBlock) {
+          statusKey = "ferias";
+          const dm = (iso: string) => {
+            const d = new Date(iso);
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
+          };
+          statusDetail = `${dm(feriasBlock.startDate)}–${dm(feriasBlock.endDate)}`;
+          current = null;
+        } else if (compromissoNow) {
+          statusKey = "indisponivel";
+          statusDetail =
+            compromissoNow.startTime && compromissoNow.endTime
+              ? `${compromissoNow.startTime}–${compromissoNow.endTime}`
+              : null;
+        } else if (current) {
+          statusKey = "scheduled";
+        } else {
+          statusKey = "disponivel";
+        }
+
+        // Em férias, esconde atividades/próxima visita.
+        const effectiveCurrent = feriasBlock ? null : current;
+        const effectiveNextVisit = feriasBlock ? null : nextVisit;
 
         // Cidade/UF da ATIVIDADE do agendamento (não a base/localização do
         // técnico). Usa a atividade atual; se não houver, a próxima/pendente.
-        const locationActivity = current || nextVisit;
+        const locationActivity = effectiveCurrent || effectiveNextVisit;
         let location = "";
         if (locationActivity) {
           const city = (locationActivity.clientCity || "").trim();
@@ -263,10 +318,11 @@ export default function PainelTV() {
         return {
           tech,
           statusKey,
-          current,
-          currentDisplayName: current ? displayName(current) : null,
-          nextVisit,
-          nextVisitName: nextVisit ? displayName(nextVisit) : null,
+          statusDetail,
+          current: effectiveCurrent,
+          currentDisplayName: effectiveCurrent ? displayName(effectiveCurrent) : null,
+          nextVisit: effectiveNextVisit,
+          nextVisitName: effectiveNextVisit ? displayName(effectiveNextVisit) : null,
           location,
           totalToday,
           doneToday,
@@ -277,11 +333,9 @@ export default function PainelTV() {
         if (r !== 0) return r;
         return a.tech.name.localeCompare(b.tech.name);
       });
-  }, [technicians, activities, now]);
+  }, [technicians, activities, agendaBlocks, now]);
 
-  const activeCount = rows.filter(
-    (r) => r.statusKey === "emExecucao" || r.statusKey === "aCaminho" || r.statusKey === "scheduled"
-  ).length;
+  const activeCount = rows.filter((r) => r.statusKey === "scheduled").length;
 
   if (isLoading) {
     return (
@@ -413,12 +467,16 @@ export default function PainelTV() {
                       <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
                       {meta.label}
                     </div>
-                    {row.current && formatTime(row.current.scheduledTime) && (
+                    {row.statusDetail ? (
+                      <div className="mt-1 ml-5 text-sm text-slate-400 tabular-nums">
+                        {row.statusDetail}
+                      </div>
+                    ) : row.current && formatTime(row.current.scheduledTime) ? (
                       <div className="mt-1 ml-5 text-sm text-slate-400 tabular-nums">
                         {formatTime(row.current.scheduledTime)}
                         {formatTime(row.current.endTime) && ` às ${formatTime(row.current.endTime)}`}
                       </div>
-                    )}
+                    ) : null}
                   </td>
 
                   {/* Cliente atual */}

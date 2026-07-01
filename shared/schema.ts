@@ -26,6 +26,8 @@ export const ACTIVITY_LOCATIONS = [
   { value: "trajeto", label: "Trajeto" },
 ] as const;
 export const dayMarkerEnum = pgEnum("day_marker", ["F", "FE", "S", "D", "P", "H"]);
+// Tipo de bloqueio de agenda (indisponibilidade): férias (multi-dia) ou compromisso pessoal (horário)
+export const agendaBlockTypeEnum = pgEnum("agenda_block_type", ["ferias", "compromisso"]);
 export const approvalStatusEnum = pgEnum("approval_status", ["pendente", "aprovado", "rejeitado"]);
 export const gpsStatusEnum = pgEnum("gps_status", ["ativo", "inativo"]);
 export const connectionStatusEnum = pgEnum("connection_status", ["online", "offline"]);
@@ -48,6 +50,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: userRoleEnum("role").notNull().default("assistente"),
   name: text("name").notNull(),
+  datasulUsername: text("datasul_username"), // login do Datasul associado (perfil Datasul)
   avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -285,6 +288,22 @@ export const dayMarkers = pgTable("day_markers", {
   markerType: dayMarkerEnum("marker_type").notNull(),
   description: text("description"),
   isGlobal: boolean("is_global").default(false),
+});
+
+// Bloqueios de agenda (indisponibilidade): férias e compromissos pessoais.
+// NÃO são atividades — ficam totalmente fora dos cálculos (pizza/tempo/relatórios).
+// Servem para ocupar a agenda e avisar o gestor ao tentar agendar.
+export const agendaBlocks = pgTable("agenda_blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").references(() => technicians.id, { onDelete: "cascade" }).notNull(),
+  blockType: agendaBlockTypeEnum("block_type").notNull(),
+  startDate: timestamp("start_date").notNull(), // dia inicial (00:00)
+  endDate: timestamp("end_date").notNull(),     // dia final (00:00) — igual a startDate p/ compromisso de 1 dia
+  startTime: text("start_time"),                // "HH:MM" — só p/ compromisso (parcial)
+  endTime: text("end_time"),                    // "HH:MM" — só p/ compromisso (parcial)
+  description: text("description"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Approvals table
@@ -741,6 +760,23 @@ export const insertDayMarkerSchema = createInsertSchema(dayMarkers).omit({
   id: true,
 });
 
+export const insertAgendaBlockSchema = createInsertSchema(agendaBlocks).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  technicianId: z.string().optional(), // definido pelo servidor p/ assistente; obrigatório p/ admin (validado na rota)
+  startDate: z.union([z.date(), z.string()]).transform((val) =>
+    typeof val === "string" ? new Date(val) : val
+  ),
+  endDate: z.union([z.date(), z.string()]).transform((val) =>
+    typeof val === "string" ? new Date(val) : val
+  ),
+  startTime: z.string().optional().nullable(),
+  endTime: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  createdBy: z.string().optional().nullable(),
+});
+
 export const insertActivityTravelTimeSchema = createInsertSchema(activityTravelTimes).omit({
   id: true,
   createdAt: true,
@@ -924,6 +960,7 @@ export const createUserAndTechnicianSchema = z.object({
   // User fields
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   role: z.enum(["admin", "assistente"]),
+  datasulUsername: z.string().optional().nullable(),
   // Technician fields
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
@@ -993,6 +1030,7 @@ export const updateUserAndTechnicianSchema = z.object({
   // User fields (optional) - empty string for password means "don't change"
   password: z.string().transform(val => val === "" ? undefined : val).pipe(z.string().min(6, "Senha deve ter pelo menos 6 caracteres")).optional(),
   role: z.enum(["admin", "assistente"]).optional(),
+  datasulUsername: z.string().optional().nullable(),
   // Technician fields (partial) - these will also update user table for consistency
   name: z.string().min(1, "Nome é obrigatório").optional(),
   email: z.string().email("Email inválido").optional(),
@@ -1058,6 +1096,9 @@ export type Activity = typeof activities.$inferSelect;
 
 export type InsertDayMarker = z.infer<typeof insertDayMarkerSchema>;
 export type DayMarker = typeof dayMarkers.$inferSelect;
+
+export type InsertAgendaBlock = z.infer<typeof insertAgendaBlockSchema>;
+export type AgendaBlock = typeof agendaBlocks.$inferSelect;
 
 export type InsertActivityTravelTime = z.infer<typeof insertActivityTravelTimeSchema>;
 export type ActivityTravelTime = typeof activityTravelTimes.$inferSelect;

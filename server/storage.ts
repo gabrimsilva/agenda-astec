@@ -9,6 +9,7 @@ import {
   activities,
   approvals,
   dayMarkers,
+  agendaBlocks,
   activityAttachments,
   auditLogs,
   technicianLocations,
@@ -35,6 +36,8 @@ import {
   type InsertApproval,
   type DayMarker,
   type InsertDayMarker,
+  type AgendaBlock,
+  type InsertAgendaBlock,
   type ActivityAttachment,
   type InsertActivityAttachment,
   type AuditLog,
@@ -63,6 +66,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByDatasulUsername(datasulUsername: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
@@ -75,7 +79,7 @@ export interface IStorage {
   createTechnician(technician: InsertTechnician): Promise<Technician>;
   createUserAndTechnician(data: { user: InsertUser; technician: Omit<InsertTechnician, 'userId'> }): Promise<{ user: User; technician: Technician }>;
   updateTechnician(id: string, technician: Partial<InsertTechnician>): Promise<Technician>;
-  updateUserAndTechnician(technicianId: string, data: { password?: string; role?: string; name?: string; email?: string; phone?: string; team?: string; baseCity?: string; color?: string; avatarUrl?: string; vehicleInfo?: string; licenseNumber?: string; workHoursPerDay?: number; baseAddress?: string; baseNumero?: string; baseBairro?: string; baseState?: string; baseLatitude?: string | null; baseLongitude?: string | null }): Promise<{ user: User; technician: Technician }>;
+  updateUserAndTechnician(technicianId: string, data: { password?: string; role?: string; name?: string; email?: string; datasulUsername?: string | null; phone?: string; team?: string; baseCity?: string; color?: string; avatarUrl?: string; vehicleInfo?: string; licenseNumber?: string; workHoursPerDay?: number; baseAddress?: string; baseNumero?: string; baseBairro?: string; baseState?: string; baseLatitude?: string | null; baseLongitude?: string | null }): Promise<{ user: User; technician: Technician }>;
   deleteTechnician(id: string): Promise<void>;
   countActivitiesByTechnicianId(technicianId: string): Promise<number>;
   
@@ -142,6 +146,13 @@ export interface IStorage {
   getDayMarkersByDateRange(startDate: Date, endDate: Date): Promise<DayMarker[]>;
   createDayMarker(marker: InsertDayMarker): Promise<DayMarker>;
   deleteDayMarker(id: string): Promise<void>;
+
+  // Agenda Blocks (indisponibilidade: férias / compromissos)
+  getAgendaBlock(id: string): Promise<AgendaBlock | undefined>;
+  getAgendaBlocksByTechnicianId(technicianId: string): Promise<AgendaBlock[]>;
+  getAgendaBlocksByDateRange(startDate: Date, endDate: Date): Promise<AgendaBlock[]>;
+  createAgendaBlock(block: InsertAgendaBlock): Promise<AgendaBlock>;
+  deleteAgendaBlock(id: string): Promise<void>;
   
   // Activity Attachments
   getActivityAttachments(activityId: string): Promise<ActivityAttachment[]>;
@@ -197,6 +208,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByDatasulUsername(datasulUsername: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.datasulUsername, datasulUsername));
     return user || undefined;
   }
 
@@ -273,7 +289,7 @@ export class DatabaseStorage implements IStorage {
     return technician;
   }
 
-  async updateUserAndTechnician(technicianId: string, data: { password?: string; role?: string; name?: string; email?: string; phone?: string; team?: string; baseCity?: string; color?: string; avatarUrl?: string; vehicleInfo?: string; licenseNumber?: string; workHoursPerDay?: number; baseAddress?: string; baseNumero?: string; baseBairro?: string; baseState?: string; baseLatitude?: string | null; baseLongitude?: string | null }): Promise<{ user: User; technician: Technician }> {
+  async updateUserAndTechnician(technicianId: string, data: { password?: string; role?: string; name?: string; email?: string; datasulUsername?: string | null; phone?: string; team?: string; baseCity?: string; color?: string; avatarUrl?: string; vehicleInfo?: string; licenseNumber?: string; workHoursPerDay?: number; baseAddress?: string; baseNumero?: string; baseBairro?: string; baseState?: string; baseLatitude?: string | null; baseLongitude?: string | null }): Promise<{ user: User; technician: Technician }> {
     // Get technician to find userId (outside transaction for simplicity)
     const existingTechnician = await this.getTechnician(technicianId);
     if (!existingTechnician) {
@@ -282,13 +298,14 @@ export class DatabaseStorage implements IStorage {
 
     return await db.transaction(async (tx) => {
       // Separate user and technician fields
-      const { password, role, name, email, ...technicianData } = data;
+      const { password, role, name, email, datasulUsername, ...technicianData } = data;
       
       // Build user update object - include name and email to keep user table in sync
       const userUpdate: any = {};
       if (role) userUpdate.role = role;
       if (name) userUpdate.name = name;
       if (email) userUpdate.email = email;
+      if (datasulUsername !== undefined) userUpdate.datasulUsername = datasulUsername || null;
       if (password) {
         // Import hashPassword dynamically to avoid circular dependency
         const { hashPassword } = await import("./auth");
@@ -686,6 +703,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDayMarker(id: string): Promise<void> {
     await db.delete(dayMarkers).where(eq(dayMarkers.id, id));
+  }
+
+  // Agenda Blocks (indisponibilidade)
+  async getAgendaBlock(id: string): Promise<AgendaBlock | undefined> {
+    const [block] = await db.select().from(agendaBlocks).where(eq(agendaBlocks.id, id));
+    return block || undefined;
+  }
+
+  async getAgendaBlocksByTechnicianId(technicianId: string): Promise<AgendaBlock[]> {
+    return await db.select().from(agendaBlocks).where(eq(agendaBlocks.technicianId, technicianId));
+  }
+
+  async getAgendaBlocksByDateRange(startDate: Date, endDate: Date): Promise<AgendaBlock[]> {
+    // Retorna bloqueios que se sobrepõem ao período [startDate, endDate]
+    return await db
+      .select()
+      .from(agendaBlocks)
+      .where(
+        and(
+          lte(agendaBlocks.startDate, endDate),
+          gte(agendaBlocks.endDate, startDate)
+        )
+      );
+  }
+
+  async createAgendaBlock(insertBlock: InsertAgendaBlock): Promise<AgendaBlock> {
+    const [block] = await db.insert(agendaBlocks).values(insertBlock).returning();
+    return block;
+  }
+
+  async deleteAgendaBlock(id: string): Promise<void> {
+    await db.delete(agendaBlocks).where(eq(agendaBlocks.id, id));
   }
 
   // Activity Attachments

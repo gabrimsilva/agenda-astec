@@ -33,6 +33,7 @@ import type { Activity, User, ActivityType, Client, Technician } from "@shared/s
 import { ActivityClientContact } from "@/components/activities/ActivityClientContact";
 import { ActivityTypeSelector, DateTimeFields, DescriptionField, ActivityLocationSelector, getActivityTypeLocations } from "@/components/activities/ActivityFormFields";
 import { RescheduleModal } from "@/components/RescheduleModal";
+import { DatasulClientField } from "@/components/activities/DatasulClientField";
 
 moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
@@ -77,12 +78,22 @@ interface CalendarEvent {
   id: string;
   start: Date;
   end: Date;
-  resource: Activity;
+  resource?: Activity;
   isGhost?: boolean; // For rescheduled activities ghost events
   ghostInfo?: {
     newDate: string;
     newStartTime: string;
     reason: string;
+  };
+  isBlock?: boolean; // Bloqueio de agenda (férias / compromisso)
+  blockInfo?: {
+    blockType: "ferias" | "compromisso";
+    description: string | null;
+    technicianId: string;
+    startTime?: string | null;
+    endTime?: string | null;
+    startDateStr?: string;
+    endDateStr?: string;
   };
 }
 
@@ -425,6 +436,23 @@ export default function Calendar() {
   
   const clients = clientsResponse?.clients || [];
 
+  // Bloqueios de agenda (férias / compromissos) do mês visível
+  const { data: agendaBlocks = [] } = useQuery<any[]>({
+    queryKey: ["/api/agenda-blocks", monthStart.toISOString(), monthEnd.toISOString()],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate: monthStart.toISOString(),
+        endDate: monthEnd.toISOString(),
+      });
+      const response = await fetch(`/api/agenda-blocks?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("astec_token")}` },
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 0,
+  });
+
   const { data: technicians = [] } = useQuery<Technician[]>({
     queryKey: ["/api/technicians"],
   });
@@ -458,8 +486,26 @@ export default function Calendar() {
         location: data.location || null,
         status: "planejado" as const,
       };
-      
-      const response = await apiRequest("POST", "/api/activities", payload);
+
+      // Cria via fetch para detectar bloqueio de agenda (409 AGENDA_BLOCK).
+      const token = localStorage.getItem("astec_token");
+      const postActivity = async (body: any) =>
+        fetch("/api/activities", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+        });
+
+      // Bloqueio de agenda (férias / compromisso): bloqueio rígido — o servidor
+      // barra e o front apenas exibe o aviso, sem opção de forçar.
+      const response = await postActivity(payload);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({} as any));
+        throw new Error(err?.error || "Erro ao criar atividade");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -473,6 +519,7 @@ export default function Calendar() {
       setCepValue("");
     },
     onError: (error: Error) => {
+      if (error.message === "__CANCELLED__") return; // usuário cancelou no aviso de bloqueio
       toast({
         title: "Erro ao criar atividade",
         description: error.message,
@@ -930,8 +977,53 @@ export default function Calendar() {
       });
     }
 
-    return [...regularEvents, ...ghostEvents];
-  }, [activities, rescheduleGhosts, selectedUser, userTechnician, searchQuery, statusFilter, typeFilter, periodFilter, clients]);
+    // Bloqueios de agenda (férias / compromisso) como eventos visuais
+    let blockEvents: CalendarEvent[] = [];
+    {
+      let fb = agendaBlocks;
+      if (selectedUser === "my-calendar" && userTechnician) {
+        fb = agendaBlocks.filter((b) => b.technicianId === userTechnician.id);
+      } else if (selectedUser !== "all" && selectedUser !== "my-calendar") {
+        fb = agendaBlocks.filter((b) => b.technicianId === selectedUser);
+      }
+      blockEvents = fb.map((b) => {
+        const sDateStr = String(b.startDate).split("T")[0];
+        const eDateStr = String(b.endDate).split("T")[0];
+        let start: Date;
+        let end: Date;
+        let allDay: boolean;
+        if (b.blockType === "compromisso" && b.startTime && b.endTime) {
+          start = new Date(`${sDateStr}T${b.startTime}`);
+          end = new Date(`${sDateStr}T${b.endTime}`);
+          allDay = false;
+        } else {
+          start = new Date(`${sDateStr}T00:00:00`);
+          const endExcl = new Date(`${eDateStr}T00:00:00`);
+          endExcl.setDate(endExcl.getDate() + 1); // fim exclusivo p/ react-big-calendar
+          end = endExcl;
+          allDay = true;
+        }
+        return {
+          id: `block-${b.id}`,
+          start,
+          end,
+          allDay,
+          isBlock: true,
+          blockInfo: {
+            blockType: b.blockType,
+            description: b.description ?? null,
+            technicianId: b.technicianId,
+            startTime: b.startTime ?? null,
+            endTime: b.endTime ?? null,
+            startDateStr: sDateStr,
+            endDateStr: eDateStr,
+          },
+        } as CalendarEvent;
+      });
+    }
+
+    return [...regularEvents, ...ghostEvents, ...blockEvents];
+  }, [activities, rescheduleGhosts, agendaBlocks, selectedUser, userTechnician, searchQuery, statusFilter, typeFilter, periodFilter, clients]);
 
   // Helper para encontrar próximo horário disponível (definido ANTES dos useEffects)
   const findNextAvailableSlot = useCallback((technicianId: string, date: string) => {
@@ -1323,6 +1415,7 @@ export default function Calendar() {
   }, [selectedActivity, form]);
 
   const onEventDrop = useCallback(({ event, start, end }: any) => {
+    if (event.isBlock || event.isGhost) return; // bloqueios/ghosts não movem
     const activity = event.resource as Activity;
     const oldDate = activity.scheduledDate ? moment(activity.scheduledDate).format("YYYY-MM-DD") : null;
     const newDate = moment(start).format("YYYY-MM-DD");
@@ -1346,6 +1439,22 @@ export default function Calendar() {
   }, [moveEventMutation]);
 
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    // Bloqueios de agenda (férias / compromisso)
+    if (event.isBlock) {
+      const ferias = event.blockInfo?.blockType === "ferias";
+      return {
+        style: {
+          backgroundColor: ferias ? "hsl(280 60% 55%)" : "hsl(300 65% 58%)",
+          borderRadius: "4px",
+          color: "white",
+          border: "none",
+          display: "block",
+          padding: "2px 4px",
+          opacity: 0.92,
+          cursor: "default",
+        },
+      };
+    }
     // Ghost events (rescheduled activities) have different styling
     if (event.isGhost) {
       return {
@@ -1379,6 +1488,41 @@ export default function Calendar() {
     const eventRef = useRef<HTMLDivElement>(null);
     const activity = event.resource;
     const isGhost = event.isGhost === true;
+
+    // Bloqueio de agenda (férias / compromisso) — chip simples, sem interação.
+    if (event.isBlock) {
+      const info = event.blockInfo;
+      const ferias = info?.blockType === "ferias";
+      const label = ferias ? "Férias" : "Indisponível";
+      const desc = info?.description;
+      const tech = technicians.find((t) => t.id === info?.technicianId);
+      const timeStr =
+        !ferias && info?.startTime && info?.endTime ? `${info.startTime}–${info.endTime}` : "";
+      const periodStr =
+        ferias && info?.startDateStr && info?.endDateStr
+          ? `${moment(info.startDateStr).format("DD/MM")}–${moment(info.endDateStr).format("DD/MM/YYYY")}`
+          : "";
+      const title = [
+        `${tech ? tech.name + " — " : ""}${label}`,
+        ferias ? periodStr : timeStr,
+        desc || "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return (
+        <div
+          className={className}
+          style={style}
+          data-testid={`calendar-block-${event.id}`}
+          title={title}
+        >
+          <span style={{ fontWeight: 600 }}>{ferias ? "✈ " : "⛔ "}{label}</span>
+          {timeStr ? <span style={{ opacity: 0.95 }}> {timeStr}</span> : null}
+          {desc ? <span style={{ opacity: 0.9 }}> · {desc}</span> : null}
+        </div>
+      );
+    }
+
     const activityType = activityTypes.find((t) => t.id === activity.activityTypeId);
     const color = activityType?.color || "#3b82f6";
     const technician = technicians.find((t) => t.id === activity.technicianId);
@@ -2532,7 +2676,7 @@ export default function Calendar() {
               popup
               showAllEvents={true}
               popupOffset={{ x: 0, y: 5 }}
-              draggableAccessor={() => true}
+              draggableAccessor={(event: any) => !event.isBlock && !event.isGhost}
               resizable
               drilldownView={null}
               style={{ height: "100%" }}
@@ -2768,38 +2912,23 @@ export default function Calendar() {
                 control={form.control}
                 name="clientName"
                 render={({ field }) => {
-                  const [open, setOpen] = useState(false);
-                  
-                  const handleSelectClient = async (clientName: string) => {
-                    field.onChange(clientName);
-                    setOpen(false);
-                    
-                    const selectedClient = clients.find(c => c.companyName === clientName);
-                    if (selectedClient) {
-                      form.setValue('clientId', selectedClient.id);
-                      form.setValue('address', selectedClient.address || '');
-                      form.setValue('numero', selectedClient.numero || '');
-                      form.setValue('bairro', selectedClient.bairro || '');
-                      form.setValue('city', selectedClient.city || '');
-                      form.setValue('state', selectedClient.state || '');
-                    } else {
-                      form.setValue('clientId', '');
-                    }
-                  };
+                  const selectedTechnicianId = form.watch("technicianId");
+                  const selectedTechnician = selectedTechnicianId
+                    ? technicians.find((t) => t.id === selectedTechnicianId)
+                    : null;
 
                   const handleBaseSelect = () => {
-                    const selectedTechnicianId = form.getValues("technicianId");
-                    const selectedTechnician = technicians.find(t => t.id === selectedTechnicianId);
-                    
                     if (!selectedTechnician) return;
-                    
-                    if (!selectedTechnician.baseAddress || !selectedTechnician.baseCity ||
-                        !selectedTechnician.baseLatitude || !selectedTechnician.baseLongitude ||
-                        isNaN(parseFloat(selectedTechnician.baseLatitude)) || 
-                        isNaN(parseFloat(selectedTechnician.baseLongitude))) {
+                    if (
+                      !selectedTechnician.baseAddress ||
+                      !selectedTechnician.baseCity ||
+                      !selectedTechnician.baseLatitude ||
+                      !selectedTechnician.baseLongitude ||
+                      isNaN(parseFloat(selectedTechnician.baseLatitude)) ||
+                      isNaN(parseFloat(selectedTechnician.baseLongitude))
+                    ) {
                       return;
                     }
-                    
                     form.setValue("clientId", undefined);
                     form.setValue("clientName", "Base do técnico (Home office)");
                     form.setValue("address", selectedTechnician.baseAddress);
@@ -2807,101 +2936,48 @@ export default function Calendar() {
                     form.setValue("bairro", "");
                     form.setValue("city", selectedTechnician.baseCity);
                     form.setValue("state", selectedTechnician.baseState || "");
-                    setOpen(false);
                   };
 
-                  const selectedTechnicianId = form.watch("technicianId");
-                  const selectedTechnician = selectedTechnicianId ? technicians.find(t => t.id === selectedTechnicianId) : null;
-                  
-                  const filteredClients = clients.filter((client) => 
-                    client.companyName.toLowerCase().includes((field.value || "").toLowerCase())
-                  );
-                  
-                  const showBaseOption = selectedTechnician && 
-                    selectedTechnician.baseAddress && 
-                    selectedTechnician.baseCity && 
-                    selectedTechnician.baseLatitude && 
-                    !isNaN(parseFloat(selectedTechnician.baseLatitude)) && 
-                    selectedTechnician.baseLongitude && 
-                    !isNaN(parseFloat(selectedTechnician.baseLongitude)) &&
-                    (!field.value || "Base do técnico (Home office)".toLowerCase().includes(field.value.toLowerCase()));
+                  const canShowBase =
+                    selectedTechnician &&
+                    selectedTechnician.baseAddress &&
+                    selectedTechnician.baseCity &&
+                    selectedTechnician.baseLatitude &&
+                    !isNaN(parseFloat(selectedTechnician.baseLatitude)) &&
+                    selectedTechnician.baseLongitude &&
+                    !isNaN(parseFloat(selectedTechnician.baseLongitude));
 
                   return (
                     <FormItem className="flex flex-col relative">
                       <FormLabel>Cliente *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Digite para buscar cliente..."
+                        <DatasulClientField
                           value={field.value || ""}
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                            setOpen(true);
+                          onChangeText={(text) => {
+                            field.onChange(text);
+                            form.setValue("clientId", "");
                           }}
-                          onFocus={() => setOpen(true)}
-                          onBlur={() => setTimeout(() => setOpen(false), 200)}
-                          data-testid="input-client-search"
+                          onSelectClient={(c) => {
+                            field.onChange(c.nome);
+                            form.setValue("clientId", "");
+                            form.setValue("address", "");
+                            form.setValue("numero", "");
+                            form.setValue("bairro", "");
+                            form.setValue("city", c.cidade || "");
+                            form.setValue("state", c.estado || "");
+                          }}
+                          baseOption={
+                            canShowBase
+                              ? {
+                                  label: "Base do técnico (Home office)",
+                                  description: `${selectedTechnician?.baseAddress}, ${selectedTechnician?.baseCity}`,
+                                  selected: field.value === "Base do técnico (Home office)",
+                                  onSelect: handleBaseSelect,
+                                }
+                              : null
+                          }
                         />
                       </FormControl>
-                      {open && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-64 overflow-y-auto">
-                          {!showBaseOption && filteredClients.length === 0 ? (
-                            <div className="p-4 text-sm text-muted-foreground text-center">
-                              {field.value ? `Nenhum cliente encontrado para "${field.value}"` : 'Nenhum cliente cadastrado'}
-                            </div>
-                          ) : (
-                            <div className="p-2">
-                              {showBaseOption && (
-                                <div
-                                  className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer border-b mb-2"
-                                  onClick={handleBaseSelect}
-                                  data-testid="option-base-home-office"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Check
-                                      className={cn(
-                                        "h-4 w-4 shrink-0",
-                                        field.value === "Base do técnico (Home office)" ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col flex-1">
-                                      <span className="font-medium">Base do técnico (Home office)</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {selectedTechnician?.baseAddress}, {selectedTechnician?.baseCity}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {filteredClients.map((client) => (
-                                <div
-                                  key={client.id}
-                                  className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer"
-                                  onClick={() => handleSelectClient(client.companyName)}
-                                  data-testid={`option-client-${client.id}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Check
-                                      className={cn(
-                                        "h-4 w-4 shrink-0",
-                                        field.value === client.companyName ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col flex-1">
-                                      <span className="font-medium">{client.companyName}</span>
-                                      {client.address && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {client.address}, {client.city}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
                       <FormMessage />
                     </FormItem>
                   );

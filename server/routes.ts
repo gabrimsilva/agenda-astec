@@ -12,7 +12,7 @@ import { db } from "./db";
 import { eq, and, gte, lte, lt, not, ne, sql, desc, inArray, or } from "drizzle-orm";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth";
 import { authMiddleware, roleMiddleware, agendaScopeMiddleware, reportsScopeMiddleware, type AuthRequest } from "./middleware";
-import { insertUserSchema, insertTechnicianSchema, insertClientSchema, insertClientSiteSchema, insertActivityTypeSchema, insertSegmentSchema, insertRegionSchema, insertActivitySchema, insertApprovalSchema, insertDayMarkerSchema, loginSchema, updateUserSchema, updateTechnicianSchema, updateUserAndTechnicianSchema, updateClientSchema, updateClientSiteSchema, updateActivityTypeSchema, updateSegmentSchema, updateRegionSchema, updateActivitySchema, updateApprovalSchema, createUserAndTechnicianSchema, insertTechnicianLocationSchema, insertTimeEntrySchema, insertNotificationSchema, insertUserPushSubscriptionSchema, insertRatSchema, createRatSchema, updateRatSchema, technicians, timeEntries, activityTypes, auditLogs, rats, activityTravelTimes, activityTimeRecords, activityReschedules, activityDayStatus, activities, users, travelSegments, approvals, activityAttachments, type InsertUser, type InsertTechnician } from "@shared/schema";
+import { insertUserSchema, insertTechnicianSchema, insertClientSchema, insertClientSiteSchema, insertActivityTypeSchema, insertSegmentSchema, insertRegionSchema, insertActivitySchema, insertApprovalSchema, insertDayMarkerSchema, insertAgendaBlockSchema, loginSchema, updateUserSchema, updateTechnicianSchema, updateUserAndTechnicianSchema, updateClientSchema, updateClientSiteSchema, updateActivityTypeSchema, updateSegmentSchema, updateRegionSchema, updateActivitySchema, updateApprovalSchema, createUserAndTechnicianSchema, insertTechnicianLocationSchema, insertTimeEntrySchema, insertNotificationSchema, insertUserPushSubscriptionSchema, insertRatSchema, createRatSchema, updateRatSchema, technicians, timeEntries, activityTypes, auditLogs, rats, activityTravelTimes, activityTimeRecords, activityReschedules, activityDayStatus, activities, users, travelSegments, approvals, activityAttachments, type InsertUser, type InsertTechnician } from "@shared/schema";
 import { seedActivityTypes, seedDefaultAdmin } from "./seed";
 import { parseGoogleMapsUrl, isValidCoordinates } from "./utils/geo";
 import { parseExcelData, EXPECTED_COLUMNS } from "./utils/excel";
@@ -214,6 +214,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Login via Datasul (ERP TOTVS). Valida as credenciais no ERP (Basic Auth) e,
+  // se válidas, autentica o usuário do ASTEC cujo "Perfil Datasul" corresponde
+  // ao usuário informado — herdando o papel (admin/assistente) já cadastrado.
+  app.post("/api/auth/datasul-login", async (req, res) => {
+    try {
+      const { username, password, host } = (req.body || {}) as {
+        username?: string;
+        password?: string;
+        host?: string;
+      };
+      if (!username || !password) {
+        return res.status(400).json({ error: "Informe usuário e senha do Datasul." });
+      }
+
+      const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+
+      let erpRes: Response;
+      try {
+        erpRes = await datasulFetch(host, "1,1", authHeader);
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return res.status(504).json({ error: "Tempo de conexão esgotado ao acessar o Datasul." });
+        }
+        return res.status(502).json({ error: "Não foi possível conectar ao Datasul. Verifique a rede/host." });
+      }
+
+      if (erpRes.status === 401 || erpRes.status === 403) {
+        return res.status(401).json({ error: "Usuário ou senha do Datasul inválidos." });
+      }
+      if (!erpRes.ok) {
+        return res.status(502).json({ error: `Falha ao conectar no Datasul (HTTP ${erpRes.status}).` });
+      }
+
+      // Credenciais válidas no ERP → localiza o usuário do ASTEC pelo perfil Datasul.
+      const user = await storage.getUserByDatasulUsername(String(username).trim());
+      if (!user) {
+        return res.status(403).json({
+          error:
+            "Login no Datasul validado, mas nenhum usuário do ASTEC está associado a este perfil Datasul. Contate o administrador.",
+        });
+      }
+
+      const token = generateToken(user);
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({
+        user: userWithoutPassword,
+        token,
+        datasulToken: authHeader, // token Basic p/ buscas Datasul na sessão (ex.: clientes no agendamento)
+        datasulHost: resolveDatasulHost(host),
+      });
+    } catch (error: any) {
+      res.status(401).json({ error: "Não foi possível fazer login via Datasul." });
+    }
+  });
+
   app.get("/api/auth/me", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const user = await storage.getUser(req.user!.userId);
@@ -388,6 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         role: data.role,
         name: data.name,
+        datasulUsername: data.datasulUsername || null,
       };
       
       const technicianData: Omit<InsertTechnician, 'userId'> = {
@@ -763,6 +819,343 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching map activities:", error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===================================================================
+  // Integração TOTVS Datasul (ERP Renner) — consulta de clientes
+  // Autenticação: HTTP Basic Auth com login do Datasul (mesmo do ERP).
+  // ===================================================================
+  const DATASUL_DEFAULT_HOST = process.env.DATASUL_HOST || "erp.renner.com.br";
+  const DATASUL_ALLOWED_HOSTS = [
+    "erp.renner.com.br",
+    "erp-homol.renner.com.br",
+    "erp-desenv.renner.com.br",
+  ];
+
+  function resolveDatasulHost(host?: string): string {
+    const h = (host || DATASUL_DEFAULT_HOST).trim().toLowerCase();
+    return DATASUL_ALLOWED_HOSTS.includes(h) ? h : DATASUL_DEFAULT_HOST;
+  }
+
+  function datasulClientesUrl(host: string | undefined, params: string): string {
+    return `https://${resolveDatasulHost(host)}/api/renner/rest/rcoa/ped/v1/rhpd4000api/clientes-lista/${params}`;
+  }
+
+  // Faz a requisição ao ERP com Basic Auth e timeout.
+  async function datasulFetch(host: string | undefined, params: string, authHeader: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      return await fetch(datasulClientesUrl(host, params), {
+        headers: { Authorization: authHeader, Accept: "application/json" },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  // Extrai o header Authorization Basic do request (enviado pelo cliente) ou
+  // monta a partir de username/senha no corpo.
+  function getDatasulAuthHeader(req: AuthRequest): string | null {
+    const incoming = req.headers["x-datasul-auth"] || req.headers["authorization-datasul"];
+    if (typeof incoming === "string" && incoming.toLowerCase().startsWith("basic ")) {
+      return incoming;
+    }
+    const { username, password } = (req.body || {}) as { username?: string; password?: string };
+    if (username && password) {
+      return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+    }
+    return null;
+  }
+
+  // Login/validação das credenciais do Datasul.
+  // Não persiste a senha: apenas valida e devolve o token Basic para o cliente
+  // reutilizar nas próximas chamadas (mantido em memória no navegador).
+  app.post("/api/datasul/login", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const { username, password, host, grupo } = (req.body || {}) as {
+        username?: string;
+        password?: string;
+        host?: string;
+        grupo?: string;
+      };
+      if (!username || !password) {
+        return res.status(400).json({ error: "Informe usuário e senha do Datasul." });
+      }
+
+      const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+      const resolvedHost = resolveDatasulHost(host);
+
+      // params: pagina,tamanho[,busca][,grupo]. Para filtrar só por grupo,
+      // a busca fica vazia: "1,50,,71".
+      // OBS: a API limita o nº de páginas em ~400; com tamanho=1 o total vem
+      // capado em 400. Usamos tamanho 50 (como na doc) para obter o total real.
+      const grupoTrim = (grupo || "").trim();
+      const params = grupoTrim ? `1,50,,${encodeURIComponent(grupoTrim)}` : "1,50";
+
+      let erpRes: Response;
+      try {
+        erpRes = await datasulFetch(host, params, authHeader);
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return res.status(504).json({ error: "Tempo de conexão esgotado ao acessar o Datasul." });
+        }
+        console.error("[Datasul] erro de rede no login:", err?.message);
+        return res.status(502).json({ error: "Não foi possível conectar ao Datasul. Verifique a rede/host." });
+      }
+
+      if (erpRes.status === 401 || erpRes.status === 403) {
+        return res.status(401).json({ error: "Usuário ou senha do Datasul inválidos." });
+      }
+      if (!erpRes.ok) {
+        return res.status(502).json({ error: `Falha ao conectar no Datasul (HTTP ${erpRes.status}).` });
+      }
+
+      const data: any = await erpRes.json().catch(() => null);
+      const meta = Array.isArray(data?.items)
+        ? data.items.find((i: any) => i?._meta === "SIM")
+        : null;
+
+      return res.json({
+        ok: true,
+        host: resolvedHost,
+        token: authHeader, // o cliente guarda em memória para as próximas chamadas
+        grupo: grupoTrim || null,
+        total: meta?.total ? parseInt(meta.total, 10) : null,
+      });
+    } catch (error: any) {
+      console.error("[Datasul] login error:", error?.message);
+      return res.status(500).json({ error: "Erro inesperado ao validar credenciais do Datasul." });
+    }
+  });
+
+  // Lista de clientes do Datasul (proxy paginado).
+  // Auth: header "x-datasul-auth: Basic <base64>" (token devolvido no login).
+  app.get("/api/datasul/clientes", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const authHeader = getDatasulAuthHeader(req);
+      if (!authHeader) {
+        return res.status(401).json({ error: "Sessão do Datasul não encontrada. Conecte-se novamente." });
+      }
+
+      const pagina = parseInt((req.query.pagina as string) || "1", 10) || 1;
+      const tamanho = Math.min(parseInt((req.query.tamanho as string) || "50", 10) || 50, 200);
+      const busca = ((req.query.busca as string) || "").trim().toUpperCase();
+      const grupo = ((req.query.grupo as string) || "").trim();
+      const host = req.query.host as string | undefined;
+
+      // Formato do path: pagina,tamanho[,busca][,grupo]
+      const parts = [String(pagina), String(tamanho)];
+      if (busca || grupo) parts.push(encodeURIComponent(busca));
+      if (grupo) parts.push(encodeURIComponent(grupo));
+      const params = parts.join(",");
+
+      let erpRes: Response;
+      try {
+        erpRes = await datasulFetch(host, params, authHeader);
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return res.status(504).json({ error: "Tempo de conexão esgotado ao acessar o Datasul." });
+        }
+        return res.status(502).json({ error: "Não foi possível conectar ao Datasul." });
+      }
+
+      if (erpRes.status === 401 || erpRes.status === 403) {
+        return res.status(401).json({ error: "Sessão do Datasul expirada. Conecte-se novamente." });
+      }
+      if (!erpRes.ok) {
+        return res.status(502).json({ error: `Falha ao consultar clientes (HTTP ${erpRes.status}).` });
+      }
+
+      const data: any = await erpRes.json().catch(() => null);
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      const meta = items.find((i) => i?._meta === "SIM") || null;
+      const clientes = items.filter((i) => i?._meta !== "SIM");
+
+      return res.json({
+        meta: meta
+          ? {
+              total: meta.total ? parseInt(meta.total, 10) : null,
+              pagina: meta.pagina ? parseInt(meta.pagina, 10) : pagina,
+              tamPag: meta["tam-pag"] ? parseInt(meta["tam-pag"], 10) : tamanho,
+              paginas: meta.paginas ? parseInt(meta.paginas, 10) : null,
+              grupo: meta["cod-gr-cli"] ?? grupo ?? null,
+            }
+          : { total: null, pagina, tamPag: tamanho, paginas: null, grupo: grupo || null },
+        clientes,
+      });
+    } catch (error: any) {
+      console.error("[Datasul] clientes error:", error?.message);
+      return res.status(500).json({ error: "Erro inesperado ao consultar clientes do Datasul." });
+    }
+  });
+
+  // Importa TODOS os clientes do Datasul (percorre as páginas) para o cadastro
+  // do ASTEC. Faz upsert usando o código do cliente (cod-emitente) como chave.
+  app.post("/api/datasul/import", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const authHeader = getDatasulAuthHeader(req);
+      if (!authHeader) {
+        return res.status(401).json({ error: "Sessão do Datasul não encontrada. Conecte-se novamente." });
+      }
+
+      const { host, grupo } = (req.body || {}) as { host?: string; grupo?: string };
+      const grupoTrim = (grupo || "").trim();
+      const PAGE = 200;
+
+      // Carrega clientes existentes para dedupe (por código interno e por CNPJ).
+      const existing = await storage.getAllClients();
+      const byInternal = new Map<string, typeof existing[number]>();
+      const byCnpj = new Map<string, typeof existing[number]>();
+      const onlyDigits = (s?: string | null) => (s || "").replace(/\D/g, "");
+      for (const c of existing) {
+        if (c.internalCode) byInternal.set(c.internalCode.trim(), c);
+        const dig = onlyDigits(c.cnpj);
+        if (dig) byCnpj.set(dig, c);
+      }
+
+      let created = 0;
+      let updated = 0;
+      let processed = 0;
+      let pagina = 1;
+      const MAX_PAGINAS = 2000; // trava de segurança
+
+      // A API capa o "total"/"paginas" em ~400, mas a paginação continua além
+      // disso. Por isso NÃO confiamos em meta.paginas: seguimos paginando até
+      // uma página vir vazia (ou com menos registros que o tamanho da página).
+      while (pagina <= MAX_PAGINAS) {
+        const parts = [String(pagina), String(PAGE)];
+        if (grupoTrim) parts.push("");
+        if (grupoTrim) parts.push(encodeURIComponent(grupoTrim));
+        const params = parts.join(",");
+
+        const erpRes = await datasulFetch(host, params, authHeader);
+        if (erpRes.status === 401 || erpRes.status === 403) {
+          return res.status(401).json({ error: "Sessão do Datasul expirada. Conecte-se novamente." });
+        }
+        if (!erpRes.ok) {
+          return res.status(502).json({ error: `Falha ao consultar clientes (HTTP ${erpRes.status}).` });
+        }
+
+        const data: any = await erpRes.json().catch(() => null);
+        const items: any[] = Array.isArray(data?.items) ? data.items : [];
+        const lote = items.filter((i) => i?._meta !== "SIM");
+
+        if (lote.length === 0) break;
+
+        for (const c of lote) {
+          processed++;
+          const internalCode = String(c["cod-emitente"] || "").trim();
+          const companyName = String(c["nome-emit"] || c["nome-abrev"] || "").trim();
+          if (!companyName) continue; // sem nome não cadastra
+
+          const cnpjDigits = onlyDigits(c["cgc"]);
+          const payload = {
+            companyName,
+            cnpj: c["cgc"] || null,
+            internalCode: internalCode || null,
+            city: c["cidade"] || null,
+            state: c["estado"] || null,
+            contactPhone: c["telefone"] || null,
+            contactEmail: c["e-mail"] || null,
+            country: "Brasil",
+            active: true,
+          };
+
+          // Procura existente por código interno, depois por CNPJ.
+          const match =
+            (internalCode && byInternal.get(internalCode)) ||
+            (cnpjDigits && byCnpj.get(cnpjDigits)) ||
+            null;
+
+          if (match) {
+            await storage.updateClient(match.id, payload);
+            updated++;
+          } else {
+            const novo = await storage.createClient(payload as any);
+            created++;
+            if (internalCode) byInternal.set(internalCode, novo);
+            if (cnpjDigits) byCnpj.set(cnpjDigits, novo);
+          }
+        }
+
+        // Se a página veio com menos registros que o tamanho, é a última.
+        if (lote.length < PAGE) break;
+        pagina++;
+      }
+
+      console.log(`[Datasul] import concluído: processados=${processed} criados=${created} atualizados=${updated}`);
+      return res.json({ ok: true, processed, created, updated });
+    } catch (error: any) {
+      console.error("[Datasul] import error:", error?.message);
+      return res.status(500).json({ error: "Erro ao importar clientes do Datasul." });
+    }
+  });
+
+  // Importa uma lista específica de clientes do Datasul (ex.: resultados de uma
+  // busca), permitindo trazer clientes que estão além do teto de 400 da listagem.
+  app.post("/api/datasul/import-clientes", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const { clientes } = (req.body || {}) as { clientes?: any[] };
+      if (!Array.isArray(clientes) || clientes.length === 0) {
+        return res.status(400).json({ error: "Nenhum cliente informado para importar." });
+      }
+
+      const existing = await storage.getAllClients();
+      const byInternal = new Map<string, typeof existing[number]>();
+      const byCnpj = new Map<string, typeof existing[number]>();
+      const onlyDigits = (s?: string | null) => (s || "").replace(/\D/g, "");
+      for (const c of existing) {
+        if (c.internalCode) byInternal.set(c.internalCode.trim(), c);
+        const dig = onlyDigits(c.cnpj);
+        if (dig) byCnpj.set(dig, c);
+      }
+
+      let created = 0;
+      let updated = 0;
+      let processed = 0;
+
+      for (const c of clientes) {
+        processed++;
+        const internalCode = String(c["cod-emitente"] || "").trim();
+        const companyName = String(c["nome-emit"] || c["nome-abrev"] || "").trim();
+        if (!companyName) continue;
+
+        const cnpjDigits = onlyDigits(c["cgc"]);
+        const payload = {
+          companyName,
+          cnpj: c["cgc"] || null,
+          internalCode: internalCode || null,
+          city: c["cidade"] || null,
+          state: c["estado"] || null,
+          contactPhone: c["telefone"] || null,
+          contactEmail: c["e-mail"] || null,
+          country: "Brasil",
+          active: true,
+        };
+
+        const match =
+          (internalCode && byInternal.get(internalCode)) ||
+          (cnpjDigits && byCnpj.get(cnpjDigits)) ||
+          null;
+
+        if (match) {
+          await storage.updateClient(match.id, payload);
+          updated++;
+        } else {
+          const novo = await storage.createClient(payload as any);
+          created++;
+          if (internalCode) byInternal.set(internalCode, novo);
+          if (cnpjDigits) byCnpj.set(cnpjDigits, novo);
+        }
+      }
+
+      return res.json({ ok: true, processed, created, updated });
+    } catch (error: any) {
+      console.error("[Datasul] import-clientes error:", error?.message);
+      return res.status(500).json({ error: "Erro ao importar clientes selecionados." });
     }
   });
 
@@ -1340,6 +1733,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: `Horário inválido: o horário de término (${data.endTime}) deve ser posterior ao horário de início (${data.startTime})`
         });
       }
+
+      // Bloqueio de agenda:
+      //  - Férias: bloqueio RÍGIDO (não permite agendar, sem override).
+      //  - Compromisso: aviso (pode confirmar com ignoreBlock=true).
+      const ignoreBlock = req.body?.ignoreBlock === true;
+      if (data.technicianId && data.scheduledDate) {
+        const bStart = new Date(data.scheduledDate);
+        bStart.setHours(0, 0, 0, 0);
+        const bEnd = data.endDate ? new Date(data.endDate) : new Date(data.scheduledDate);
+        bEnd.setHours(23, 59, 59, 999);
+        const overlapBlocks = await storage.getAgendaBlocksByDateRange(bStart, bEnd);
+        const techBlocks = overlapBlocks.filter((b) => b.technicianId === data.technicianId);
+        const toMin = (t?: string | null) => {
+          if (!t) return null;
+          const m = t.match(/^(\d{1,2}):(\d{2})/);
+          return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+        };
+
+        // Férias: bloqueio rígido (mesmo com ignoreBlock).
+        const feriasHit = techBlocks.find((b) => b.blockType === "ferias");
+        if (feriasHit) {
+          return res.status(409).json({
+            code: "AGENDA_BLOCK_FERIAS",
+            error: "O técnico está de férias neste período. Não é possível agendar.",
+          });
+        }
+
+        // Compromisso: aviso (pode ser ignorado).
+        if (!ignoreBlock) {
+          const compHit = techBlocks.find((b) => {
+            if (b.blockType !== "compromisso") return false;
+            const bs = toMin(b.startTime);
+            const be = toMin(b.endTime);
+            const as = toMin(data.startTime);
+            const ae = toMin(data.endTime || data.startTime);
+            if (bs === null || be === null || as === null || ae === null) return true;
+            return as < be && ae > bs;
+          });
+          if (compHit) {
+            return res.status(409).json({
+              code: "AGENDA_BLOCK",
+              blockType: "compromisso",
+              error: "O técnico tem um compromisso pessoal neste horário.",
+            });
+          }
+        }
+      }
       
       // Check for scheduling conflicts (aplica-se a todos os tipos de atividade)
       if (data.technicianId && data.scheduledDate && data.startTime) {
@@ -1479,6 +1919,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({
             error: `Horário inválido: o horário de término (${endTime}) deve ser posterior ao horário de início (${startTime})`
           });
+        }
+
+        // Bloqueio de agenda na edição: férias = rígido; compromisso = aviso.
+        const ignoreBlockPut = req.body?.ignoreBlock === true;
+        if (technicianId && scheduledDateInput) {
+          const bStart = new Date(scheduledDateInput as any);
+          bStart.setHours(0, 0, 0, 0);
+          const bEnd = endDateInput ? new Date(endDateInput as any) : new Date(scheduledDateInput as any);
+          bEnd.setHours(23, 59, 59, 999);
+          const overlapBlocks = await storage.getAgendaBlocksByDateRange(bStart, bEnd);
+          const techBlocks = overlapBlocks.filter((b) => b.technicianId === technicianId);
+          const toMin = (t?: string | null) => {
+            if (!t) return null;
+            const m = t.match(/^(\d{1,2}):(\d{2})/);
+            return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+          };
+
+          const feriasHit = techBlocks.find((b) => b.blockType === "ferias");
+          if (feriasHit) {
+            return res.status(409).json({
+              code: "AGENDA_BLOCK_FERIAS",
+              error: "O técnico está de férias neste período. Não é possível agendar.",
+            });
+          }
+
+          if (!ignoreBlockPut) {
+            const compHit = techBlocks.find((b) => {
+              if (b.blockType !== "compromisso") return false;
+              const bs = toMin(b.startTime);
+              const be = toMin(b.endTime);
+              const as = toMin(startTime);
+              const ae = toMin(endTime || startTime);
+              if (bs === null || be === null || as === null || ae === null) return true;
+              return as < be && ae > bs;
+            });
+            if (compHit) {
+              return res.status(409).json({
+                code: "AGENDA_BLOCK",
+                blockType: "compromisso",
+                error: "O técnico tem um compromisso pessoal neste horário.",
+              });
+            }
+          }
         }
         
         if (technicianId && scheduledDateInput && startTime) {
@@ -1746,6 +2229,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/day-markers/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       await storage.deleteDayMarker(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ===================================================================
+  // Bloqueios de agenda (indisponibilidade: férias / compromissos)
+  // Técnico tem autonomia: cria/exclui os próprios bloqueios.
+  // Admin pode criar/excluir para qualquer técnico.
+  // ===================================================================
+  app.get("/api/agenda-blocks", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { startDate, endDate, technicianId } = req.query;
+      let blocks: any[] = [];
+      if (startDate && endDate) {
+        // Trata data-only (YYYY-MM-DD) como horário LOCAL para não perder
+        // bloqueios por diferença de fuso. Cobre o dia inteiro.
+        const dateOnly = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+        const startStr = startDate as string;
+        const endStr = endDate as string;
+        const start = dateOnly(startStr) ? new Date(`${startStr}T00:00:00`) : (() => { const d = new Date(startStr); d.setHours(0, 0, 0, 0); return d; })();
+        const end = dateOnly(endStr) ? new Date(`${endStr}T23:59:59.999`) : (() => { const d = new Date(endStr); d.setHours(23, 59, 59, 999); return d; })();
+        blocks = await storage.getAgendaBlocksByDateRange(start, end);
+      } else if (technicianId) {
+        blocks = await storage.getAgendaBlocksByTechnicianId(technicianId as string);
+      }
+      res.json(blocks);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/agenda-blocks", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const data = insertAgendaBlockSchema.parse(req.body);
+
+      // Assistente só pode criar bloqueio para si mesmo.
+      if (req.user!.role === "assistente") {
+        const tech = await storage.getTechnicianByUserId(req.user!.userId);
+        if (!tech) {
+          return res.status(400).json({ error: "Técnico não encontrado para este usuário." });
+        }
+        data.technicianId = tech.id;
+      } else if (!data.technicianId) {
+        return res.status(400).json({ error: "Selecione o técnico." });
+      }
+
+      data.createdBy = req.user!.userId;
+
+      const block = await storage.createAgendaBlock(data as any);
+      res.status(201).json(block);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/agenda-blocks/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const block = await storage.getAgendaBlock(req.params.id);
+      if (!block) {
+        return res.status(404).json({ error: "Bloqueio não encontrado." });
+      }
+      // Assistente só pode excluir os próprios bloqueios.
+      if (req.user!.role === "assistente") {
+        const tech = await storage.getTechnicianByUserId(req.user!.userId);
+        if (!tech || block.technicianId !== tech.id) {
+          return res.status(403).json({ error: "Não autorizado a excluir este bloqueio." });
+        }
+      }
+      await storage.deleteAgendaBlock(req.params.id);
       res.status(204).send();
     } catch (error: any) {
       res.status(400).json({ error: error.message });

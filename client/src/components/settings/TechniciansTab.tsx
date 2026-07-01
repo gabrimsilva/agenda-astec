@@ -31,6 +31,7 @@ const baseFormSchema = z.object({
   vehicleInfo: z.string().optional(),
   licenseNumber: z.string().optional(),
   workHoursPerDay: z.coerce.number().min(1).max(24).default(8),
+  datasulUsername: z.string().optional(),
   // Base address fields (home office)
   baseCep: z.string().optional(),
   baseAddress: z.string().optional(),
@@ -145,6 +146,7 @@ export default function TechniciansTab() {
       vehicleInfo: "",
       licenseNumber: "",
       workHoursPerDay: 8,
+      datasulUsername: "",
     },
   });
 
@@ -186,6 +188,7 @@ export default function TechniciansTab() {
       vehicleInfo: technician.vehicleInfo || "",
       licenseNumber: technician.licenseNumber || "",
       workHoursPerDay: technician.workHoursPerDay || 8,
+      datasulUsername: user?.datasulUsername || "",
       baseCep: (technician as any).baseCep || "",
       baseAddress: technician.baseAddress || "",
       baseNumero: technician.baseNumero || "",
@@ -213,6 +216,7 @@ export default function TechniciansTab() {
       vehicleInfo: "",
       licenseNumber: "",
       workHoursPerDay: 8,
+      datasulUsername: "",
       baseCep: "",
       baseAddress: "",
       baseNumero: "",
@@ -503,6 +507,29 @@ export default function TechniciansTab() {
                 </div>
               </div>
 
+              <FormField
+                control={form.control}
+                name="datasulUsername"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Perfil Datasul</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="usuário do Datasul (ex.: gmsilva)"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-datasul-username"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Login do Datasul associado a este usuário. Ao entrar via Datasul com esse usuário,
+                      o sistema aplica o perfil de acesso definido acima.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="border-t pt-4">
                 <h3 className="font-medium text-sm mb-4">Dados do Técnico</h3>
               </div>
@@ -586,69 +613,6 @@ export default function TechniciansTab() {
                       <FormLabel>Cor</FormLabel>
                       <FormControl>
                         <Input type="color" {...field} data-testid="input-color" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="vehicleInfo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Veículo</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Fiat Strada 2020" data-testid="input-vehicle" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="licenseNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Placa</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="ABC-1234" data-testid="input-license" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="workHoursPerDay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Horas de Trabalho/Dia</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="24"
-                          {...field}
-                          value={field.value}
-                          data-testid="input-work-hours"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="avatarUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL do Avatar</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="https://..." data-testid="input-avatar" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

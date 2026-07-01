@@ -20,11 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Building2, MapPin, FileSpreadsheet, Pencil, Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Building2, MapPin, FileSpreadsheet, Pencil, Trash2, Loader2, CheckCircle2, Database } from "lucide-react";
 import { Client } from "@shared/schema";
 import { PREDEFINED_SEGMENTS } from "@/lib/constants";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ImportClientsDialog } from "@/components/clients/ImportClientsDialog";
+import { DatasulImportDialog } from "@/components/clients/DatasulImportDialog";
 import { DeleteClientDialog } from "@/components/clients/DeleteClientDialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +52,7 @@ export default function Clients() {
 
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [datasulDialogOpen, setDatasulDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
@@ -215,6 +217,16 @@ export default function Clients() {
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                 <span className="text-xs lg:text-sm">Importar Excel</span>
+              </Button>
+              <Button
+                onClick={() => setDatasulDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 lg:gap-2"
+                data-testid="button-import-datasul"
+              >
+                <Database className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                <span className="text-xs lg:text-sm">Importar do Datasul</span>
               </Button>
               <Button
                 onClick={handleNewClient}
@@ -426,6 +438,11 @@ export default function Clients() {
       <ImportClientsDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
+      />
+
+      <DatasulImportDialog
+        open={datasulDialogOpen}
+        onOpenChange={setDatasulDialogOpen}
       />
     </div>
   );

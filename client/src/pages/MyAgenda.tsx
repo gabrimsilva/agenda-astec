@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, ChevronLeft, ChevronRight, Plus, Building2, Clock, MapPin, FileText, ChevronsUpDown, Check, X, Search, Loader2, ChevronDown } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Plus, Building2, Clock, MapPin, FileText, ChevronsUpDown, Check, X, Search, Loader2, ChevronDown, Ban, Plane, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityRealtime } from "@/hooks/useActivityRealtime";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -26,6 +26,9 @@ import type { Activity, Technician, ActivityType, Client, Rat } from "@shared/sc
 import moment from "moment";
 import "moment/locale/pt-br";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AgendaBlockDialog } from "@/components/agenda/AgendaBlockDialog";
+import { DatasulClientField } from "@/components/activities/DatasulClientField";
+import type { AgendaBlock } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,6 +96,7 @@ export default function MyAgenda() {
   const [navigationDialogOpen, setNavigationDialogOpen] = useState(false);
   const [selectedActivityForNav, setSelectedActivityForNav] = useState<string | null>(null); // ID da atividade selecionada para navegação individual
   const [newActivityDialogOpen, setNewActivityDialogOpen] = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   
@@ -287,7 +291,31 @@ export default function MyAgenda() {
     return technicians.find((t) => t.userId === user?.id);
   }, [technicians, user?.id]);
 
-  // Form para criar nova atividade
+  // Bloqueios de agenda (férias / compromissos) do técnico logado
+  const { data: myAgendaBlocks = [] } = useQuery<AgendaBlock[]>({
+    queryKey: ["/api/agenda-blocks", "tech", myTechnician?.id],
+    queryFn: async () => {
+      if (!myTechnician) return [];
+      const token = localStorage.getItem("astec_token");
+      const res = await fetch(`/api/agenda-blocks?technicianId=${myTechnician.id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!myTechnician,
+  });
+
+  const deleteBlockMutation = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/agenda-blocks/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agenda-blocks"], refetchType: "all" });
+      toast({ title: "Bloqueio removido" });
+    },
+    onError: (e: Error) => toast({ variant: "destructive", title: "Erro ao remover", description: e.message }),
+  });
+
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -448,6 +476,15 @@ export default function MyAgenda() {
         return timeA.localeCompare(timeB);
       });
   }, [activities, selectedDateStr, cancelledDayKeys, dayStatusMap]);
+
+  // Bloqueios (férias/compromisso) que abrangem o dia selecionado
+  const selectedDateBlocks = useMemo(() => {
+    return myAgendaBlocks.filter((b) => {
+      const s = moment(b.startDate).format("YYYY-MM-DD");
+      const e = moment(b.endDate).format("YYYY-MM-DD");
+      return selectedDateStr >= s && selectedDateStr <= e;
+    });
+  }, [myAgendaBlocks, selectedDateStr]);
 
   // Converter atividades para o formato do DailyRouteView
   const stops = useMemo(() => {
@@ -870,7 +907,24 @@ export default function MyAgenda() {
         notes: data.notes,
       };
       
-      const response = await apiRequest("PUT", `/api/activities/${activityId}`, activityData);
+      // Envia via fetch para tratar bloqueio de agenda (409 AGENDA_BLOCK).
+      const token = localStorage.getItem("astec_token");
+      const putActivity = async (body: any) =>
+        fetch(`/api/activities/${activityId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+        });
+
+      // Bloqueio de agenda (férias / compromisso): bloqueio rígido na edição.
+      const response = await putActivity(activityData);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({} as any));
+        throw new Error(err?.error || "Erro ao atualizar atividade");
+      }
       return await response.json();
     },
     onSuccess: () => {
@@ -885,6 +939,7 @@ export default function MyAgenda() {
       });
     },
     onError: (error: Error) => {
+      if (error.message === "__CANCELLED__") return; // usuário cancelou no aviso de bloqueio
       toast({
         title: "Erro ao atualizar atividade",
         description: error.message,
@@ -1701,7 +1756,7 @@ export default function MyAgenda() {
       };
       
       try {
-        await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, activityData);
+        await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
         queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
         setEditActivityDialogOpen(false);
@@ -1728,7 +1783,17 @@ export default function MyAgenda() {
   return (
     <div className="space-y-4 pb-20 md:pb-6" data-testid="page-my-agenda">
       {/* Header */}
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          size="default"
+          variant="outline"
+          className="gap-2"
+          onClick={() => setBlockDialogOpen(true)}
+          data-testid="button-block-agenda"
+        >
+          <Ban className="h-4 w-4" />
+          Bloquear Agenda
+        </Button>
         <Button 
           size="default" 
           className="gap-2"
@@ -1809,6 +1874,50 @@ export default function MyAgenda() {
         </CardContent>
       </Card>
 
+      {/* Bloqueios do dia (férias / compromissos) */}
+      {selectedDateBlocks.length > 0 && (
+        <div className="space-y-2">
+          {selectedDateBlocks.map((block) => (
+            <Card key={block.id} className="border-l-4 border-l-purple-500 bg-purple-50/50 dark:bg-purple-950/20">
+              <CardContent className="flex items-center justify-between gap-3 p-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {block.blockType === "ferias" ? (
+                    <Plane className="h-5 w-5 text-purple-600 shrink-0" />
+                  ) : (
+                    <Ban className="h-5 w-5 text-purple-600 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium text-purple-800 dark:text-purple-200">
+                      {block.blockType === "ferias" ? "Férias" : "Compromisso pessoal"}
+                      {block.blockType === "compromisso" && block.startTime && (
+                        <span className="ml-2 text-sm font-normal">
+                          {block.startTime}–{block.endTime}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {block.blockType === "ferias"
+                        ? `${moment(block.startDate).format("DD/MM")} a ${moment(block.endDate).format("DD/MM/YYYY")}`
+                        : block.description || "Indisponível"}
+                      {block.blockType === "ferias" && block.description ? ` · ${block.description}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteBlockMutation.mutate(block.id)}
+                  disabled={deleteBlockMutation.isPending}
+                  data-testid={`button-delete-block-${block.id}`}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Visualização do Dia Selecionado */}
       <DailyRouteView
         date={selectedDate.format("D [de] MMMM, YYYY")}
@@ -1840,6 +1949,13 @@ export default function MyAgenda() {
       />
 
       {/* Dialog de Nova Atividade */}
+      <AgendaBlockDialog
+        open={blockDialogOpen}
+        onOpenChange={setBlockDialogOpen}
+        defaultTechnicianId={myTechnician?.id}
+        defaultDate={selectedDate.format("YYYY-MM-DD")}
+      />
+
       <Dialog open={newActivityDialogOpen} onOpenChange={(open) => {
         setNewActivityDialogOpen(open);
         if (!open) {
@@ -1887,128 +2003,56 @@ export default function MyAgenda() {
                 />
               </div>
 
-              {/* Cliente - Campo com Autocomplete */}
+              {/* Cliente - Busca ao vivo no Datasul */}
               <FormField
                 control={form.control}
                 name="clientName"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col relative">
-                    <FormLabel>Cliente *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Digite para buscar cliente..."
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setClientSearchQuery(e.target.value);
-                          setClientSearchOpen(true);
-                        }}
-                        onFocus={() => {
-                          setClientSearchOpen(true);
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => setClientSearchOpen(false), 200);
-                        }}
-                        data-testid="input-client-search"
-                      />
-                    </FormControl>
-                    {clientSearchOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-64 overflow-y-auto">
-                        {isLoadingClients ? (
-                          <div className="p-4 text-sm text-muted-foreground text-center">
-                            Carregando clientes...
-                          </div>
-                        ) : (
-                          <div className="p-2">
-                            {/* Opção: Base do técnico (Home office) - só aparece se a base estiver configurada com coordenadas válidas */}
-                            {myTechnician && 
-                             myTechnician.baseAddress && 
-                             myTechnician.baseCity && 
-                             myTechnician.baseLatitude && !isNaN(parseFloat(myTechnician.baseLatitude)) && 
-                             myTechnician.baseLongitude && !isNaN(parseFloat(myTechnician.baseLongitude)) &&
-                             (!field.value || "Base do técnico (Home office)".toLowerCase().includes(field.value.toLowerCase())) && (
-                              <div
-                                className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer border-b mb-2"
-                                onClick={() => handleBaseSelect()}
-                                data-testid="option-base-home-office"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Check
-                                    className={cn(
-                                      "h-4 w-4 shrink-0",
-                                      field.value === "Base do técnico (Home office)" ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col flex-1">
-                                    <span className="font-medium">Base do técnico (Home office)</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {myTechnician.baseAddress}, {myTechnician.baseCity}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Lista de clientes */}
-                            {clients.length === 0 && !(myTechnician && 
-                             myTechnician.baseAddress && 
-                             myTechnician.baseCity && 
-                             myTechnician.baseLatitude && !isNaN(parseFloat(myTechnician.baseLatitude)) && 
-                             myTechnician.baseLongitude && !isNaN(parseFloat(myTechnician.baseLongitude))) ? (
-                              <div className="p-4 text-sm text-muted-foreground text-center">
-                                Nenhum cliente cadastrado
-                              </div>
-                            ) : clients.filter(client => 
-                              client.companyName.toLowerCase().includes((field.value || "").toLowerCase())
-                            ).length === 0 && field.value && !(myTechnician && 
-                             myTechnician.baseAddress && 
-                             myTechnician.baseCity && 
-                             myTechnician.baseLatitude && !isNaN(parseFloat(myTechnician.baseLatitude)) && 
-                             myTechnician.baseLongitude && !isNaN(parseFloat(myTechnician.baseLongitude)) &&
-                             "Base do técnico (Home office)".toLowerCase().includes(field.value.toLowerCase())) ? (
-                              <div className="p-4 text-sm text-muted-foreground text-center">
-                                Nenhum cliente encontrado para "{field.value}"
-                              </div>
-                            ) : (
-                              <>
-                                {clients
-                                  .filter(client => 
-                                    client.companyName.toLowerCase().includes((field.value || "").toLowerCase())
-                                  )
-                                  .map((client) => (
-                                    <div
-                                      key={client.id}
-                                      className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer"
-                                      onClick={() => handleClientSelect(client)}
-                                      data-testid={`option-client-${client.id}`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <Check
-                                          className={cn(
-                                            "h-4 w-4 shrink-0",
-                                            field.value === client.companyName ? "opacity-100" : "opacity-0"
-                                          )}
-                                        />
-                                        <div className="flex flex-col flex-1">
-                                          <span className="font-medium">{client.companyName}</span>
-                                          {client.address && (
-                                            <span className="text-xs text-muted-foreground">
-                                              {client.address}, {client.city}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const canBase =
+                    myTechnician &&
+                    myTechnician.baseAddress &&
+                    myTechnician.baseCity &&
+                    myTechnician.baseLatitude &&
+                    !isNaN(parseFloat(myTechnician.baseLatitude)) &&
+                    myTechnician.baseLongitude &&
+                    !isNaN(parseFloat(myTechnician.baseLongitude));
+                  return (
+                    <FormItem className="flex flex-col relative">
+                      <FormLabel>Cliente *</FormLabel>
+                      <FormControl>
+                        <DatasulClientField
+                          value={field.value || ""}
+                          onChangeText={(text) => {
+                            field.onChange(text);
+                            form.setValue("clientId", undefined);
+                          }}
+                          onSelectClient={(c) => {
+                            field.onChange(c.nome);
+                            form.setValue("clientId", undefined);
+                            form.setValue("address", "");
+                            form.setValue("numero", "");
+                            form.setValue("bairro", "");
+                            form.setValue("city", c.cidade || "");
+                            form.setValue("state", c.estado || "");
+                            form.setValue("latitude", null);
+                            form.setValue("longitude", null);
+                          }}
+                          baseOption={
+                            canBase
+                              ? {
+                                  label: "Base do técnico (Home office)",
+                                  description: `${myTechnician?.baseAddress}, ${myTechnician?.baseCity}`,
+                                  selected: field.value === "Base do técnico (Home office)",
+                                  onSelect: handleBaseSelect,
+                                }
+                              : null
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Informações de contato do cliente selecionado */}
@@ -2181,100 +2225,52 @@ export default function MyAgenda() {
               <FormField
                 control={editForm.control}
                 name="clientName"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col relative">
-                    <FormLabel>Cliente *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Digite para buscar cliente..."
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setEditClientSearchOpen(true);
-                        }}
-                        onFocus={() => {
-                          setEditClientSearchOpen(true);
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => setEditClientSearchOpen(false), 200);
-                        }}
-                        data-testid="edit-input-client-search"
-                      />
-                    </FormControl>
-                    {editClientSearchOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-64 overflow-y-auto">
-                        {isLoadingClients ? (
-                          <div className="p-4 text-sm text-muted-foreground text-center">
-                            Carregando clientes...
-                          </div>
-                        ) : (
-                          <div className="p-2">
-                            {/* Opção: Base do técnico (Home office) */}
-                            {myTechnician && 
-                             myTechnician.baseAddress && 
-                             myTechnician.baseCity && 
-                             myTechnician.baseLatitude && !isNaN(parseFloat(myTechnician.baseLatitude)) && 
-                             myTechnician.baseLongitude && !isNaN(parseFloat(myTechnician.baseLongitude)) &&
-                             (!field.value || "Base do técnico (Home office)".toLowerCase().includes(field.value.toLowerCase())) && (
-                              <div
-                                className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer border-b mb-2"
-                                onClick={() => handleEditBaseSelect()}
-                                data-testid="edit-option-base-home-office"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Check
-                                    className={cn(
-                                      "h-4 w-4 shrink-0",
-                                      field.value === "Base do técnico (Home office)" ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col flex-1">
-                                    <span className="font-medium">Base do técnico (Home office)</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {myTechnician.baseAddress}, {myTechnician.baseCity}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Lista de clientes */}
-                            {clients
-                              .filter(client => 
-                                client.companyName.toLowerCase().includes((field.value || "").toLowerCase())
-                              )
-                              .map((client) => (
-                                <div
-                                  key={client.id}
-                                  className="px-3 py-2 hover:bg-accent rounded-sm cursor-pointer"
-                                  onClick={() => handleEditClientSelect(client)}
-                                  data-testid={`edit-option-client-${client.id}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Check
-                                      className={cn(
-                                        "h-4 w-4 shrink-0",
-                                        field.value === client.companyName ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col flex-1">
-                                      <span className="font-medium">{client.companyName}</span>
-                                      {client.address && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {client.address}, {client.city}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const canBase =
+                    myTechnician &&
+                    myTechnician.baseAddress &&
+                    myTechnician.baseCity &&
+                    myTechnician.baseLatitude &&
+                    !isNaN(parseFloat(myTechnician.baseLatitude)) &&
+                    myTechnician.baseLongitude &&
+                    !isNaN(parseFloat(myTechnician.baseLongitude));
+                  return (
+                    <FormItem className="flex flex-col relative">
+                      <FormLabel>Cliente *</FormLabel>
+                      <FormControl>
+                        <DatasulClientField
+                          value={field.value || ""}
+                          onChangeText={(text) => {
+                            field.onChange(text);
+                            editForm.setValue("clientId", undefined);
+                          }}
+                          onSelectClient={(c) => {
+                            field.onChange(c.nome);
+                            editForm.setValue("clientId", undefined);
+                            editForm.setValue("address", "");
+                            editForm.setValue("numero", "");
+                            editForm.setValue("bairro", "");
+                            editForm.setValue("city", c.cidade || "");
+                            editForm.setValue("state", c.estado || "");
+                            editForm.setValue("latitude", null);
+                            editForm.setValue("longitude", null);
+                          }}
+                          baseOption={
+                            canBase
+                              ? {
+                                  label: "Base do técnico (Home office)",
+                                  description: `${myTechnician?.baseAddress}, ${myTechnician?.baseCity}`,
+                                  selected: field.value === "Base do técnico (Home office)",
+                                  onSelect: handleEditBaseSelect,
+                                }
+                              : null
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* CEP com busca automática */}

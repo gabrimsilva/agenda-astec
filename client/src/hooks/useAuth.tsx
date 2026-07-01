@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginDatasul: (username: string, password: string, host: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isLoading: boolean;
@@ -77,10 +78,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("[useAuth] Login successful, user and token set");
   };
 
+  const loginDatasul = async (username: string, password: string, host: string) => {
+    const response = await apiRequest("POST", "/api/auth/datasul-login", { username, password, host });
+    const data = await response.json();
+    if (!data.user || !data.token) {
+      throw new Error("Resposta inválida do servidor");
+    }
+    setUser(data.user);
+    setToken(data.token);
+    localStorage.setItem("astec_token", data.token);
+    // Guarda o token Datasul na sessão (usado p/ buscar clientes no agendamento).
+    if (data.datasulToken) {
+      sessionStorage.setItem("astec_datasul_token", data.datasulToken);
+      sessionStorage.setItem("astec_datasul_host", data.datasulHost || host);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("astec_token");
+    sessionStorage.removeItem("astec_datasul_token");
+    sessionStorage.removeItem("astec_datasul_host");
     queryClient.clear();
   };
 
@@ -92,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, refreshUser, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginDatasul, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

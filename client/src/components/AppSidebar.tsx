@@ -1,7 +1,6 @@
 import {
   Calendar,
   Users,
-  Building2,
   Settings,
   FileText,
   MapPin,
@@ -51,11 +50,6 @@ const adminMenuItems = [
     title: "Calendário",
     url: "/calendario",
     icon: Calendar,
-  },
-  {
-    title: "Clientes",
-    url: "/clientes",
-    icon: Building2,
   },
   {
     title: "RATs",
