@@ -29,6 +29,11 @@ export async function updateTechnician(id: string, data: any): Promise<Technicia
   return response.json();
 }
 
+export async function updateTechnicianDatasulProfile(id: string, datasulUsername: string): Promise<{ datasulUsername: string | null }> {
+  const response = await apiRequest("PATCH", `/api/technicians/${id}/datasul-profile`, { datasulUsername });
+  return response.json();
+}
+
 export async function deleteTechnician(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/technicians/${id}`);
 }

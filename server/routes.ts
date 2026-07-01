@@ -1472,6 +1472,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Minimal endpoint just for the Datasul profile (tiny body avoids corporate WAF blocking large PUTs)
+  app.patch("/api/technicians/:id/datasul-profile", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const raw = req.body?.datasulUsername;
+      const datasulUsername = raw === undefined || raw === null || raw === "" ? null : String(raw).trim();
+      const user = await storage.updateTechnicianDatasulProfile(req.params.id, datasulUsername);
+      res.json({ datasulUsername: user.datasulUsername });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.delete("/api/technicians/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       const activitiesCount = await storage.countActivitiesByTechnicianId(req.params.id);

@@ -80,6 +80,7 @@ export interface IStorage {
   createUserAndTechnician(data: { user: InsertUser; technician: Omit<InsertTechnician, 'userId'> }): Promise<{ user: User; technician: Technician }>;
   updateTechnician(id: string, technician: Partial<InsertTechnician>): Promise<Technician>;
   updateUserAndTechnician(technicianId: string, data: { password?: string; role?: string; name?: string; email?: string; datasulUsername?: string | null; phone?: string; team?: string; baseCity?: string; color?: string; avatarUrl?: string; vehicleInfo?: string; licenseNumber?: string; workHoursPerDay?: number; baseAddress?: string; baseNumero?: string; baseBairro?: string; baseState?: string; baseLatitude?: string | null; baseLongitude?: string | null }): Promise<{ user: User; technician: Technician }>;
+  updateTechnicianDatasulProfile(technicianId: string, datasulUsername: string | null): Promise<User>;
   deleteTechnician(id: string): Promise<void>;
   countActivitiesByTechnicianId(technicianId: string): Promise<number>;
   
@@ -346,6 +347,22 @@ export class DatabaseStorage implements IStorage {
 
       return { user, technician };
     });
+  }
+
+  async updateTechnicianDatasulProfile(technicianId: string, datasulUsername: string | null): Promise<User> {
+    const existingTechnician = await this.getTechnician(technicianId);
+    if (!existingTechnician || !existingTechnician.userId) {
+      throw new Error("Técnico não encontrado");
+    }
+    const [updatedUser] = await db
+      .update(users)
+      .set({ datasulUsername: datasulUsername || null })
+      .where(eq(users.id, existingTechnician.userId))
+      .returning();
+    if (!updatedUser) {
+      throw new Error("Usuário não encontrado");
+    }
+    return updatedUser;
   }
 
   async deleteTechnician(id: string): Promise<void> {

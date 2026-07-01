@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { fetchTechnicians, createTechnician, createUserAndTechnician, updateTechnician, deleteTechnician } from "@/lib/api/technicians";
+import { fetchTechnicians, createTechnician, createUserAndTechnician, updateTechnician, updateTechnicianDatasulProfile, deleteTechnician } from "@/lib/api/technicians";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -95,7 +95,13 @@ export default function TechniciansTab() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<FormValues> }) => updateTechnician(id, data),
+    mutationFn: async ({ id, data, datasulUsername }: { id: string; data: Partial<FormValues>; datasulUsername?: string }) => {
+      // Datasul profile goes through its own tiny endpoint (avoids corporate WAF blocking large PUTs)
+      if (datasulUsername !== undefined) {
+        await updateTechnicianDatasulProfile(id, datasulUsername);
+      }
+      return updateTechnician(id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/technicians"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -154,8 +160,9 @@ export default function TechniciansTab() {
     if (editingTechnician) {
       // Não reenvia avatarUrl (pode ser um base64 grande que dispara WAF/proxy);
       // omitir preserva o avatar atual no banco.
-      const { avatarUrl, ...rest } = values;
-      updateMutation.mutate({ id: editingTechnician.id, data: rest });
+      // datasulUsername vai por um endpoint dedicado e mínimo (evita bloqueio do WAF).
+      const { avatarUrl, datasulUsername, ...rest } = values;
+      updateMutation.mutate({ id: editingTechnician.id, data: rest, datasulUsername: datasulUsername ?? "" });
     } else {
       // When creating, validate that password and role are provided
       if (!values.password || !values.role) {
