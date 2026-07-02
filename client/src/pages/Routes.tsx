@@ -7,7 +7,7 @@ import { io, Socket } from "socket.io-client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Users, Building2, Activity, Battery, Clock, Wifi, WifiOff, Navigation, Calendar } from "lucide-react";
+import { MapPin, Users, Building2, Activity, Battery, Clock, Wifi, WifiOff, Navigation, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientsClusterLayer } from "@/components/map/ClientsClusterLayer";
 import { FiltersDrawer } from "@/components/map/FiltersDrawer";
@@ -373,6 +373,20 @@ export default function Routes() {
     return arr;
   }, [mapActivities]);
 
+  // Controle de expandir/colapsar por técnico na lista de atividades (padrão: colapsado)
+  const [expandedTechIds, setExpandedTechIds] = useState<Set<string>>(new Set());
+  const toggleTechExpanded = (technicianId: string) => {
+    setExpandedTechIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(technicianId)) {
+        next.delete(technicianId);
+      } else {
+        next.add(technicianId);
+      }
+      return next;
+    });
+  };
+
   // Socket.IO para atualizações em tempo real
   useEffect(() => {
     const token = localStorage.getItem("astec_token");
@@ -706,9 +720,21 @@ export default function Routes() {
                           <p className="text-sm">Nenhuma atividade no período</p>
                         </div>
                       ) : (
-                        activitiesByTechnician.map((group) => (
+                        activitiesByTechnician.map((group) => {
+                          const isExpanded = expandedTechIds.has(group.technicianId);
+                          return (
                           <div key={group.technicianId} data-testid={`activities-group-${group.technicianId}`}>
-                            <div className="flex items-center gap-2 mb-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleTechExpanded(group.technicianId)}
+                              className="w-full flex items-center gap-2 mb-2 rounded-md px-1 py-1 hover-elevate text-left"
+                              data-testid={`activities-group-toggle-${group.technicianId}`}
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                              )}
                               <div
                                 className="h-3 w-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: group.technicianColor }}
@@ -717,8 +743,9 @@ export default function Routes() {
                               <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
                                 {group.activities.length}
                               </Badge>
-                            </div>
-                            <div className="space-y-2">
+                            </button>
+                            {isExpanded && (
+                            <div className="space-y-2 pl-6">
                               {group.activities.map((act) => (
                                 <div
                                   key={act.id}
@@ -748,8 +775,10 @@ export default function Routes() {
                                 </div>
                               ))}
                             </div>
+                            )}
                           </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </ScrollArea>
