@@ -175,6 +175,26 @@ function MapSizeInvalidator() {
   return null;
 }
 
+const activityStatusLabels: Record<string, string> = {
+  planejado: "Planejado",
+  aCaminho: "A Caminho",
+  emExecucao: "Em Execução",
+  concluido: "Concluído",
+  reprovado: "Reprovado",
+  cancelado: "Cancelado",
+};
+
+const activityStatusColors: Record<string, string> = {
+  planejado: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  aCaminho: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+  emExecucao: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+  concluido: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  reprovado: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  cancelado: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+};
+
+const formatTime = (t?: string | null) => (t ? t.slice(0, 5) : "");
+
 export default function Routes() {
   const isMobile = useIsMobile();
   // Centro do mapa em Curitiba
@@ -219,7 +239,6 @@ export default function Routes() {
   // Filtro de técnicos para o mapa
   const [selectedTechnicianIds, setSelectedTechnicianIds] = useState<string[]>([]);
   const [showActivities, setShowActivities] = useState(true); // Mostrar atividades no mapa
-  const [viewMode, setViewMode] = useState<"map" | "list">("map"); // Modo de visualização: mapa ou lista
   const [activityDateRange, setActivityDateRange] = useState<{ start: string; end: string }>(() => {
     const today = new Date();
     return {
@@ -296,6 +315,9 @@ export default function Routes() {
     technicianId: string;
     technicianName: string;
     technicianColor: string;
+    endTime?: string | null;
+    clientCity?: string | null;
+    clientState?: string | null;
   }
 
   const { data: mapActivities = [], isLoading: loadingActivities } = useQuery<MapActivity[]>({
@@ -328,6 +350,28 @@ export default function Routes() {
     team: t.team,
     baseCity: null as string | null, // Será preenchido do endpoint de técnicos
   }));
+
+  // Agrupar atividades por técnico (para a lista lateral), ordenadas por horário
+  const activitiesByTechnician = useMemo(() => {
+    const groups = new Map<string, { technicianId: string; technicianName: string; technicianColor: string; activities: MapActivity[] }>();
+    for (const act of mapActivities) {
+      let group = groups.get(act.technicianId);
+      if (!group) {
+        group = {
+          technicianId: act.technicianId,
+          technicianName: act.technicianName,
+          technicianColor: act.technicianColor || "#3b82f6",
+          activities: [],
+        };
+        groups.set(act.technicianId, group);
+      }
+      group.activities.push(act);
+    }
+    const arr = Array.from(groups.values());
+    arr.forEach(g => g.activities.sort((a, b) => (a.scheduledTime || "").localeCompare(b.scheduledTime || "")));
+    arr.sort((a, b) => a.technicianName.localeCompare(b.technicianName));
+    return arr;
+  }, [mapActivities]);
 
   // Socket.IO para atualizações em tempo real
   useEffect(() => {
@@ -546,26 +590,6 @@ export default function Routes() {
               )}
             </Button>
 
-            <Button
-              variant={viewMode === "list" ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}
-              className="gap-2"
-              data-testid="button-toggle-view-mode"
-            >
-              {viewMode === "map" ? (
-                <>
-                  <List className="h-4 w-4" />
-                  Ver Lista GPS
-                </>
-              ) : (
-                <>
-                  <Map className="h-4 w-4" />
-                  Ver Mapa
-                </>
-              )}
-            </Button>
-
             <div className="h-6 w-px bg-border mx-1" />
 
             <Button
@@ -578,21 +602,6 @@ export default function Routes() {
               <MapPin className="h-4 w-4" />
               Encontrar Técnico Próximo
             </Button>
-
-            <Badge variant="outline" className="gap-1 text-xs" data-testid="status-technicians">
-              <Users className="h-3 w-3" />
-              {techniciansOnline}/{technicians.length} online
-            </Badge>
-            <Badge variant="outline" className="gap-1 text-xs" data-testid="status-gps-active">
-              <Navigation className="h-3 w-3 text-green-500" />
-              {techniciansWithActiveGPS} GPS Ativo
-            </Badge>
-            {techniciansWithInactiveGPS > 0 && (
-              <Badge variant="secondary" className="gap-1 text-xs" data-testid="status-gps-inactive">
-                <Navigation className="h-3 w-3 text-muted-foreground" />
-                {techniciansWithInactiveGPS} GPS Inativo
-              </Badge>
-            )}
 
             {selectedTechnicianIds.length > 0 && (
               <Badge variant="secondary" className="gap-1">
@@ -610,106 +619,6 @@ export default function Routes() {
                     <p className="text-sm text-muted-foreground">Carregando...</p>
                   </div>
                 </div>
-              ) : viewMode === "list" ? (
-                /* Lista de técnicos com GPS */
-                <ScrollArea className="h-full">
-                  <div className="p-4 space-y-3" data-testid="gps-technicians-list">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-sm">Lista de Técnicos GPS</h3>
-                      <Badge variant="outline" className="gap-1">
-                        {technicians.length} técnico(s)
-                      </Badge>
-                    </div>
-                    
-                    {technicians.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Nenhum técnico encontrado</p>
-                      </div>
-                    ) : (
-                      technicians
-                        .filter(tech => 
-                          selectedTechnicianIds.length === 0 || 
-                          selectedTechnicianIds.includes(tech.technicianId)
-                        )
-                        .map((tech) => {
-                          const hasLocation = tech.lastLocation !== null;
-                          const isGpsActive = tech.gpsStatus === "ativo";
-                          
-                          // Usar cidade do GPS (já vem do backend via geocodificação reversa)
-                          const gpsCity = tech.lastLocation?.city;
-                          const displayLocation = gpsCity || (hasLocation ? "Buscando localização..." : "Sem localização GPS");
-                          
-                          return (
-                            <Card 
-                              key={tech.technicianId} 
-                              className="p-3 hover-elevate"
-                              data-testid={`gps-list-item-${tech.technicianId}`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <div
-                                      className="h-3 w-3 rounded-full flex-shrink-0"
-                                      style={{ backgroundColor: tech.color || "#3b82f6" }}
-                                    />
-                                    <p className="font-semibold text-sm truncate">{tech.name}</p>
-                                    {tech.team && (
-                                      <Badge variant="outline" className="text-xs flex-shrink-0">
-                                        {tech.team}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                                    <span className="truncate">{displayLocation}</span>
-                                  </div>
-                                  
-                                  {hasLocation && (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <Clock className="h-3 w-3 flex-shrink-0" />
-                                      <span>Última atualização: {moment(tech.lastLocation!.updatedAt).fromNow()}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                  <Badge 
-                                    variant={isGpsActive ? "default" : "secondary"} 
-                                    className="gap-1 text-xs"
-                                    data-testid={`gps-status-${tech.technicianId}`}
-                                  >
-                                    <Navigation className="h-3 w-3" />
-                                    {isGpsActive ? "GPS Ativo" : "GPS Inativo"}
-                                  </Badge>
-                                  
-                                  <Badge 
-                                    variant={tech.status === "online" ? "default" : "outline"} 
-                                    className="gap-1 text-xs"
-                                  >
-                                    {tech.status === "online" ? (
-                                      <Wifi className="h-3 w-3" />
-                                    ) : (
-                                      <WifiOff className="h-3 w-3" />
-                                    )}
-                                    {tech.status === "online" ? "Online" : "Offline"}
-                                  </Badge>
-                                  
-                                  {tech.battery !== null && (
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                      <Battery className="h-3 w-3" />
-                                      <span>{tech.battery}%</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </Card>
-                          );
-                        })
-                    )}
-                  </div>
-                </ScrollArea>
               ) : (
                 <MapContainer
                   center={defaultCenter}
@@ -722,76 +631,6 @@ export default function Routes() {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-
-                  {/* Marcadores de Técnicos */}
-                  {techniciansWithLocation.map((tech) => {
-                    const lat = parseFloat(tech.lastLocation!.latitude);
-                    const lng = parseFloat(tech.lastLocation!.longitude);
-
-                    // Escolher ícone baseado no status do GPS
-                    const markerIcon = tech.gpsStatus === "ativo" ? technicianActiveIcon : technicianInactiveIcon;
-                    
-                    return (
-                      <Marker
-                        key={tech.technicianId}
-                        position={[lat, lng]}
-                        icon={markerIcon}
-                        data-testid={`marker-technician-${tech.technicianId}`}
-                      >
-                        <Popup>
-                          <div className="p-2 w-[230px] max-w-[230px]" data-testid={`popup-technician-${tech.technicianId}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="h-4 w-4 text-blue-500 shrink-0" />
-                              <p className="font-semibold text-sm truncate">{tech.name}</p>
-                            </div>
-                            
-                            {tech.team && (
-                              <p className="text-xs text-muted-foreground mb-1 truncate">
-                                Equipe: {tech.team}
-                              </p>
-                            )}
-                            
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant={tech.gpsStatus === "ativo" ? "default" : "secondary"} className="text-xs gap-1">
-                                <Navigation className="h-3 w-3" />
-                                {tech.gpsStatus === "ativo" ? "GPS Ativo" : "GPS Inativo"}
-                              </Badge>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 mb-1">
-                              {tech.status === "online" ? (
-                                <Wifi className="h-3 w-3 text-green-500 shrink-0" />
-                              ) : (
-                                <WifiOff className="h-3 w-3 text-gray-400 shrink-0" />
-                              )}
-                              <span className="text-xs">
-                                {tech.status === "online" ? "Online" : "Offline"}
-                              </span>
-                            </div>
-
-                            {tech.battery !== null && (
-                              <div className="flex items-center gap-2 mb-1">
-                                <Battery className="h-3 w-3 shrink-0" />
-                                <span className="text-xs">Bateria: {tech.battery}%</span>
-                              </div>
-                            )}
-
-                            {tech.lastLocation?.address && (
-                              <p className="text-xs text-muted-foreground mt-2 break-words">
-                                <MapPin className="h-3 w-3 inline mr-1 shrink-0" />
-                                {tech.lastLocation.address}
-                              </p>
-                            )}
-
-                            <p className="text-xs text-muted-foreground mt-2">
-                              <Clock className="h-3 w-3 inline mr-1" />
-                              {moment(tech.lastLocation!.updatedAt).fromNow()}
-                            </p>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
 
                   {/* Marcadores de Atividades coloridos por técnico */}
                   {showActivities && mapActivities.length > 0 && (
@@ -843,6 +682,81 @@ export default function Routes() {
               )}
             </div>
 
+            {/* Painel lateral com a lista de atividades (agenda dos técnicos) */}
+            {showActivities && (
+              <div className="w-80 lg:w-96 flex-shrink-0 min-w-[280px] flex flex-col h-full min-h-0" data-testid="activities-list-panel">
+                <Card className="flex flex-col h-full min-h-0">
+                  <div className="p-3 border-b flex items-center justify-between flex-shrink-0">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Atividades
+                    </h3>
+                    <Badge variant="outline">{mapActivities.length}</Badge>
+                  </div>
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-3 space-y-4">
+                      {loadingActivities ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Activity className="h-6 w-6 animate-spin mx-auto mb-2" />
+                          <p className="text-sm">Carregando atividades...</p>
+                        </div>
+                      ) : mapActivities.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Nenhuma atividade no período</p>
+                        </div>
+                      ) : (
+                        activitiesByTechnician.map((group) => (
+                          <div key={group.technicianId} data-testid={`activities-group-${group.technicianId}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div
+                                className="h-3 w-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: group.technicianColor }}
+                              />
+                              <span className="font-semibold text-sm truncate">{group.technicianName}</span>
+                              <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
+                                {group.activities.length}
+                              </Badge>
+                            </div>
+                            <div className="space-y-2">
+                              {group.activities.map((act) => (
+                                <div
+                                  key={act.id}
+                                  className="rounded-md border p-2 text-xs bg-card"
+                                  data-testid={`activity-item-${act.id}`}
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="flex items-center gap-1 font-medium text-muted-foreground">
+                                      <Clock className="h-3 w-3" />
+                                      {formatTime(act.scheduledTime)}
+                                      {act.endTime ? ` - ${formatTime(act.endTime)}` : ""}
+                                    </span>
+                                    <Badge className={`text-[10px] px-1.5 py-0 ${activityStatusColors[act.status] || ""}`}>
+                                      {activityStatusLabels[act.status] || act.status}
+                                    </Badge>
+                                  </div>
+                                  <p className="font-semibold text-sm leading-tight line-clamp-2">{act.clientName}</p>
+                                  <p className="text-muted-foreground truncate">{act.activityTypeName}</p>
+                                  {(act.clientCity || act.clientState) && (
+                                    <p className="flex items-center gap-1 text-muted-foreground mt-1">
+                                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                                      <span className="truncate">
+                                        {[act.clientCity, act.clientState].filter(Boolean).join(" / ")}
+                                      </span>
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
+            )}
+
             {/* Painel lateral de técnicos próximos - responsivo para notebooks 14" */}
             {nearbyPanelOpen && (
               <div className="w-80 lg:w-96 xl:w-[420px] flex-shrink-0 min-w-[280px] flex flex-col h-full min-h-0" data-testid="nearby-technicians-panel-container">
@@ -882,12 +796,6 @@ export default function Routes() {
           <Card className="p-4 mt-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-500" />
-                  <span className="text-sm" data-testid="count-technicians">
-                    Técnicos GPS ({techniciansWithLocation.length})
-                  </span>
-                </div>
                 {showActivities && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
