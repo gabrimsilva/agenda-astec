@@ -7,7 +7,7 @@ import { io, Socket } from "socket.io-client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Users, Building2, Activity, Battery, Clock, Wifi, WifiOff, Navigation, Calendar, List, Map } from "lucide-react";
+import { MapPin, Users, Building2, Activity, Battery, Clock, Wifi, WifiOff, Navigation, Calendar } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientsClusterLayer } from "@/components/map/ClientsClusterLayer";
 import { FiltersDrawer } from "@/components/map/FiltersDrawer";
