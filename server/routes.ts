@@ -888,12 +888,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
       const resolvedHost = resolveDatasulHost(host);
 
-      // params: pagina,tamanho[,busca][,grupo]. Para filtrar só por grupo,
-      // a busca fica vazia: "1,50,,71".
-      // OBS: a API limita o nº de páginas em ~400; com tamanho=1 o total vem
-      // capado em 400. Usamos tamanho 50 (como na doc) para obter o total real.
+      // params: pagina,tamanho,busca,grupo,todos. Slot 5 (todos=1) ativa o
+      // MODO CADASTRO COMPLETO (toda a base, sem teto de 400). Busca vazia;
+      // grupo opcional (ex.: 71 = Coatings). Ex.: "1,50,,71,1" ou "1,50,,,1".
       const grupoTrim = (grupo || "").trim();
-      const params = grupoTrim ? `1,50,,${encodeURIComponent(grupoTrim)}` : "1,50";
+      const params = `1,50,,${grupoTrim ? encodeURIComponent(grupoTrim) : ""},1`;
 
       let erpRes: Response;
       try {
@@ -946,11 +945,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const grupo = ((req.query.grupo as string) || "").trim();
       const host = req.query.host as string | undefined;
 
-      // Formato do path: pagina,tamanho[,busca][,grupo]
-      const parts = [String(pagina), String(tamanho)];
-      if (busca || grupo) parts.push(encodeURIComponent(busca));
-      if (grupo) parts.push(encodeURIComponent(grupo));
-      const params = parts.join(",");
+      // Formato do path: pagina,tamanho,busca,grupo,todos
+      // Slot 5 (todos=1) => MODO CADASTRO COMPLETO (toda a base, sem teto de 400/500).
+      const params = [
+        String(pagina),
+        String(tamanho),
+        encodeURIComponent(busca),
+        encodeURIComponent(grupo),
+        "1",
+      ].join(",");
 
       let erpRes: Response;
       try {
@@ -1022,14 +1025,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let pagina = 1;
       const MAX_PAGINAS = 2000; // trava de segurança
 
-      // A API capa o "total"/"paginas" em ~400, mas a paginação continua além
-      // disso. Por isso NÃO confiamos em meta.paginas: seguimos paginando até
-      // uma página vir vazia (ou com menos registros que o tamanho da página).
+      // Com o MODO CADASTRO COMPLETO (todos=1) o meta.total/paginas vem real,
+      // mas mantemos a paginação até uma página vir vazia (ou menor que o tamanho)
+      // por robustez.
       while (pagina <= MAX_PAGINAS) {
-        const parts = [String(pagina), String(PAGE)];
-        if (grupoTrim) parts.push("");
-        if (grupoTrim) parts.push(encodeURIComponent(grupoTrim));
-        const params = parts.join(",");
+        // path: pagina,tamanho,busca,grupo,todos (todos=1 => base completa)
+        const params = [
+          String(pagina),
+          String(PAGE),
+          "",
+          grupoTrim ? encodeURIComponent(grupoTrim) : "",
+          "1",
+        ].join(",");
 
         const erpRes = await datasulFetch(host, params, authHeader);
         if (erpRes.status === 401 || erpRes.status === 403) {
