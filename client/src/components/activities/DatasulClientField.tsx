@@ -24,14 +24,13 @@ interface DatasulClientFieldProps {
   onSelectClient: (client: DatasulClientResult) => void;
   baseOption?: BaseOption | null;
   placeholder?: string;
-  grupo?: string;
+  grupo?: string; // Se não definido, busca em AMBOS (71 e 88)
 }
-
-const DATASUL_GRUPO_PADRAO = "71"; // Coatings
 
 /**
  * Campo de cliente com busca AO VIVO na API do Datasul (ERP).
  * Usa o token Datasul guardado na sessão no login (sessionStorage).
+ * Se grupo não for especificado, busca em AMBOS os grupos (71 e 88).
  */
 export function DatasulClientField({
   value,
@@ -39,7 +38,7 @@ export function DatasulClientField({
   onSelectClient,
   baseOption,
   placeholder = "Digite para buscar cliente no Datasul...",
-  grupo = DATASUL_GRUPO_PADRAO,
+  grupo, // Agora opcional - undefined por padrão (busca em ambos)
 }: DatasulClientFieldProps) {
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<DatasulClientResult[]>([]);
