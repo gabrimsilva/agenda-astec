@@ -763,7 +763,7 @@ export default function Routes() {
                                     </Badge>
                                   </div>
                                   <p className="font-semibold text-sm leading-tight line-clamp-2">{act.clientName}</p>
-                                  <p className="text-muted-foreground truncate">{act.activityTypeName}</p>
+                                  <p className="text-muted-foreground line-clamp-2">{act.activityTypeName}</p>
                                   {(act.clientCity || act.clientState) && (
                                     <p className="flex items-center gap-1 text-muted-foreground mt-1">
                                       <MapPin className="h-3 w-3 flex-shrink-0" />
