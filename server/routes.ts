@@ -870,117 +870,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return null;
   }
 
-  // Cache em memória: grupos 71 (Coatings) e 88 (Alumínio) carregados via todos=1
-  // Atualizado na primeira consulta ou periodicamente. Chave: "71" ou "88".
-  const datasulClientesCache = new Map<string, { clientes: any[]; timestamp: number }>();
-  const CACHE_TTL = 3600000; // 1 hora em ms
-
-  // Carrega uma base de clientes do Datasul (grupo) com cache TTL e timeout.
-  async function loadDatasulClientesForGrupo(
-    grupo: string,
-    host: string | undefined,
-    authHeader: string
-  ): Promise<any[]> {
-    const now = Date.now();
-    const cached = datasulClientesCache.get(grupo);
-    
-    // Se cache válido, retorna imediatamente
-    if (cached && now - cached.timestamp < CACHE_TTL) {
-      return cached.clientes;
-    }
-
-    // Se já está carregando (evita múltiplos loads simultâneos), aguarda com timeout
-    if (!cached) {
-      // Marca como "carregando" com timestamp anterior (indica que está em progresso)
-      datasulClientesCache.set(grupo, { clientes: [], timestamp: now });
-    }
-
-    // Inicia carregamento do ERP com timeout de 45 segundos
-    console.log(`[Datasul] Iniciando carregamento do grupo ${grupo}...`);
-    const clientes: any[] = [];
-    let pagina = 1;
-    const MAX_PAGINAS = 200; // backstop de segurança
-    const TIMEOUT_POR_PAGINA = 20000; // 20s por página
-    let totalLoaded = 0;
-
-    try {
-      while (pagina <= MAX_PAGINAS) {
-        const params = [String(pagina), "200", "", encodeURIComponent(grupo), "1"].join(",");
-        console.log(`[Datasul] Grupo ${grupo} página ${pagina}...`);
-        
-        try {
-          // Cria AbortController com timeout
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_POR_PAGINA);
-          
-          const erpRes = await datasulFetch(host, params, authHeader);
-          clearTimeout(timeoutId);
-          
-          if (!erpRes.ok) {
-            console.warn(`[Datasul] HTTP ${erpRes.status} ao carregar grupo ${grupo} página ${pagina}`);
-            break;
-          }
-          
-          const data: any = await erpRes.json().catch(() => null);
-          const items: any[] = Array.isArray(data?.items) ? data.items : [];
-          const lote = items.filter((i) => i?._meta !== "SIM");
-          
-          if (lote.length === 0) {
-            console.log(`[Datasul] Grupo ${grupo} página ${pagina}: fim da paginação (0 itens)`);
-            break;
-          }
-          
-          clientes.push(...lote);
-          totalLoaded += lote.length;
-          console.log(`[Datasul] Grupo ${grupo} página ${pagina}: +${lote.length} itens (total: ${totalLoaded})`);
-          
-          if (lote.length < 200) {
-            console.log(`[Datasul] Grupo ${grupo} página ${pagina}: última página (< 200 itens)`);
-            break;
-          }
-          
-          pagina++;
-        } catch (err: any) {
-          if (err?.name === "AbortError") {
-            console.error(`[Datasul] Timeout ao carregar grupo ${grupo} página ${pagina} (${TIMEOUT_POR_PAGINA}ms)`);
-          } else {
-            console.error(`[Datasul] Erro ao carregar grupo ${grupo} página ${pagina}:`, err?.message);
-          }
-          // Continua com o que carregou até agora
-          break;
-        }
-      }
-
-      // Salva em cache mesmo que parcial
-      datasulClientesCache.set(grupo, { clientes, timestamp: now });
-      console.log(`[Datasul] ✓ Grupo ${grupo} em cache: ${clientes.length} clientes carregados`);
-    } catch (err: any) {
-      console.error(`[Datasul] Erro fatal ao carregar grupo ${grupo}:`, err?.message);
-      // Limpa o cache para permitir retry na próxima chamada
-      datasulClientesCache.delete(grupo);
-    }
-
-    return clientes;
-  }
-
-  // Filtra clientes em memória por um termo de busca (código, nome, fantasia, CNPJ, cidade, UF, rep, tel)
-  function filtrarClientesMemoria(clientes: any[], termo: string): any[] {
-    if (!termo.trim()) return clientes;
-    const upper = termo.toUpperCase();
-    return clientes.filter((c) => {
-      return (
-        (c["cod-emitente"] && String(c["cod-emitente"]).toUpperCase().includes(upper)) ||
-        (c["nome-emit"] && c["nome-emit"].toUpperCase().includes(upper)) ||
-        (c["nome-abrev"] && c["nome-abrev"].toUpperCase().includes(upper)) ||
-        (c["nom-fantasia"] && c["nom-fantasia"].toUpperCase().includes(upper)) ||
-        (c["cgc"] && c["cgc"].toUpperCase().includes(upper)) ||
-        (c["cidade"] && c["cidade"].toUpperCase().includes(upper)) ||
-        (c["estado"] && c["estado"].toUpperCase().includes(upper)) ||
-        (c["nome-rep"] && c["nome-rep"].toUpperCase().includes(upper)) ||
-        (c["telefone"] && c["telefone"].toUpperCase().includes(upper))
-      );
-    });
-  }
+  // Nota: A busca é feita diretamente no ERP, que já suporta busca em múltiplos campos.
+  // Não usamos cache de clientes em memória para evitar carregar 30k+ registros.
 
   // Login/validação das credenciais do Datasul.
   // Não persiste a senha: apenas valida e devolve o token Basic para o cliente
@@ -1042,9 +933,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Lista de clientes do Datasul com busca em memória (cache + filtro).
+  // Lista de clientes do Datasul com busca expandida.
   // Suporta grupos 71 (Coatings) e 88 (Alumínio).
-  // Busca por: código, nome, fantasia, CNPJ, cidade, UF, representante, telefone.
+  // Busca é feita DIRETAMENTE no ERP (sem cache de clientes em memória).
   // Auth: header "x-datasul-auth: Basic <base64>" (token devolvido no login).
   app.get("/api/datasul/clientes", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
@@ -1056,89 +947,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pagina = parseInt((req.query.pagina as string) || "1", 10) || 1;
       const tamanho = Math.min(parseInt((req.query.tamanho as string) || "50", 10) || 50, 200);
       const termo = ((req.query.busca as string) || "").trim();
-      const grupoReq = ((req.query.grupo as string) || "71").trim(); // Padrão grupo 71 se não informado
+      let grupoReq = ((req.query.grupo as string) || "").trim();
       const host = req.query.host as string | undefined;
 
-      // Se um termo de busca foi enviado, usa a estratégia de cache + filtro em memória
-      // para grupos 71 e 88, permitindo busca em vários campos.
-      if (termo.length > 0) {
+      // Se nenhum grupo foi especificado e há um termo de busca, busca em AMBOS os grupos (71 e 88)
+      // concatenando os resultados (sem paginação entre grupos)
+      if (termo.length > 0 && !grupoReq) {
+        // Busca em paralelo nos dois grupos
+        const params71 = [
+          String(pagina),
+          String(tamanho),
+          encodeURIComponent(termo),
+          encodeURIComponent("71"),
+          "1",
+        ].join(",");
+
+        const params88 = [
+          String(pagina),
+          String(tamanho),
+          encodeURIComponent(termo),
+          encodeURIComponent("88"),
+          "1",
+        ].join(",");
+
+        let erpRes71: Response;
+        let erpRes88: Response;
+        
         try {
-          // Carrega grupos 71 e 88 em cache com TIMEOUT máximo de 25 segundos (pra deixar margem)
-          const loadPromise71 = loadDatasulClientesForGrupo("71", host, authHeader);
-          const loadPromise88 = loadDatasulClientesForGrupo("88", host, authHeader);
-          
-          const timeoutMs = 25000; // 25s de timeout
-          const promises = [
-            Promise.race([
-              loadPromise71,
-              new Promise<any[]>((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout ao carregar grupo 71")), timeoutMs)
-              ),
-            ]),
-            Promise.race([
-              loadPromise88,
-              new Promise<any[]>((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout ao carregar grupo 88")), timeoutMs)
-              ),
-            ]),
-          ];
-
-          const results = await Promise.allSettled(promises);
-          
-          const clientes71 = results[0].status === "fulfilled" ? results[0].value : [];
-          const clientes88 = results[1].status === "fulfilled" ? results[1].value : [];
-          
-          if (results[0].status === "rejected") {
-            console.warn("[API] Falha ao carregar grupo 71:", (results[0].reason as Error)?.message);
+          [erpRes71, erpRes88] = await Promise.all([
+            datasulFetch(host, params71, authHeader),
+            datasulFetch(host, params88, authHeader),
+          ]);
+        } catch (err: any) {
+          if (err?.name === "AbortError") {
+            return res.status(504).json({ error: "Tempo de conexão esgotado ao acessar o Datasul." });
           }
-          if (results[1].status === "rejected") {
-            console.warn("[API] Falha ao carregar grupo 88:", (results[1].reason as Error)?.message);
-          }
+          return res.status(502).json({ error: "Não foi possível conectar ao Datasul." });
+        }
 
-          // Merge dos dois grupos (ou apenas o que carregou)
-          const allClientes = [...clientes71, ...clientes88];
+        // Processa resposta do grupo 71
+        if (!erpRes71.ok) {
+          return res.status(502).json({ error: `Falha ao consultar clientes grupo 71 (HTTP ${erpRes71.status}).` });
+        }
 
-          if (allClientes.length === 0) {
-            return res.status(503).json({
-              error: "Erro ao carregar clientes do Datasul. Tente novamente em alguns instantes.",
-            });
-          }
+        const data71: any = await erpRes71.json().catch(() => null);
+        const items71: any[] = Array.isArray(data71?.items) ? data71.items : [];
+        const clientes71 = items71.filter((i) => i?._meta !== "SIM");
+        const meta71 = items71.find((i) => i?._meta === "SIM");
 
-          // Filtra pelo termo (código, nome, fantasia, CNPJ, cidade, UF, rep, tel)
-          const filtrados = filtrarClientesMemoria(allClientes, termo);
-
-          // Pagina o resultado
-          const inicio = (pagina - 1) * tamanho;
-          const fim = inicio + tamanho;
-          const clientesPaginados = filtrados.slice(inicio, fim);
-
-          const totalResults = filtrados.length;
-          const totalPages = Math.ceil(totalResults / tamanho);
-
+        // Processa resposta do grupo 88
+        if (!erpRes88.ok) {
+          console.warn(`[Datasul] Aviso: grupo 88 retornou HTTP ${erpRes88.status}, usando apenas grupo 71`);
           return res.json({
-            meta: {
-              total: totalResults,
-              pagina,
-              tamPag: tamanho,
-              paginas: totalPages,
-              grupo: grupoReq,
-            },
-            clientes: clientesPaginados,
-          });
-        } catch (cacheErr: any) {
-          console.error("[API] Erro ao usar cache/filtro:", cacheErr?.message);
-          return res.status(503).json({
-            error: "Erro ao carregar clientes do Datasul. Tente novamente em alguns instantes.",
+            meta: meta71
+              ? {
+                  total: meta71.total ? parseInt(meta71.total, 10) : null,
+                  pagina: meta71.pagina ? parseInt(meta71.pagina, 10) : pagina,
+                  tamPag: meta71["tam-pag"] ? parseInt(meta71["tam-pag"], 10) : tamanho,
+                  paginas: meta71.paginas ? parseInt(meta71.paginas, 10) : null,
+                  grupo: "71",
+                }
+              : { total: null, pagina, tamPag: tamanho, paginas: null, grupo: "71" },
+            clientes: clientes71,
           });
         }
+
+        const data88: any = await erpRes88.json().catch(() => null);
+        const items88: any[] = Array.isArray(data88?.items) ? data88.items : [];
+        const clientes88 = items88.filter((i) => i?._meta !== "SIM");
+        const meta88 = items88.find((i) => i?._meta === "SIM");
+
+        // Merge dos resultados
+        const allClientes = [...clientes71, ...clientes88];
+        const totalCombined = (meta71?.total ? parseInt(meta71.total, 10) : 0) +
+                              (meta88?.total ? parseInt(meta88.total, 10) : 0);
+
+        return res.json({
+          meta: {
+            total: totalCombined,
+            pagina,
+            tamPag: tamanho,
+            paginas: Math.ceil(totalCombined / tamanho),
+            grupo: "71,88", // Indica que buscou em ambos
+          },
+          clientes: allClientes,
+        });
       }
 
-      // Fallback: chamada direta ao ERP (sem termo ou se falhou o cache)
+      // Fallback: busca em um grupo específico (ou sem termo)
       const params = [
         String(pagina),
         String(tamanho),
         encodeURIComponent(termo),
-        encodeURIComponent(grupoReq),
+        encodeURIComponent(grupoReq || "71"), // Padrão: grupo 71
         "1",
       ].join(",");
 
@@ -1171,9 +1072,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               pagina: meta.pagina ? parseInt(meta.pagina, 10) : pagina,
               tamPag: meta["tam-pag"] ? parseInt(meta["tam-pag"], 10) : tamanho,
               paginas: meta.paginas ? parseInt(meta.paginas, 10) : null,
-              grupo: meta["cod-gr-cli"] ?? grupoReq ?? null,
+              grupo: meta["cod-gr-cli"] ?? grupoReq ?? "71",
             }
-          : { total: null, pagina, tamPag: tamanho, paginas: null, grupo: grupoReq || null },
+          : { total: null, pagina, tamPag: tamanho, paginas: null, grupo: grupoReq || "71" },
         clientes,
       });
     } catch (error: any) {
