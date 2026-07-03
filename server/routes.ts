@@ -875,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const datasulClientesCache = new Map<string, { clientes: any[]; timestamp: number }>();
   const CACHE_TTL = 3600000; // 1 hora em ms
 
-  // Carrega uma base de clientes do Datasul (grupo) com cache TTL.
+  // Carrega uma base de clientes do Datasul (grupo) com cache TTL e timeout.
   async function loadDatasulClientesForGrupo(
     grupo: string,
     host: string | undefined,
@@ -884,38 +884,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const now = Date.now();
     const cached = datasulClientesCache.get(grupo);
     
-    // Se cache válido, retorna
+    // Se cache válido, retorna imediatamente
     if (cached && now - cached.timestamp < CACHE_TTL) {
       return cached.clientes;
     }
 
-    // Senão, carrega do ERP (percorre todas as páginas do grupo via todos=1)
-    console.log(`[Datasul] Carregando grupo ${grupo} em cache...`);
+    // Se já está carregando (evita múltiplos loads simultâneos), aguarda com timeout
+    if (!cached) {
+      // Marca como "carregando" com timestamp anterior (indica que está em progresso)
+      datasulClientesCache.set(grupo, { clientes: [], timestamp: now });
+    }
+
+    // Inicia carregamento do ERP com timeout de 45 segundos
+    console.log(`[Datasul] Iniciando carregamento do grupo ${grupo}...`);
     const clientes: any[] = [];
     let pagina = 1;
     const MAX_PAGINAS = 200; // backstop de segurança
+    const TIMEOUT_POR_PAGINA = 20000; // 20s por página
+    let totalLoaded = 0;
 
-    while (pagina <= MAX_PAGINAS) {
-      const params = [String(pagina), "200", "", encodeURIComponent(grupo), "1"].join(",");
-      try {
-        const erpRes = await datasulFetch(host, params, authHeader);
-        if (!erpRes.ok) break;
-        const data: any = await erpRes.json().catch(() => null);
-        const items: any[] = Array.isArray(data?.items) ? data.items : [];
-        const lote = items.filter((i) => i?._meta !== "SIM");
-        if (lote.length === 0) break;
-        clientes.push(...lote);
-        if (lote.length < 200) break;
-        pagina++;
-      } catch (err) {
-        console.error(`[Datasul] Erro ao carregar grupo ${grupo} página ${pagina}:`, err);
-        break;
+    try {
+      while (pagina <= MAX_PAGINAS) {
+        const params = [String(pagina), "200", "", encodeURIComponent(grupo), "1"].join(",");
+        console.log(`[Datasul] Grupo ${grupo} página ${pagina}...`);
+        
+        try {
+          // Cria AbortController com timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_POR_PAGINA);
+          
+          const erpRes = await datasulFetch(host, params, authHeader);
+          clearTimeout(timeoutId);
+          
+          if (!erpRes.ok) {
+            console.warn(`[Datasul] HTTP ${erpRes.status} ao carregar grupo ${grupo} página ${pagina}`);
+            break;
+          }
+          
+          const data: any = await erpRes.json().catch(() => null);
+          const items: any[] = Array.isArray(data?.items) ? data.items : [];
+          const lote = items.filter((i) => i?._meta !== "SIM");
+          
+          if (lote.length === 0) {
+            console.log(`[Datasul] Grupo ${grupo} página ${pagina}: fim da paginação (0 itens)`);
+            break;
+          }
+          
+          clientes.push(...lote);
+          totalLoaded += lote.length;
+          console.log(`[Datasul] Grupo ${grupo} página ${pagina}: +${lote.length} itens (total: ${totalLoaded})`);
+          
+          if (lote.length < 200) {
+            console.log(`[Datasul] Grupo ${grupo} página ${pagina}: última página (< 200 itens)`);
+            break;
+          }
+          
+          pagina++;
+        } catch (err: any) {
+          if (err?.name === "AbortError") {
+            console.error(`[Datasul] Timeout ao carregar grupo ${grupo} página ${pagina} (${TIMEOUT_POR_PAGINA}ms)`);
+          } else {
+            console.error(`[Datasul] Erro ao carregar grupo ${grupo} página ${pagina}:`, err?.message);
+          }
+          // Continua com o que carregou até agora
+          break;
+        }
       }
+
+      // Salva em cache mesmo que parcial
+      datasulClientesCache.set(grupo, { clientes, timestamp: now });
+      console.log(`[Datasul] ✓ Grupo ${grupo} em cache: ${clientes.length} clientes carregados`);
+    } catch (err: any) {
+      console.error(`[Datasul] Erro fatal ao carregar grupo ${grupo}:`, err?.message);
+      // Limpa o cache para permitir retry na próxima chamada
+      datasulClientesCache.delete(grupo);
     }
 
-    // Salva em cache
-    datasulClientesCache.set(grupo, { clientes, timestamp: now });
-    console.log(`[Datasul] Grupo ${grupo} em cache: ${clientes.length} clientes`);
     return clientes;
   }
 
@@ -1019,12 +1063,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // para grupos 71 e 88, permitindo busca em vários campos.
       if (termo.length > 0) {
         try {
-          // Carrega grupos 71 e 88 em cache (ou retorna cache se válido)
-          const clientes71 = await loadDatasulClientesForGrupo("71", host, authHeader);
-          const clientes88 = await loadDatasulClientesForGrupo("88", host, authHeader);
+          // Carrega grupos 71 e 88 em cache com TIMEOUT máximo de 25 segundos (pra deixar margem)
+          const loadPromise71 = loadDatasulClientesForGrupo("71", host, authHeader);
+          const loadPromise88 = loadDatasulClientesForGrupo("88", host, authHeader);
+          
+          const timeoutMs = 25000; // 25s de timeout
+          const promises = [
+            Promise.race([
+              loadPromise71,
+              new Promise<any[]>((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout ao carregar grupo 71")), timeoutMs)
+              ),
+            ]),
+            Promise.race([
+              loadPromise88,
+              new Promise<any[]>((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout ao carregar grupo 88")), timeoutMs)
+              ),
+            ]),
+          ];
 
-          // Merge dos dois grupos
+          const results = await Promise.allSettled(promises);
+          
+          const clientes71 = results[0].status === "fulfilled" ? results[0].value : [];
+          const clientes88 = results[1].status === "fulfilled" ? results[1].value : [];
+          
+          if (results[0].status === "rejected") {
+            console.warn("[API] Falha ao carregar grupo 71:", (results[0].reason as Error)?.message);
+          }
+          if (results[1].status === "rejected") {
+            console.warn("[API] Falha ao carregar grupo 88:", (results[1].reason as Error)?.message);
+          }
+
+          // Merge dos dois grupos (ou apenas o que carregou)
           const allClientes = [...clientes71, ...clientes88];
+
+          if (allClientes.length === 0) {
+            return res.status(503).json({
+              error: "Erro ao carregar clientes do Datasul. Tente novamente em alguns instantes.",
+            });
+          }
 
           // Filtra pelo termo (código, nome, fantasia, CNPJ, cidade, UF, rep, tel)
           const filtrados = filtrarClientesMemoria(allClientes, termo);
@@ -1048,9 +1126,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clientes: clientesPaginados,
           });
         } catch (cacheErr: any) {
-          console.error("[Datasul] Erro ao usar cache/filtro:", cacheErr?.message);
-          // Fallback: tenta fazer a busca direto no ERP (sem filtro em memória)
-          // Isto permite graceful degradation se houver erro no cache.
+          console.error("[API] Erro ao usar cache/filtro:", cacheErr?.message);
+          return res.status(503).json({
+            error: "Erro ao carregar clientes do Datasul. Tente novamente em alguns instantes.",
+          });
         }
       }
 
