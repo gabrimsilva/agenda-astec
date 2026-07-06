@@ -50,7 +50,7 @@ interface EnhancedNearbyTechnician {
 
 interface NearbyTechniciansPanelProps {
   onClose: () => void;
-  onTechnicianSelect?: (technicianId: string, lat: number, lng: number) => void;
+  onTechnicianSelect?: (technicianId: string, lat: number, lng: number, selectedClient?: DatasulClientResult | null) => void;
   onLocationSearched?: (location: { 
     lat: number; 
     lng: number; 
@@ -522,7 +522,8 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                           onTechnicianSelect(
                             tech.id,
                             searchedLocation.lat,
-                            searchedLocation.lng
+                            searchedLocation.lng,
+                            selectedClient
                           );
                         }
                       }}

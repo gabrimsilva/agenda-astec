@@ -245,6 +245,7 @@ export default function Routes() {
     country?: string;
     latitude: number;
     longitude: number;
+    selectedClient?: any;
   } | null>(null); // Dados do técnico e endereço selecionados para agendamento
   
   // Filtro de técnicos para o mapa
@@ -847,7 +848,7 @@ export default function Routes() {
                   onLocationSearched={(location) => setSearchedLocation(location)}
                   onActivitySelected={(activity) => setSelectedActivity(activity)}
                   dateRange={activityDateRange}
-                  onTechnicianSelect={(technicianId, lat, lng) => {
+                  onTechnicianSelect={(technicianId, lat, lng, selectedClient) => {
                     // Find technician data from the technicians list
                     const tech = technicians.find(t => t.technicianId === technicianId);
                     if (tech && searchedLocation) {
@@ -863,6 +864,7 @@ export default function Routes() {
                         country: searchedLocation.country,
                         latitude: searchedLocation.lat || lat,
                         longitude: searchedLocation.lng || lng,
+                        selectedClient,
                       });
                       setScheduleDialogOpen(true);
                     }
@@ -1087,6 +1089,7 @@ export default function Routes() {
           country={selectedScheduleData.country}
           latitude={selectedScheduleData.latitude}
           longitude={selectedScheduleData.longitude}
+          selectedClient={selectedScheduleData.selectedClient}
         />
       )}
     </div>

@@ -47,6 +47,7 @@ interface QuickScheduleDialogProps {
   country?: string;
   latitude: number;
   longitude: number;
+  selectedClient?: any;
 }
 
 const quickScheduleSchema = z.object({
@@ -75,6 +76,7 @@ export function QuickScheduleDialog({
   country,
   latitude,
   longitude,
+  selectedClient,
 }: QuickScheduleDialogProps) {
   const { toast } = useToast();
 
@@ -188,6 +190,27 @@ export function QuickScheduleDialog({
                         </p>
                       )}
                       {postcode && <p>CEP: {postcode}</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Client (read-only display) */}
+              {selectedClient && (
+                <div className="flex items-start gap-2 p-2 rounded-lg bg-muted">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium mb-0.5">Cliente selecionado</p>
+                    <div className="text-[11px] text-muted-foreground space-y-1">
+                      <p className="font-semibold text-xs text-foreground">{selectedClient.nome}</p>
+                      {selectedClient.cnpj && (
+                        <p className="truncate">CNPJ: {selectedClient.cnpj}</p>
+                      )}
+                      {(selectedClient.cidade || selectedClient.estado) && (
+                        <p className="truncate">
+                          {selectedClient.cidade}, {selectedClient.estado}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
