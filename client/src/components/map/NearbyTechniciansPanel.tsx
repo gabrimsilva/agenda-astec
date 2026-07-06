@@ -67,6 +67,7 @@ interface NearbyTechniciansPanelProps {
 }
 
 export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocationSearched, dateRange: externalDateRange }: NearbyTechniciansPanelProps) {
+  const [clientSearchText, setClientSearchText] = useState<string>("");
   const [selectedClient, setSelectedClient] = useState<DatasulClientResult | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<{ 
     lat: number; 
@@ -108,9 +109,9 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
   
   const { toast } = useToast();
 
-  // Quando um cliente é selecionado, geocodificar para trazer coordenadas
   const handleClientSelect = (client: DatasulClientResult) => {
     setSelectedClient(client);
+    setClientSearchText(client.nome); // Atualiza o texto quando seleciona
     
     // Montar endereço com dados do cliente
     const address = [
@@ -181,6 +182,7 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
   });
 
   const handleClear = () => {
+    setClientSearchText("");
     setSelectedClient(null);
     setSearchedLocation(null);
     setEnhancedResults([]);
@@ -261,8 +263,8 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
           <label className="text-sm font-medium">Cliente *</label>
           <p className="text-xs text-muted-foreground mb-2">Busca em grupos 71 (Coatings) e 88 (Alumínio)</p>
           <DatasulClientField
-            value={selectedClient?.nome || ""}
-            onChangeText={() => {}} // Controlado pela seleção
+            value={clientSearchText}
+            onChangeText={setClientSearchText}
             onSelectClient={handleClientSelect}
             placeholder="Selecione um cliente..."
           />
