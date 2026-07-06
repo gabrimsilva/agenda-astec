@@ -152,7 +152,7 @@ export function QuickScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[550px] max-h-[90vh] overflow-hidden flex flex-col p-0" data-testid="dialog-quick-schedule">
+      <DialogContent className="max-w-[95vw] sm:max-w-[650px] max-h-[90vh] overflow-hidden flex flex-col p-0" data-testid="dialog-quick-schedule">
         <DialogHeader className="px-4 pt-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-base">Agendar Visita</DialogTitle>
           <DialogDescription className="text-xs">
@@ -241,7 +241,7 @@ export function QuickScheduleDialog({
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="max-w-[calc(100vw-2rem)]">
+                        <SelectContent className="min-w-[500px]">
                           {activityTypes.filter((t: any) => t.isActive !== false).map((type: any) => (
                             <SelectItem key={type.id} value={type.id} className="whitespace-normal">
                               <div className="flex items-start gap-2">
