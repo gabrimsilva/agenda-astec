@@ -1004,9 +1004,8 @@ export default function Calendar() {
           // End: react-big-calendar treats end as EXCLUSIVE
           // Database stores endDate as 00:00 of the day after the last day
           // So for férias 15-20/07, endDate is 21/07 00:00
-          // We need to convert this to 20/07 00:00 for react-big-calendar
-          // Subtract 1 day to get the actual last day (calendar will render up to 20/07)
-          end = moment(eDateStr, 'YYYY-MM-DD').subtract(1, 'day').startOf('day').toDate();
+          // React-big-calendar will render up to (but not including) 21/07, which shows 15-20
+          end = moment(eDateStr, 'YYYY-MM-DD').startOf('day').toDate();
           allDay = true;
         }
         return {
