@@ -37,7 +37,7 @@ const SERVER_BUILD_ID = Date.now().toString();
 // Serves cached data in <5ms; refreshes the cache in the background after TTL.
 const _ratsCache = new Map<string, { data: any[]; ts: number }>();
 const _ratsRefreshing = new Set<string>();
-const RATS_CACHE_TTL = 55_000; // 55 seconds
+const RATS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - aumentado para manter cache quente mais tempo
 
 // Small cache: userId → technicianId (survives until server restart).
 // Eliminates a DB round-trip on every GET /api/rats for "assistente" users.
@@ -7000,9 +7000,9 @@ _Segue em anexo o relatório completo em PDF._`;
     }
   };
 
-  // Aquecimento inicial: tenta a cada 2s (até ~2 min) até o primeiro sucesso.
+  // Aquecimento inicial: tenta a cada 2s (até ~4 min) até o primeiro sucesso.
   (async () => {
-    for (let attempt = 0; attempt < 60; attempt++) {
+    for (let attempt = 0; attempt < 120; attempt++) {
       await new Promise((r) => setTimeout(r, attempt === 0 ? 500 : 2000));
       if (await warmAdminRatsCache()) {
         console.log(`[RATs cache] startup pre-warm complete (tentativa ${attempt + 1})`);
@@ -7011,7 +7011,7 @@ _Segue em anexo o relatório completo em PDF._`;
     }
   })();
 
-  // Keep-warm: reaquece dentro do TTL (55s) para o cache nunca esfriar.
+  // Keep-warm: reaquece dentro do TTL (10min) para o cache nunca esfriar.
   // Mantém o admin sempre quente e reaquece qualquer cache de técnico já carregado.
   setInterval(() => {
     warmAdminRatsCache().catch(() => {});
@@ -7025,7 +7025,7 @@ _Segue em anexo o relatório completo em PDF._`;
         ).catch(() => {});
       }
     }
-  }, 45_000);
+  }, 8 * 60 * 1000); // 8 minutes - bem antes do TTL de 10 minutos
 
   const httpServer = createServer(app);
   return httpServer;

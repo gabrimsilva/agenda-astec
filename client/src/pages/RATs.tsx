@@ -147,7 +147,7 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
-    staleTime: 5 * 60 * 1000, // 5 minutes - aumentado de 2 para reduzir refetches
+    staleTime: 10 * 60 * 1000, // 10 minutes - sincronizado com backend cache TTL
     refetchOnWindowFocus: false,
     retry: 2, // Mantém retry no client também
     retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 15000),
