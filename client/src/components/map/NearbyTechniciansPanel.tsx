@@ -63,10 +63,11 @@ interface NearbyTechniciansPanelProps {
     postcode?: string;
     country?: string;
   } | null) => void;
+  onActivitySelected?: (activity: ActivityWithDistance | null) => void;
   dateRange?: { start: string; end: string };
 }
 
-export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocationSearched, dateRange: externalDateRange }: NearbyTechniciansPanelProps) {
+export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocationSearched, onActivitySelected, dateRange: externalDateRange }: NearbyTechniciansPanelProps) {
   const [clientSearchText, setClientSearchText] = useState<string>("");
   const [selectedClient, setSelectedClient] = useState<DatasulClientResult | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<{ 
@@ -416,7 +417,10 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                       
                       {/* Closest Activity Highlight */}
                       {tech.closestActivity && (
-                        <div className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded">
+                        <div 
+                          className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded cursor-pointer hover:bg-primary/10 transition-colors"
+                          onClick={() => onActivitySelected?.(tech.closestActivity)}
+                        >
                           <p className="text-[10px] font-medium text-primary mb-0.5">
                             Atividade mais próxima:
                           </p>
@@ -474,7 +478,8 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                             {otherActivities.map((activity, index) => (
                               <div
                                 key={activity.id}
-                                className="p-2 bg-muted/50 rounded-md text-xs"
+                                className="p-2 bg-muted/50 rounded-md text-xs cursor-pointer hover:bg-muted/80 transition-colors"
+                                onClick={() => onActivitySelected?.(activity)}
                                 data-testid={`activity-item-${tech.id}-${index}`}
                               >
                                 <div className="flex items-start justify-between gap-2">

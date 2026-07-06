@@ -73,6 +73,16 @@ const searchedLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Ícone customizado para atividade selecionada (verde)
+const selectedActivityIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 interface TechnicianStatus {
   technicianId: string;
   name: string;
@@ -220,7 +230,8 @@ export default function Routes() {
     state?: string;
     postcode?: string;
     country?: string;
-  } | null>(null); // Localização do endereço pesquisado com componentes
+  } | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null); // Localização do endereço pesquisado com componentes
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false); // Controla o dialog de agendamento
   const [selectedScheduleData, setSelectedScheduleData] = useState<{
     technicianId: string;
@@ -686,6 +697,44 @@ export default function Routes() {
                       </Popup>
                     </Marker>
                   )}
+
+                  {/* Marcador da atividade selecionada */}
+                  {selectedActivity && searchedLocation && (
+                    <>
+                      <Marker
+                        position={[selectedActivity.latitude, selectedActivity.longitude]}
+                        icon={selectedActivityIcon}
+                        data-testid="selected-activity-marker"
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <p className="font-semibold text-green-600">📍 Atividade Selecionada</p>
+                            <p className="text-xs font-medium mt-1">{selectedActivity.clientName}</p>
+                            {selectedActivity.address && (
+                              <p className="text-xs text-muted-foreground mt-1">{selectedActivity.address}</p>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              <p>{selectedActivity.formattedDate} às {selectedActivity.startTime}</p>
+                              <p>{selectedActivity.distanceKm.toFixed(1)} km • ~{selectedActivity.estimatedTimeMin} min</p>
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+
+                      {/* Linha de visualização entre cliente e atividade */}
+                      <Polyline
+                        positions={[
+                          [searchedLocation.lat, searchedLocation.lng],
+                          [selectedActivity.latitude, selectedActivity.longitude]
+                        ]}
+                        color="green"
+                        dashArray="5, 5"
+                        weight={2}
+                        opacity={0.6}
+                        data-testid="activity-distance-line"
+                      />
+                    </>
+                  )}
                   
                   {/* Controlador para centralizar mapa automaticamente */}
                   <MapCenterController location={searchedLocation} />
@@ -793,8 +842,10 @@ export default function Routes() {
                   onClose={() => {
                     setNearbyPanelOpen(false);
                     setSearchedLocation(null); // Limpa o marcador ao fechar o painel
+                    setSelectedActivity(null); // Limpa atividade selecionada
                   }}
                   onLocationSearched={(location) => setSearchedLocation(location)}
+                  onActivitySelected={(activity) => setSelectedActivity(activity)}
                   dateRange={activityDateRange}
                   onTechnicianSelect={(technicianId, lat, lng) => {
                     // Find technician data from the technicians list
