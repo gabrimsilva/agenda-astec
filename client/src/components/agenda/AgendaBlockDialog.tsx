@@ -86,13 +86,15 @@ export function AgendaBlockDialog({
       if (blockType === "ferias") {
         if (!startDate || !endDate) throw new Error("Informe início e fim das férias.");
         if (endDate < startDate) throw new Error("A data final deve ser igual ou depois da inicial.");
-        payload.startDate = `${startDate}T00:00:00`;
-        payload.endDate = `${endDate}T00:00:00`;
+        // Use moment to parse local date and convert to UTC ISO string
+        payload.startDate = moment(startDate, 'YYYY-MM-DD').startOf('day').toISOString();
+        payload.endDate = moment(endDate, 'YYYY-MM-DD').endOf('day').toISOString();
       } else {
         if (!date) throw new Error("Informe a data do compromisso.");
         if (endTime <= startTime) throw new Error("O horário de término deve ser depois do início.");
-        payload.startDate = `${date}T00:00:00`;
-        payload.endDate = `${date}T00:00:00`;
+        // Use moment to parse local date and convert to UTC ISO string
+        payload.startDate = moment(date, 'YYYY-MM-DD').startOf('day').toISOString();
+        payload.endDate = moment(date, 'YYYY-MM-DD').endOf('day').toISOString();
         payload.startTime = startTime;
         payload.endTime = endTime;
       }
