@@ -51,8 +51,6 @@ interface QuickScheduleDialogProps {
 }
 
 const quickScheduleSchema = z.object({
-  clientName: z.string().min(1, "Digite o nome do local/cliente"),
-  clientId: z.string().optional(), // Cliente é opcional neste fluxo
   activityTypeId: z.string().min(1, "Selecione o tipo de atividade"),
   date: z.string().min(1, "Selecione a data"),
   startTime: z.string().min(1, "Selecione o horário de início"),
@@ -90,8 +88,6 @@ export function QuickScheduleDialog({
   const form = useForm<QuickScheduleForm>({
     resolver: zodResolver(quickScheduleSchema),
     defaultValues: {
-      clientName: "",
-      clientId: "",
       activityTypeId: "",
       date: new Date().toISOString().split("T")[0], // Today's date
       startTime: "09:00",
@@ -106,11 +102,15 @@ export function QuickScheduleDialog({
       // Combine date and start time to create full timestamp ISO string (prevent timezone issues)
       const scheduledDateTime = `${data.date}T${data.startTime}:00`;
       
+      // Use selected client name or address as fallback
+      const clientName = selectedClient?.nome || address || "Agendamento Direto";
+      const clientId = selectedClient?.codigo || null;
+      
       // Use searched location address components (always from geocoding in this flow)
       const payload = {
         technicianId,
-        clientId: data.clientId || null, // Can be null if no client selected
-        clientName: data.clientName, // Use the manually entered name
+        clientId,
+        clientName,
         activityTypeId: data.activityTypeId,
         scheduledDate: scheduledDateTime,
         startTime: data.startTime,
@@ -215,26 +215,6 @@ export function QuickScheduleDialog({
                   </div>
                 </div>
               )}
-
-              {/* Client/Location Name */}
-              <FormField
-                control={form.control}
-                name="clientName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Nome do Local/Cliente</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Ex: Shopping Palladium, Loja ABC, etc."
-                        className="h-8 text-sm"
-                        data-testid="input-client-name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Activity type selection */}
               <FormField
