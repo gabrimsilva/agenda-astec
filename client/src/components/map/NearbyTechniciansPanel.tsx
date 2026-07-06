@@ -114,20 +114,17 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
     setSelectedClient(client);
     setClientSearchText(client.nome); // Atualiza o texto quando seleciona
     
-    // Montar endereço com dados do cliente
-    const address = [
-      client.nome,
-      client.cidade,
-      client.estado
-    ].filter(Boolean).join(", ");
+    // Montar endereço: tenta com cidade/estado primeiro (mais confiável)
+    // O fallback será apenas a cidade, estado
+    const primaryAddress = [client.cidade, client.estado].filter(Boolean).join(", ");
     
-    // Se não conseguir, tenta só a cidade
-    const fallbackAddress = [client.cidade, client.estado].filter(Boolean).join(", ");
+    // Se a primeira falhar, tenta com estado apenas
+    const fallbackAddress = client.estado || "Brasil";
     
-    console.log("[Geocode] Tentando geocodificar:", address);
+    console.log("[Geocode] Tentando geocodificar:", primaryAddress);
     
     // Chamar geocode para trazer coordenadas (com fallback)
-    geocodeMutation.mutate({ address, fallbackAddress });
+    geocodeMutation.mutate({ address: primaryAddress, fallbackAddress });
   };
 
   // Geocode mutation
