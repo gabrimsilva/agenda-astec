@@ -522,17 +522,19 @@ export default function Calendar() {
       const scheduledDate = activity.scheduledDate as any;
       const dateStr = typeof scheduledDate === 'string' 
         ? scheduledDate.split('T')[0] 
-        : new Date(scheduledDate).toISOString().split('T')[0];
+        : moment(scheduledDate).format('YYYY-MM-DD');
       
       const activityEndDate = (activity as any).endDate;
       const endDateStr = activityEndDate 
         ? (typeof activityEndDate === 'string' 
             ? activityEndDate.split('T')[0] 
-            : new Date(activityEndDate).toISOString().split('T')[0])
+            : moment(activityEndDate).format('YYYY-MM-DD'))
         : dateStr;
 
-      const startDateTime = new Date(`${dateStr}T${activity.startTime}`);
-      const endDateTime = new Date(`${endDateStr}T${activity.endTime}`);
+      // Use moment to parse dates with proper timezone handling
+      // Parse the date string in local timezone, not UTC
+      const startDateTime = moment(`${dateStr} ${activity.startTime}`, 'YYYY-MM-DD HH:mm').toDate();
+      const endDateTime = moment(`${endDateStr} ${activity.endTime}`, 'YYYY-MM-DD HH:mm').toDate();
 
       return {
         id: activity.id,
