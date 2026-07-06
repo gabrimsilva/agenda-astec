@@ -1522,6 +1522,7 @@ export default function Calendar() {
           title={title}
         >
           <span style={{ fontWeight: 600 }}>{ferias ? "✈ " : "⛔ "}{label}</span>
+          {tech && <span style={{ opacity: 0.9, marginLeft: "4px" }}> • {tech.name}</span>}
           {timeStr ? <span style={{ opacity: 0.95 }}> {timeStr}</span> : null}
           {desc ? <span style={{ opacity: 0.9 }}> · {desc}</span> : null}
         </div>
