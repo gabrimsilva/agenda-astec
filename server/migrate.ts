@@ -1,5 +1,7 @@
 import { db } from "./db";
 import { sql } from "drizzle-orm";
+import { agendaBlocks } from "@shared/schema";
+import { eq, lt } from "drizzle-orm";
 
 /**
  * Sistema de Migração Automática do Banco de Dados
@@ -22,6 +24,42 @@ const MIGRATION_LOG_TABLE = `
     success BOOLEAN DEFAULT true
   )
 `;
+
+/**
+ * Fix para bloqueios de agenda com data errada (antes da correção de timezone)
+ * Subtrai 1 dia dos bloqueios que foram criados com data incorreta
+ */
+async function fixAgendaBlockDates(): Promise<void> {
+  try {
+    console.log("🔧 Corrigindo datas de bloqueios de agenda...");
+    
+    // Buscar bloqueios antigos (criados antes desta correção)
+    // A heurística: bloqueios onde startDate e endDate têm a mesma hora (00:00) e foram criados há tempos
+    const result = await db.execute(sql`
+      UPDATE agenda_blocks
+      SET 
+        start_date = start_date - INTERVAL '1 day',
+        end_date = end_date - INTERVAL '1 day'
+      WHERE 
+        created_at < NOW() - INTERVAL '1 hour'
+        AND EXTRACT(HOUR FROM start_date) = 0
+        AND EXTRACT(MINUTE FROM start_date) = 0
+        AND EXTRACT(HOUR FROM end_date) = 0
+        AND EXTRACT(MINUTE FROM end_date) = 0
+      RETURNING id, start_date, end_date
+    `);
+    
+    const updatedCount = result.rows.length;
+    if (updatedCount > 0) {
+      console.log(`✅ Corrigidas ${updatedCount} datas de bloqueios de agenda`);
+    } else {
+      console.log(`✅ Nenhum bloqueio de agenda precisava correção`);
+    }
+  } catch (error) {
+    console.error("❌ Erro ao corrigir datas de bloqueios:", error);
+    // Não interrompe a migração se este step falhar
+  }
+}
 
 export async function runMigrations(): Promise<void> {
   const startTime = Date.now();
@@ -74,7 +112,10 @@ export async function runMigrations(): Promise<void> {
       }
     }
 
-    // 6. Registrar migração bem-sucedida
+    // 6. Aplicar fixes de dados se necessário
+    await fixAgendaBlockDates();
+
+    // 7. Registrar migração bem-sucedida
     await db.execute(
       sql`INSERT INTO _migration_log (version, description, success) 
           VALUES (${APP_VERSION}, ${'Sincronização automática do schema'}, true)`
