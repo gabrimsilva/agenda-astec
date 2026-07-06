@@ -6206,17 +6206,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ─────────────────────────────────────────────────────────────────────
 
       // No cache yet — run the query (first load after server restart)
-      // Retry up to 3 times to absorb Neon cold-start delays
+      // Retry up to 5 times to absorb Neon cold-start delays (may take 15-20s total)
       let lightRats: any[] | null = null;
       let lastError: any = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 5; attempt++) {
         try {
           lightRats = await runQuery();
           break;
         } catch (dbErr: any) {
           lastError = dbErr;
-          console.error(`[RATs] DB query attempt ${attempt + 1} failed:`, dbErr.message);
-          if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+          console.error(`[RATs] DB query attempt ${attempt + 1}/5 failed:`, dbErr.message);
+          if (attempt < 4) await new Promise(r => setTimeout(r, 1000 * Math.pow(1.5, attempt)));
         }
       }
       if (lightRats === null) throw lastError;
@@ -7000,10 +7000,10 @@ _Segue em anexo o relatório completo em PDF._`;
     }
   };
 
-  // Aquecimento inicial: tenta a cada 2s (até ~1 min) até o primeiro sucesso.
+  // Aquecimento inicial: tenta a cada 2s (até ~2 min) até o primeiro sucesso.
   (async () => {
-    for (let attempt = 0; attempt < 30; attempt++) {
-      await new Promise((r) => setTimeout(r, attempt === 0 ? 1000 : 2000));
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await new Promise((r) => setTimeout(r, attempt === 0 ? 500 : 2000));
       if (await warmAdminRatsCache()) {
         console.log(`[RATs cache] startup pre-warm complete (tentativa ${attempt + 1})`);
         break;

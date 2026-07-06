@@ -147,9 +147,9 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes - aumentado de 2 para reduzir refetches
     refetchOnWindowFocus: false,
-    retry: 4,
+    retry: 2, // Mantém retry no client também
     retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 15000),
   });
 
@@ -163,14 +163,17 @@ export default function RATs() {
   
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: [activitiesQueryUrl],
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: technicians = [] } = useQuery<Technician[]>({
     queryKey: ["/api/technicians"],
+    staleTime: 30 * 60 * 1000, // 30 minutes - técnicos não mudam com frequência
   });
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
     queryKey: ["/api/activity-types"],
+    staleTime: 60 * 60 * 1000, // 1 hour - tipos de atividade são estáticos
   });
 
   const myTechnician = useMemo(() => {
