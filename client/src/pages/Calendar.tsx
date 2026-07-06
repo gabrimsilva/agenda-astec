@@ -999,10 +999,11 @@ export default function Calendar() {
           allDay = false;
         } else {
           // Use moment for all-day events (férias)
+          // Start: beginning of first day
           start = moment(sDateStr, 'YYYY-MM-DD').startOf('day').toDate();
-          const endDate = moment(eDateStr, 'YYYY-MM-DD').endOf('day').toDate();
-          endDate.setDate(endDate.getDate() + 1); // fim exclusivo p/ react-big-calendar
-          end = endDate;
+          // End: beginning of day AFTER last day (exclusive end for react-big-calendar)
+          // So if endDate is 20/07, react-big-calendar will show 20/07 (not 21/07)
+          end = moment(eDateStr, 'YYYY-MM-DD').add(1, 'day').startOf('day').toDate();
           allDay = true;
         }
         return {
