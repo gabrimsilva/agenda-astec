@@ -2590,8 +2590,11 @@ export default function MyAgenda() {
           if (activityRatMap.has(act.id)) return false;
           const isMultiDay = !!(act as any).endDate;
           if (isMultiDay) {
-            const endDate = moment.utc((act as any).endDate).format("YYYY-MM-DD");
+            // Para atividades multi-dia, RAT só deve aparecer no último dia
+            // endDate vem como timestamp UTC, precisa comparar sem timezone
+            const endDate = moment((act as any).endDate).format("YYYY-MM-DD");
             const currentDay = selectedDate.format("YYYY-MM-DD");
+            // Só permitir RAT se for exatamente o último dia
             if (currentDay !== endDate) return false;
           }
           return true;
