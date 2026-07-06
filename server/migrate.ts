@@ -34,24 +34,31 @@ async function fixAgendaBlockDates(): Promise<void> {
     console.log("🔧 Corrigindo datas de bloqueios de agenda...");
     
     // Buscar bloqueios antigos (criados antes desta correção)
-    // A heurística: bloqueios onde startDate e endDate têm a mesma hora (00:00) e foram criados há tempos
+    // Para férias: subtrai 1 dia de ambas as datas
+    // Para compromissos: subtrai 1 dia apenas de startDate
     const result = await db.execute(sql`
       UPDATE agenda_blocks
       SET 
         start_date = start_date - INTERVAL '1 day',
-        end_date = end_date - INTERVAL '1 day'
+        end_date = CASE 
+          WHEN block_type = 'compromisso' THEN end_date - INTERVAL '1 day'
+          ELSE end_date - INTERVAL '1 day'
+        END
       WHERE 
         created_at < NOW() - INTERVAL '1 hour'
         AND EXTRACT(HOUR FROM start_date) = 0
         AND EXTRACT(MINUTE FROM start_date) = 0
         AND EXTRACT(HOUR FROM end_date) = 0
         AND EXTRACT(MINUTE FROM end_date) = 0
-      RETURNING id, start_date, end_date
+      RETURNING id, block_type, start_date, end_date
     `);
     
     const updatedCount = result.rows.length;
     if (updatedCount > 0) {
       console.log(`✅ Corrigidas ${updatedCount} datas de bloqueios de agenda`);
+      result.rows.forEach((row: any) => {
+        console.log(`   - ${row.block_type}: ${new Date(row.start_date).toLocaleDateString('pt-BR')} a ${new Date(row.end_date).toLocaleDateString('pt-BR')}`);
+      });
     } else {
       console.log(`✅ Nenhum bloqueio de agenda precisava correção`);
     }

@@ -993,14 +993,16 @@ export default function Calendar() {
         let end: Date;
         let allDay: boolean;
         if (b.blockType === "compromisso" && b.startTime && b.endTime) {
-          start = new Date(`${sDateStr}T${b.startTime}`);
-          end = new Date(`${sDateStr}T${b.endTime}`);
+          // Use moment to parse local date with timezone awareness
+          start = moment(`${sDateStr} ${b.startTime}`, 'YYYY-MM-DD HH:mm').toDate();
+          end = moment(`${sDateStr} ${b.endTime}`, 'YYYY-MM-DD HH:mm').toDate();
           allDay = false;
         } else {
-          start = new Date(`${sDateStr}T00:00:00`);
-          const endExcl = new Date(`${eDateStr}T00:00:00`);
-          endExcl.setDate(endExcl.getDate() + 1); // fim exclusivo p/ react-big-calendar
-          end = endExcl;
+          // Use moment for all-day events (férias)
+          start = moment(sDateStr, 'YYYY-MM-DD').startOf('day').toDate();
+          const endDate = moment(eDateStr, 'YYYY-MM-DD').endOf('day').toDate();
+          endDate.setDate(endDate.getDate() + 1); // fim exclusivo p/ react-big-calendar
+          end = endDate;
           allDay = true;
         }
         return {
