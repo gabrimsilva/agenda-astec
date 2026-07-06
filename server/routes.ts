@@ -6663,9 +6663,22 @@ _Segue em anexo o relatório completo em PDF._`;
         }
       }
       
-      await storage.deleteRat(req.params.id);
+      // Não deletar a RAT, apenas resetar para "pendente"
+      // Isso permite que o usuário preencha novamente sem perder a atividade vinculada
+      await storage.updateRat(req.params.id, {
+        status: "pendente",
+        formData: null,
+        photoSections: null,
+        sentAt: null,
+        sendChannel: null,
+        fileUrl: null,
+        importedPdfUrl: null,
+        importedPdfFilename: null,
+        technicianSignature: null,
+        technicianSignatureName: null,
+      });
       removeRatFromCache(req.params.id);
-      res.status(204).send();
+      res.status(200).json({ message: "RAT resetada para pendente" });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
