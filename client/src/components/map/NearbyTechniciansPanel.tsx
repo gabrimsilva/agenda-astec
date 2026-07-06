@@ -120,8 +120,13 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
       client.estado
     ].filter(Boolean).join(", ");
     
-    // Chamar geocode para trazer coordenadas
-    geocodeMutation.mutate(address);
+    // Se não conseguir, tenta só a cidade
+    const fallbackAddress = [client.cidade, client.estado].filter(Boolean).join(", ");
+    
+    console.log("[Geocode] Tentando geocodificar:", address);
+    
+    // Chamar geocode para trazer coordenadas (com fallback)
+    geocodeMutation.mutate({ address, fallbackAddress });
   };
 
   // Geocode mutation
@@ -140,11 +145,21 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
       country?: string;
     },
     Error,
-    string
+    { address: string; fallbackAddress: string }
   >({
-    mutationFn: async (address: string) => {
-      const response = await apiRequest("POST", "/api/geocode", { address });
-      return await response.json();
+    mutationFn: async ({ address, fallbackAddress }) => {
+      console.log("[Geocode] Primeira tentativa:", address);
+      let response = await apiRequest("POST", "/api/geocode", { address });
+      let data = await response.json();
+      
+      // Se não encontrou, tenta fallback (só cidade + estado)
+      if (!data.found && fallbackAddress) {
+        console.log("[Geocode] Primeira falhou, tentando fallback:", fallbackAddress);
+        response = await apiRequest("POST", "/api/geocode", { address: fallbackAddress });
+        data = await response.json();
+      }
+      
+      return data;
     },
     onSuccess: (data) => {
       if (!data.found) {
