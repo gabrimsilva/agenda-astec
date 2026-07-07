@@ -147,9 +147,9 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
-    staleTime: 10 * 60 * 1000, // 10 minutes - sincronizado com backend cache TTL
+    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado com backend cache TTL
     refetchOnWindowFocus: false,
-    retry: 2, // Mantém retry no client também
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 15000),
   });
 
@@ -163,17 +163,17 @@ export default function RATs() {
   
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: [activitiesQueryUrl],
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado com backend
   });
 
   const { data: technicians = [] } = useQuery<Technician[]>({
     queryKey: ["/api/technicians"],
-    staleTime: 30 * 60 * 1000, // 30 minutes - técnicos não mudam com frequência
+    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado
   });
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
     queryKey: ["/api/activity-types"],
-    staleTime: 60 * 60 * 1000, // 1 hour - tipos de atividade são estáticos
+    staleTime: 60 * 60 * 1000, // 1 hour - tipos mudam raramente
   });
 
   const myTechnician = useMemo(() => {

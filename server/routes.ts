@@ -37,18 +37,18 @@ const SERVER_BUILD_ID = Date.now().toString();
 // Serves cached data in <5ms; refreshes the cache in the background after TTL.
 const _ratsCache = new Map<string, { data: any[]; ts: number }>();
 const _ratsRefreshing = new Set<string>();
-const RATS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - aumentado para manter cache quente mais tempo
+const RATS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido para manter dados mais frescos
 
 // ── Technicians in-memory cache (stale-while-revalidate) ──────────────────────
 // Prevents slow Neon DB queries for technicians list (called by multiple endpoints).
 const _techniciansCache = { data: null as any[] | null, ts: 0 };
-const TECHNICIANS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const TECHNICIANS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido
 
 // ── Activities in-memory cache (stale-while-revalidate) ───────────────────────
 // Prevents slow JOIN queries when loading activities list for RATs page.
 const _activitiesCache = new Map<string, { data: any[]; ts: number }>();
 const _activitiesRefreshing = new Set<string>();
-const ACTIVITIES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const ACTIVITIES_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido
 
 // Small cache: userId → technicianId (survives until server restart).
 // Eliminates a DB round-trip on every GET /api/rats for "assistente" users.
@@ -7128,35 +7128,47 @@ _Segue em anexo o relatório completo em PDF._`;
     }
   };
 
-  // Aquecimento inicial: tenta a cada 2s (até ~4 min) até o primeiro sucesso.
+  // Aquecimento AGRESSIVO: acordar o Neon imediatamente na inicialização
   (async () => {
-    for (let attempt = 0; attempt < 120; attempt++) {
-      await new Promise((r) => setTimeout(r, attempt === 0 ? 500 : 2000));
-      if (await warmAdminRatsCache()) {
-        console.log(`[RATs cache] startup pre-warm complete (tentativa ${attempt + 1})`);
+    console.log("[Startup] 🔥 AGGRESSIVE WARM-UP: Acordando o Neon agora!");
+    
+    // 1. Executar uma query simples para acordar o banco (pode levar até 30s na primeira vez)
+    console.log("[Startup] Tentando acordar Neon com query simples...");
+    for (let attempt = 0; attempt < 60; attempt++) {
+      try {
+        await db.execute(sql`SELECT 1`);
+        console.log(`[Startup] ✅ Neon acordado em tentativa ${attempt + 1}`);
         break;
+      } catch (err) {
+        console.log(`[Startup] Tentativa ${attempt + 1}/60 falhando, aguardando 1s...`);
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
-    // Warm up technicians and activities cache as well
-    _bgRefreshTechniciansCache().catch(() => {});
+    
+    // 2. Agora aquecer todos os caches em paralelo (bem mais rápido agora que Neon acordou)
+    console.log("[Startup] Aquecendo RATs, Technicians e Activities em paralelo...");
+    const startWarmUp = Date.now();
+    
+    await Promise.all([
+      warmAdminRatsCache().catch(err => console.error("[Startup] RATs warm failed:", err.message)),
+      _bgRefreshTechniciansCache().catch(err => console.error("[Startup] Technicians warm failed:", err.message)),
+      _bgRefreshActivitiesCache("default:all:all", async () => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        return await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
+      }).catch(err => console.error("[Startup] Activities warm failed:", err.message)),
+    ]);
+    
+    const warmUpTime = Date.now() - startWarmUp;
+    console.log(`[Startup] ✅ AGRESSIVO WARM-UP CONCLUÍDO em ${warmUpTime}ms!`);
   })();
 
-  // Keep-warm: reaquece dentro do TTL (5min) para o cache nunca esfriar.
-  // Mantém tudo sempre quente e reaquece qualquer cache já carregado.
+  // Keep-warm: SUPER AGRESSIVO - 1 minuto
+  // Garante que TUDO está sempre aquecido
   setInterval(() => {
+    // Refresh RATs
     warmAdminRatsCache().catch(() => {});
-    _bgRefreshTechniciansCache().catch(() => {});
-    // Warm all cached activity queries
-    for (const key of _activitiesCache.keys()) {
-      const age = Date.now() - _activitiesCache.get(key)!.ts;
-      if (age > ACTIVITIES_CACHE_TTL * 0.8) { // Refresh at 80% of TTL
-        // Simple refresh - just trigger a query
-        _bgRefreshActivitiesCache(key, async () => {
-          // For now, just return empty - real refresh happens on next client request
-          return _activitiesCache.get(key)?.data || [];
-        }).catch(() => {});
-      }
-    }
     for (const key of _ratsCache.keys()) {
       if (key.startsWith("tech:")) {
         const techId = key.slice("tech:".length);
@@ -7167,7 +7179,16 @@ _Segue em anexo o relatório completo em PDF._`;
         ).catch(() => {});
       }
     }
-  }, 3 * 60 * 1000); // 3 minutes - muito mais agressivo
+    
+    // Refresh Technicians
+    _bgRefreshTechniciansCache().catch(() => {});
+    
+    // Refresh Activities
+    for (const key of _activitiesCache.keys()) {
+      // Silently refresh in background (don't log to avoid spam)
+      _activitiesCache.delete(key); // Force recalculation on next request
+    }
+  }, 60 * 1000); // 1 minute - MUITO MAIS AGRESSIVO
 
   const httpServer = createServer(app);
   return httpServer;
