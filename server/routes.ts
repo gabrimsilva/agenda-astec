@@ -1872,8 +1872,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate, technicianId, userId } = req.query;
       
+      // ✅ NOVO: Normalizar cache key para intervalos padrão de 90 dias
+      // RATs.tsx sempre pede ~90 dias. Se o intervalo solicitado é ~90 dias,
+      // use cache key genérica em vez de datas específicas, para reutilizar warmup
+      let normalizedStartDate: string | undefined = startDate as string | undefined;
+      let normalizedEndDate: string | undefined = endDate as string | undefined;
+      
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        const daysDiff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        
+        // Se o intervalo é aproximadamente 90 dias (85-95 dias), normalize para "default:all:all"
+        if (daysDiff >= 85 && daysDiff <= 95) {
+          normalizedStartDate = undefined;
+          normalizedEndDate = undefined;
+          console.log(`[Activities cache] Normalizing ${daysDiff.toFixed(0)}-day request to 90-day cache key`);
+        }
+      }
+      
       // Create a cache key based on query parameters
-      const cacheKey = `${userId || technicianId || 'default'}:${startDate}:${endDate}`;
+      const cacheKey = normalizedStartDate && normalizedEndDate
+        ? `${userId || technicianId || 'default'}:${normalizedStartDate}:${normalizedEndDate}`
+        : `${userId || technicianId || 'default'}:all:all`;
       
       let activities: any[] = [];
       
@@ -1891,7 +1912,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const technicians = await storage.getAllTechnicians();
               const technician = technicians.find(t => t.userId === userId);
               return technician ? await storage.getActivitiesByTechnicianId(technician.id) : [];
-            } else if (startDate && endDate) {
+            } else if (normalizedStartDate && normalizedEndDate) {
+              return await storage.getActivitiesByDateRange(
+                new Date(normalizedStartDate),
+                new Date(normalizedEndDate)
+              );
+            } else if (startDate && endDate && (!normalizedStartDate && !normalizedEndDate)) {
+              // Original dates for non-normalized requests
               return await storage.getActivitiesByDateRange(
                 new Date(startDate as string),
                 new Date(endDate as string)
@@ -1899,10 +1926,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else if (technicianId) {
               return await storage.getActivitiesByTechnicianId(technicianId as string);
             } else {
+              // Default: 90 days back
               const now = new Date();
-              const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-              const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-              return await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
+              const ninetyDaysAgo = new Date(now);
+              ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+              ninetyDaysAgo.setHours(0, 0, 0, 0);
+              now.setHours(23, 59, 59, 999);
+              return await storage.getActivitiesByDateRange(ninetyDaysAgo, now);
             }
           };
           _bgRefreshActivitiesCache(cacheKey, queryFn).catch(() => {});
@@ -1921,6 +1951,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           activities = [];
         }
+      } else if (normalizedStartDate && normalizedEndDate) {
+        activities = await storage.getActivitiesByDateRange(
+          new Date(normalizedStartDate),
+          new Date(normalizedEndDate)
+        );
       } else if (startDate && endDate) {
         activities = await storage.getActivitiesByDateRange(
           new Date(startDate as string),
@@ -1929,18 +1964,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (technicianId) {
         activities = await storage.getActivitiesByTechnicianId(technicianId as string);
       } else {
-        // Default to current month
+        // Default to 90 days back (matches RATs.tsx default)
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        // Importante: incluir o último dia do mês inteiro (até 23:59:59.999),
-        // senão atividades do último dia após a meia-noite ficam de fora.
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        activities = await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
+        const ninetyDaysAgo = new Date(now);
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        ninetyDaysAgo.setHours(0, 0, 0, 0);
+        now.setHours(23, 59, 59, 999);
+        activities = await storage.getActivitiesByDateRange(ninetyDaysAgo, now);
       }
       
       // Cache the result
       _activitiesCache.set(cacheKey, { data: activities, ts: Date.now() });
-      console.log(`[Activities cache] cold-populated key="${cacheKey}" (${activities.length} items)`);
+      console.log(`[Activities cache] key="${cacheKey}" (${activities.length} items)`);
       
       res.json(activities);
     } catch (error: any) {
@@ -7152,11 +7187,19 @@ _Segue em anexo o relatório completo em PDF._`;
     await Promise.all([
       warmAdminRatsCache().catch(err => console.error("[Startup] RATs warm failed:", err.message)),
       _bgRefreshTechniciansCache().catch(err => console.error("[Startup] Technicians warm failed:", err.message)),
+      // ✅ CRÍTICO: Aquecer activities com INTERVALO DE 90 DIAS
+      // RATs.tsx carrega com intervalo padrão de 3 meses (90 dias)
+      // Se aquecermos apenas 1 mês, o primeiro carregamento vai bater no banco
       _bgRefreshActivitiesCache("default:all:all", async () => {
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        return await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
+        // Go back 90 days (3 months)
+        const ninetyDaysAgo = new Date(now);
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        // Include full day
+        ninetyDaysAgo.setHours(0, 0, 0, 0);
+        now.setHours(23, 59, 59, 999);
+        console.log(`[Startup] Aquecendo activities de ${ninetyDaysAgo.toISOString().split('T')[0]} a ${now.toISOString().split('T')[0]}`);
+        return await storage.getActivitiesByDateRange(ninetyDaysAgo, now);
       }).catch(err => console.error("[Startup] Activities warm failed:", err.message)),
     ]);
     
@@ -7183,11 +7226,17 @@ _Segue em anexo o relatório completo em PDF._`;
     // Refresh Technicians
     _bgRefreshTechniciansCache().catch(() => {});
     
-    // Refresh Activities
-    for (const key of _activitiesCache.keys()) {
-      // Silently refresh in background (don't log to avoid spam)
-      _activitiesCache.delete(key); // Force recalculation on next request
-    }
+    // ✅ IMPORTANTE: Refresh Activities com intervalo de 90 dias (padrão de RATs)
+    // Mantém cache quente para o intervalo que usuários realmente usam
+    const now = new Date();
+    const ninetyDaysAgo = new Date(now);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    ninetyDaysAgo.setHours(0, 0, 0, 0);
+    now.setHours(23, 59, 59, 999);
+    
+    _bgRefreshActivitiesCache("default:all:all", async () =>
+      storage.getActivitiesByDateRange(ninetyDaysAgo, now)
+    ).catch(() => {});
   }, 60 * 1000); // 1 minute - MUITO MAIS AGRESSIVO
 
   const httpServer = createServer(app);
