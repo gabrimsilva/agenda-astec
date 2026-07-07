@@ -389,6 +389,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🔴 EMERGENCY: List users (sem auth, apenas para debug)
+  app.get("/api/admin/list-users", async (req: AuthRequest, res) => {
+    try {
+      const allUsers = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      }).from(users);
+      res.json(allUsers);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       // If password is provided, hash it separately
