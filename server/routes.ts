@@ -413,7 +413,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       const cutoffDate = new Date(sinceDate);
       console.log(`🔴 CLEANUP: Deletando dados de teste desde ${cutoffDate.toISOString()}`);
       
-      // 1. Deletar atividades criadas após sinceDate
+      // 1. Deletar bloqueios de agenda criados após sinceDate (FAZER PRIMEIRO)
+      const blocksDeleted = await db.delete(sql`agenda_blocks`).where(
+        gte(sql`created_at`, cutoffDate)
+      );
+      
+      // 2. Deletar atividades criadas após sinceDate
       const activitiesToDelete = await db
         .select({ id: activities.id })
         .from(activities)
@@ -423,24 +428,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         await storage.deleteActivity(activity.id);
       }
       
-      // 2. Deletar RATs criadas após sinceDate
-      const ratsToDelete = await db
-        .select({ id: rats.id })
-        .from(rats)
-        .where(gte(rats.createdAt, cutoffDate));
-      
-      for (const rat of ratsToDelete) {
-        // Delete via API para limpar cache
-        invalidateRatsCache();
-      }
-      
+      // 3. Deletar RATs criadas após sinceDate
       await db.delete(rats).where(gte(rats.createdAt, cutoffDate));
-      
-      // 3. Deletar bloqueios de agenda criados após sinceDate
-      const blocksToDelete = await db
-        .select({ id: sql`id` })
-        .from(sql`agenda_blocks`)
-        .where(gte(sql`created_at`, cutoffDate));
+      invalidateRatsCache();
       
       // 4. Deletar approvals de atividades deletadas
       await db.delete(approvals).where(
@@ -451,13 +441,13 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       console.log(`✅ Limpeza concluída:`);
       console.log(`   - ${activitiesToDelete.length} atividades deletadas`);
-      console.log(`   - ${ratsToDelete.length} RATs deletadas`);
-      console.log(`   - Bloqueios, approvals e registros relacionados deletados`);
+      console.log(`   - Bloqueios de agenda deletados`);
+      console.log(`   - Approvals e registros relacionados deletados`);
       
       res.json({
         message: "Limpeza de dados de teste concluída com sucesso",
         activitiesDeleted: activitiesToDelete.length,
-        ratsDeleted: ratsToDelete.length,
+        blocksDeleted: true,
       });
     } catch (error: any) {
       console.error("❌ Erro na limpeza:", error);
