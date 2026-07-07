@@ -1,10 +1,8 @@
 import { useRef, useState } from "react";
-import { User, Mail, Phone, MapPin, LogOut, Settings, Camera, Trash2, Loader2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,8 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Technician } from "@shared/schema";
 
 export default function Profile() {
-  const { user, logout, refreshUser } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,11 +80,6 @@ export default function Profile() {
       });
     },
   });
-
-  const handleLogout = () => {
-    logout();
-    setLocation("/login");
-  };
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -246,22 +238,7 @@ export default function Profile() {
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
-        <Button variant="outline" className="w-full" size="default" data-testid="button-settings">
-          <Settings className="h-4 w-4 mr-2" />
-          Configurações
-        </Button>
-        <Button 
-          variant="destructive" 
-          className="w-full" 
-          size="default" 
-          onClick={handleLogout}
-          data-testid="button-logout"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sair
-        </Button>
-      </div>
+
     </div>
   );
 }
