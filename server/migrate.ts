@@ -122,7 +122,7 @@ export async function runMigrations(): Promise<void> {
     await db.execute(sql.raw(MIGRATION_LOG_TABLE));
 
     // 2. Verificar versão atual do sistema
-    const APP_VERSION = process.env.APP_VERSION || "1.0.0";
+    const APP_VERSION = process.env.APP_VERSION || "2.0.0";
     
     // 3. Verificar se esta versão já foi migrada
     const existingMigration = await db.execute(
@@ -184,7 +184,7 @@ export async function runMigrations(): Promise<void> {
     
     // Registrar erro na migração
     try {
-      const APP_VERSION = process.env.APP_VERSION || "1.0.0";
+      const APP_VERSION = process.env.APP_VERSION || "2.0.0";
       await db.execute(
         sql`INSERT INTO _migration_log (version, description, success) 
             VALUES (${APP_VERSION}, ${`Erro: ${error instanceof Error ? error.message : 'Unknown error'}`}, false)`
