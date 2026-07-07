@@ -39,6 +39,11 @@ const _ratsCache = new Map<string, { data: any[]; ts: number }>();
 const _ratsRefreshing = new Set<string>();
 const RATS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - aumentado para manter cache quente mais tempo
 
+// ── Technicians in-memory cache (stale-while-revalidate) ──────────────────────
+// Prevents slow Neon DB queries for technicians list (called by multiple endpoints).
+const _techniciansCache = { data: null as any[] | null, ts: 0 };
+const TECHNICIANS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // Small cache: userId → technicianId (survives until server restart).
 // Eliminates a DB round-trip on every GET /api/rats for "assistente" users.
 const _userTechCache = new Map<string, string>();
@@ -122,6 +127,25 @@ async function _bgRefreshRatsCache(key: string, queryFn: () => Promise<any[]>) {
   } finally {
     _ratsRefreshing.delete(key);
   }
+}
+
+// ── Technicians cache refresh helper
+async function _bgRefreshTechniciansCache() {
+  try {
+    const data = await storage.getAllTechnicians();
+    _techniciansCache.data = data;
+    _techniciansCache.ts = Date.now();
+    console.log(`[Technicians cache] refreshed (${data.length} items)`);
+  } catch (err: any) {
+    console.error("[Technicians cache] background refresh failed:", err.message);
+  }
+}
+
+// Invalidate technicians cache when they change
+function invalidateTechniciansCache() {
+  _techniciansCache.data = null;
+  _techniciansCache.ts = 0;
+  console.log("[Technicians cache] invalidated");
 }
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -475,7 +499,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Technicians routes
   app.get("/api/technicians", authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const technicians = await storage.getAllTechnicians();
+      // ── Stale-while-revalidate for technicians ────────────────────────
+      if (_techniciansCache.data) {
+        // Always serve cached data immediately
+        res.json(_techniciansCache.data);
+        // Trigger background refresh only if TTL has expired
+        const age = Date.now() - _techniciansCache.ts;
+        if (age > TECHNICIANS_CACHE_TTL) {
+          _bgRefreshTechniciansCache().catch(() => {});
+        }
+        return;
+      }
+      // ─────────────────────────────────────────────────────────────────
+
+      // No cache yet — run the query (first load after server restart)
+      // Retry up to 3 times to absorb Neon cold-start delays
+      let technicians: any[] | null = null;
+      let lastError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          technicians = await storage.getAllTechnicians();
+          break;
+        } catch (dbErr: any) {
+          lastError = dbErr;
+          console.error(`[Technicians] DB query attempt ${attempt + 1}/3 failed:`, dbErr.message);
+          if (attempt < 2) await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+        }
+      }
+      if (technicians === null) throw lastError;
+
+      _techniciansCache.data = technicians;
+      _techniciansCache.ts = Date.now();
+      console.log(`[Technicians cache] cold-populated (${technicians.length} items)`);
       res.json(technicians);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -1551,6 +1606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = insertTechnicianSchema.parse(req.body);
       const technician = await storage.createTechnician(data);
+      invalidateTechniciansCache();
       res.status(201).json(technician);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -1561,6 +1617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = updateUserAndTechnicianSchema.parse(req.body);
       const result = await storage.updateUserAndTechnician(req.params.id, data);
+      invalidateTechniciansCache();
       res.json(result.technician);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -1574,6 +1631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const raw = req.body?.datasulUsername;
       const datasulUsername = raw === undefined || raw === null || raw === "" ? null : String(raw).trim();
       const user = await storage.updateTechnicianDatasulProfile(req.params.id, datasulUsername);
+      invalidateTechniciansCache();
       res.json({ datasulUsername: user.datasulUsername });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -1585,6 +1643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = updateUserAndTechnicianSchema.parse(req.body);
       const result = await storage.updateUserAndTechnician(req.params.id, data);
+      invalidateTechniciansCache();
       res.json(result.technician);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -1600,6 +1659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.deleteTechnician(req.params.id);
+      invalidateTechniciansCache();
       res.status(204).send();
     } catch (error: any) {
       console.error("Error deleting technician:", error);
@@ -7009,12 +7069,15 @@ _Segue em anexo o relatório completo em PDF._`;
         break;
       }
     }
+    // Warm up technicians cache as well
+    _bgRefreshTechniciansCache().catch(() => {});
   })();
 
   // Keep-warm: reaquece dentro do TTL (10min) para o cache nunca esfriar.
   // Mantém o admin sempre quente e reaquece qualquer cache de técnico já carregado.
   setInterval(() => {
     warmAdminRatsCache().catch(() => {});
+    _bgRefreshTechniciansCache().catch(() => {});
     for (const key of _ratsCache.keys()) {
       if (key.startsWith("tech:")) {
         const techId = key.slice("tech:".length);
@@ -7025,7 +7088,7 @@ _Segue em anexo o relatório completo em PDF._`;
         ).catch(() => {});
       }
     }
-  }, 8 * 60 * 1000); // 8 minutes - bem antes do TTL de 10 minutos
+  }, 4 * 60 * 1000); // 4 minutes - refresh every 4 min para manter dados frescos
 
   const httpServer = createServer(app);
   return httpServer;
