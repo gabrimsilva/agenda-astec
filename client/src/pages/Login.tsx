@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Globe, User as UserIcon, Lock, Eye, EyeOff, AlertTriangle } from "lucide-react";
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "2.0.0";
 
 type Ambiente = "producao" | "homologacao" | "dev";
 
