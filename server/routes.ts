@@ -37,18 +37,18 @@ const SERVER_BUILD_ID = Date.now().toString();
 // Serves cached data in <5ms; refreshes the cache in the background after TTL.
 const _ratsCache = new Map<string, { data: any[]; ts: number }>();
 const _ratsRefreshing = new Set<string>();
-const RATS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido para manter dados mais frescos
+const RATS_CACHE_TTL = 60 * 60 * 1000; // 1 HOUR - muito mais agressivo, cache quente por mais tempo
 
 // ── Technicians in-memory cache (stale-while-revalidate) ──────────────────────
 // Prevents slow Neon DB queries for technicians list (called by multiple endpoints).
 const _techniciansCache = { data: null as any[] | null, ts: 0 };
-const TECHNICIANS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido
+const TECHNICIANS_CACHE_TTL = 60 * 60 * 1000; // 1 HOUR - muito mais agressivo
 
 // ── Activities in-memory cache (stale-while-revalidate) ───────────────────────
 // Prevents slow JOIN queries when loading activities list for RATs page.
 const _activitiesCache = new Map<string, { data: any[]; ts: number }>();
 const _activitiesRefreshing = new Set<string>();
-const ACTIVITIES_CACHE_TTL = 3 * 60 * 1000; // 3 minutes - reduzido
+const ACTIVITIES_CACHE_TTL = 60 * 60 * 1000; // 1 HOUR - muito mais agressivo
 
 // Small cache: userId → technicianId (survives until server restart).
 // Eliminates a DB round-trip on every GET /api/rats for "assistente" users.
@@ -58,25 +58,22 @@ const _userTechCache = new Map<string, string>();
 // applicationNote can be many KB per RAT × 150+ rows = several MB of payload.
 // All heavy fields (formData, photoSections, technicianSignature, etc.) are
 // loaded on-demand by the individual RAT dialogs via GET /api/rats/:id.
-function getRatsLightSelect() {
+// ✅ Ultra-minimal select para carregamento inicial rápido
+function getRatsMinimalSelect() {
   return {
     id: rats.id,
     reportNumber: rats.reportNumber,
     reportNumberManual: rats.reportNumberManual,
-    activityId: rats.activityId,
-    technicianId: rats.technicianId,
     clientName: rats.clientName,
     status: rats.status,
-    openDate: rats.openDate,
     sentAt: rats.sentAt,
-    importedPdfUrl: rats.importedPdfUrl,
-    importedPdfFilename: rats.importedPdfFilename,
-    isSimplified: rats.isSimplified,
     createdAt: rats.createdAt,
-    hasFormData: sql<boolean>`(form_data IS NOT NULL)`.as("has_form_data"),
-    hasSignature: sql<boolean>`(technician_signature IS NOT NULL)`.as("has_signature"),
-    hasPhotos: sql<boolean>`(photo_sections IS NOT NULL OR photos IS NOT NULL)`.as("has_photos"),
   };
+}
+
+// Light select para compatibilidade (agora usa minimal)
+function getRatsLightSelect() {
+  return getRatsMinimalSelect();
 }
 
 // Full invalidation — only for bulk ops (fix-pending) where many rows change at once.
@@ -539,26 +536,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // ─────────────────────────────────────────────────────────────────
 
-      // No cache yet — run the query (first load after server restart)
-      // Retry up to 3 times to absorb Neon cold-start delays
-      let technicians: any[] | null = null;
-      let lastError: any = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          technicians = await storage.getAllTechnicians();
-          break;
-        } catch (dbErr: any) {
-          lastError = dbErr;
-          console.error(`[Technicians] DB query attempt ${attempt + 1}/3 failed:`, dbErr.message);
-          if (attempt < 2) await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
-        }
+      // ✅ SEM RETRY: Se cache não está quente, retorna erro imediatamente
+      try {
+        const technicians = await storage.getAllTechnicians();
+        _techniciansCache.data = technicians;
+        _techniciansCache.ts = Date.now();
+        console.log(`[Technicians cache] populated (${technicians.length} items)`);
+        res.json(technicians);
+      } catch (dbErr: any) {
+        console.error(`[Technicians] DB query failed:`, dbErr.message);
+        return res.status(503).json({ 
+          error: "Servidor aquecendo, tente novamente em alguns segundos",
+          retryAfter: 5
+        });
       }
-      if (technicians === null) throw lastError;
-
-      _techniciansCache.data = technicians;
-      _techniciansCache.ts = Date.now();
-      console.log(`[Technicians cache] cold-populated (${technicians.length} items)`);
-      res.json(technicians);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
@@ -6369,23 +6360,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ─────────────────────────────────────────────────────────────────────
 
       // No cache yet — run the query (first load after server restart)
-      // Retry up to 5 times to absorb Neon cold-start delays (may take 15-20s total)
+      // ✅ SEM RETRY: Se cache não está quente, retorna erro imediatamente
+      // Força o cliente a aguardar e tentar novamente (melhor que retry lento)
       let lightRats: any[] | null = null;
-      let lastError: any = null;
-      for (let attempt = 0; attempt < 5; attempt++) {
-        try {
-          lightRats = await runQuery();
-          break;
-        } catch (dbErr: any) {
-          lastError = dbErr;
-          console.error(`[RATs] DB query attempt ${attempt + 1}/5 failed:`, dbErr.message);
-          if (attempt < 4) await new Promise(r => setTimeout(r, 1000 * Math.pow(1.5, attempt)));
-        }
+      try {
+        lightRats = await runQuery();
+      } catch (dbErr: any) {
+        console.error(`[RATs] DB query failed:`, dbErr.message);
+        // Retorna erro ao invés de fazer retry lento
+        return res.status(503).json({ 
+          error: "Servidor aquecendo, tente novamente em alguns segundos",
+          retryAfter: 5
+        });
       }
-      if (lightRats === null) throw lastError;
 
       _ratsCache.set(cacheKey, { data: lightRats, ts: Date.now() });
-      console.log(`[RATs cache] cold-populated key="${cacheKey}" (${lightRats.length} items)`);
+      console.log(`[RATs cache] populated key="${cacheKey}" (${lightRats.length} items)`);
       res.json(lightRats);
     } catch (error: any) {
       console.error("[RATs] Failed to fetch:", error.message);

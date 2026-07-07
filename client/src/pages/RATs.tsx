@@ -147,10 +147,19 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
-    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado com backend cache TTL
+    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
     refetchOnWindowFocus: false,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 15000),
+    retry: (failureCount, error: any) => {
+      // Se retornar 503 (aquecendo), retry com delay. Senão, não retry
+      if (error?.status === 503 && failureCount < 5) {
+        return true;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => {
+      // Backoff: 2s, 4s, 8s, 16s, 32s
+      return Math.min(2000 * Math.pow(2, attemptIndex), 60000);
+    },
   });
 
   // Fetch activities with date range to include older activities
@@ -163,17 +172,27 @@ export default function RATs() {
   
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: [activitiesQueryUrl],
-    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado com backend
+    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
+    retry: (failureCount, error: any) => {
+      if (error?.status === 503 && failureCount < 5) return true;
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => Math.min(2000 * Math.pow(2, attemptIndex), 60000),
   });
 
   const { data: technicians = [] } = useQuery<Technician[]>({
     queryKey: ["/api/technicians"],
-    staleTime: 3 * 60 * 1000, // 3 minutes - sincronizado
+    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
+    retry: (failureCount, error: any) => {
+      if (error?.status === 503 && failureCount < 5) return true;
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => Math.min(2000 * Math.pow(2, attemptIndex), 60000),
   });
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
     queryKey: ["/api/activity-types"],
-    staleTime: 60 * 60 * 1000, // 1 hour - tipos mudam raramente
+    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
   });
 
   const myTechnician = useMemo(() => {
