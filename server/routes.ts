@@ -366,45 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 🔴 EMERGENCY: Reset admin role (sem auth para caso extremo)
-  app.post("/api/admin/reset-role", async (req: AuthRequest, res) => {
-    try {
-      const { userId, newRole } = req.body;
-      
-      if (!userId || !newRole) {
-        return res.status(400).json({ error: "userId e newRole são obrigatórios" });
-      }
-      
-      if (!["admin", "assistente"].includes(newRole)) {
-        return res.status(400).json({ error: "newRole deve ser 'admin' ou 'assistente'" });
-      }
-      
-      const user = await storage.updateUser(userId, { role: newRole as "admin" | "assistente" });
-      console.log(`🔴 EMERGENCY: Admin role reset para user ${userId} → ${newRole}`);
-      
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-
-  // 🔴 EMERGENCY: List users (sem auth, apenas para debug)
-  app.get("/api/admin/list-users", async (req: AuthRequest, res) => {
-    try {
-      const allUsers = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-      }).from(users);
-      res.json(allUsers);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-
-  app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       // If password is provided, hash it separately
       let updateData: any = updateUserSchema.parse(req.body);
