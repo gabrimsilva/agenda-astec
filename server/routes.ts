@@ -401,6 +401,70 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
+  // 🔴 CLEANUP: Remover dados de teste desde uma data específica (admin only)
+  app.post("/api/admin/cleanup-test-data", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const { sinceDate } = req.body;
+      
+      if (!sinceDate) {
+        return res.status(400).json({ error: "sinceDate é obrigatório (YYYY-MM-DD ou ISO string)" });
+      }
+      
+      const cutoffDate = new Date(sinceDate);
+      console.log(`🔴 CLEANUP: Deletando dados de teste desde ${cutoffDate.toISOString()}`);
+      
+      // 1. Deletar atividades criadas após sinceDate
+      const activitiesToDelete = await db
+        .select({ id: activities.id })
+        .from(activities)
+        .where(gte(activities.createdAt, cutoffDate));
+      
+      for (const activity of activitiesToDelete) {
+        await storage.deleteActivity(activity.id);
+      }
+      
+      // 2. Deletar RATs criadas após sinceDate
+      const ratsToDelete = await db
+        .select({ id: rats.id })
+        .from(rats)
+        .where(gte(rats.createdAt, cutoffDate));
+      
+      for (const rat of ratsToDelete) {
+        // Delete via API para limpar cache
+        invalidateRatsCache();
+      }
+      
+      await db.delete(rats).where(gte(rats.createdAt, cutoffDate));
+      
+      // 3. Deletar bloqueios de agenda criados após sinceDate
+      const blocksToDelete = await db
+        .select({ id: sql`id` })
+        .from(sql`agenda_blocks`)
+        .where(gte(sql`created_at`, cutoffDate));
+      
+      // 4. Deletar approvals de atividades deletadas
+      await db.delete(approvals).where(
+        inArray(approvals.activityId, 
+          db.select({ id: activities.id }).from(activities).where(lt(activities.createdAt, cutoffDate))
+        )
+      );
+      
+      console.log(`✅ Limpeza concluída:`);
+      console.log(`   - ${activitiesToDelete.length} atividades deletadas`);
+      console.log(`   - ${ratsToDelete.length} RATs deletadas`);
+      console.log(`   - Bloqueios, approvals e registros relacionados deletados`);
+      
+      res.json({
+        message: "Limpeza de dados de teste concluída com sucesso",
+        activitiesDeleted: activitiesToDelete.length,
+        ratsDeleted: ratsToDelete.length,
+      });
+    } catch (error: any) {
+      console.error("❌ Erro na limpeza:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Upload avatar for user (user can update their own avatar)
   app.post("/api/users/:id/avatar", authMiddleware, upload.single("avatar"), async (req: AuthRequest, res) => {
     try {
