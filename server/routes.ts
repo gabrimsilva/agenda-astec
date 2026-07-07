@@ -2517,6 +2517,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       const { startDate, endDate, technicianId } = req.query;
       let blocks: any[] = [];
+      
       if (startDate && endDate) {
         // Trata data-only (YYYY-MM-DD) como horário LOCAL para não perder
         // bloqueios por diferença de fuso. Cobre o dia inteiro.
@@ -2526,9 +2527,20 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         const start = dateOnly(startStr) ? new Date(`${startStr}T00:00:00`) : (() => { const d = new Date(startStr); d.setHours(0, 0, 0, 0); return d; })();
         const end = dateOnly(endStr) ? new Date(`${endStr}T23:59:59.999`) : (() => { const d = new Date(endStr); d.setHours(23, 59, 59, 999); return d; })();
         blocks = await storage.getAgendaBlocksByDateRange(start, end);
+        
+        // ✅ NOVO: Se é assistente, filtrar apenas seus blocos
+        if (req.user!.role === "assistente") {
+          const tech = await storage.getTechnicianByUserId(req.user!.userId);
+          if (tech) {
+            blocks = blocks.filter(b => b.technicianId === tech.id);
+          } else {
+            blocks = [];
+          }
+        }
       } else if (technicianId) {
         blocks = await storage.getAgendaBlocksByTechnicianId(technicianId as string);
       }
+      
       res.json(blocks);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
