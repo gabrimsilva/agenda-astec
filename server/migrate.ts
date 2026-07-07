@@ -68,6 +68,51 @@ async function fixAgendaBlockDates(): Promise<void> {
   }
 }
 
+/**
+ * Cria índices de performance para queries lentas
+ */
+async function createPerformanceIndexes(): Promise<void> {
+  try {
+    console.log("🔧 Criando índices de performance...");
+    
+    const indexes = [
+      // Activities indexes for date range queries
+      { name: "idx_activities_scheduled_date", query: "CREATE INDEX IF NOT EXISTS idx_activities_scheduled_date ON activities(scheduled_date)" },
+      { name: "idx_activities_end_date", query: "CREATE INDEX IF NOT EXISTS idx_activities_end_date ON activities(end_date)" },
+      { name: "idx_activities_technician_id", query: "CREATE INDEX IF NOT EXISTS idx_activities_technician_id ON activities(technician_id)" },
+      { name: "idx_activities_status", query: "CREATE INDEX IF NOT EXISTS idx_activities_status ON activities(status)" },
+      
+      // RATs indexes
+      { name: "idx_rats_technician_id", query: "CREATE INDEX IF NOT EXISTS idx_rats_technician_id ON rats(technician_id)" },
+      { name: "idx_rats_created_at", query: "CREATE INDEX IF NOT EXISTS idx_rats_created_at ON rats(created_at)" },
+      { name: "idx_rats_activity_id", query: "CREATE INDEX IF NOT EXISTS idx_rats_activity_id ON rats(activity_id)" },
+      
+      // Technicians indexes
+      { name: "idx_technicians_user_id", query: "CREATE INDEX IF NOT EXISTS idx_technicians_user_id ON technicians(user_id)" },
+      
+      // Clients indexes
+      { name: "idx_clients_company_name", query: "CREATE INDEX IF NOT EXISTS idx_clients_company_name ON clients(company_name)" },
+    ];
+    
+    for (const idx of indexes) {
+      try {
+        await db.execute(sql.raw(idx.query));
+        console.log(`  ✅ ${idx.name}`);
+      } catch (err: any) {
+        // Index might already exist, which is fine
+        if (!err.message.includes("already exists")) {
+          console.warn(`  ⚠️ ${idx.name}: ${err.message}`);
+        }
+      }
+    }
+    
+    console.log("✅ Índices de performance criados");
+  } catch (error) {
+    console.error("❌ Erro ao criar índices:", error);
+    // Não interrompe a migração se este step falhar
+  }
+}
+
 export async function runMigrations(): Promise<void> {
   const startTime = Date.now();
   console.log("🔄 Iniciando verificação de migração do banco de dados...");
@@ -122,10 +167,13 @@ export async function runMigrations(): Promise<void> {
     // 6. Aplicar fixes de dados se necessário
     await fixAgendaBlockDates();
 
-    // 7. Registrar migração bem-sucedida
+    // 7. Criar índices de performance
+    await createPerformanceIndexes();
+
+    // 8. Registrar migração bem-sucedida
     await db.execute(
       sql`INSERT INTO _migration_log (version, description, success) 
-          VALUES (${APP_VERSION}, ${'Sincronização automática do schema'}, true)`
+          VALUES (${APP_VERSION}, ${'Sincronização automática do schema + índices de performance'}, true)`
     );
 
     const elapsed = Date.now() - startTime;

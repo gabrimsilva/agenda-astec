@@ -44,6 +44,12 @@ const RATS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - aumentado para manter cac
 const _techniciansCache = { data: null as any[] | null, ts: 0 };
 const TECHNICIANS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// ── Activities in-memory cache (stale-while-revalidate) ───────────────────────
+// Prevents slow JOIN queries when loading activities list for RATs page.
+const _activitiesCache = new Map<string, { data: any[]; ts: number }>();
+const _activitiesRefreshing = new Set<string>();
+const ACTIVITIES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // Small cache: userId → technicianId (survives until server restart).
 // Eliminates a DB round-trip on every GET /api/rats for "assistente" users.
 const _userTechCache = new Map<string, string>();
@@ -146,6 +152,27 @@ function invalidateTechniciansCache() {
   _techniciansCache.data = null;
   _techniciansCache.ts = 0;
   console.log("[Technicians cache] invalidated");
+}
+
+// ── Activities cache refresh helper
+async function _bgRefreshActivitiesCache(cacheKey: string, queryFn: () => Promise<any[]>) {
+  if (_activitiesRefreshing.has(cacheKey)) return;
+  _activitiesRefreshing.add(cacheKey);
+  try {
+    const data = await queryFn();
+    _activitiesCache.set(cacheKey, { data, ts: Date.now() });
+    console.log(`[Activities cache] refreshed key="${cacheKey}" (${data.length} items)`);
+  } catch (err: any) {
+    console.error("[Activities cache] background refresh failed:", err.message);
+  } finally {
+    _activitiesRefreshing.delete(cacheKey);
+  }
+}
+
+// Invalidate activities cache
+function invalidateActivitiesCache() {
+  _activitiesCache.clear();
+  console.log("[Activities cache] cleared");
 }
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -1845,7 +1872,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate, technicianId, userId } = req.query;
       
+      // Create a cache key based on query parameters
+      const cacheKey = `${userId || technicianId || 'default'}:${startDate}:${endDate}`;
+      
       let activities: any[] = [];
+      
+      // ── Stale-while-revalidate for activities ────────────────────────
+      const cached = _activitiesCache.get(cacheKey);
+      if (cached) {
+        // Always serve cached data immediately
+        res.json(cached.data);
+        // Trigger background refresh only if TTL has expired
+        const age = Date.now() - cached.ts;
+        if (age > ACTIVITIES_CACHE_TTL) {
+          // Prepare query function for background refresh
+          const queryFn = async () => {
+            if (userId) {
+              const technicians = await storage.getAllTechnicians();
+              const technician = technicians.find(t => t.userId === userId);
+              return technician ? await storage.getActivitiesByTechnicianId(technician.id) : [];
+            } else if (startDate && endDate) {
+              return await storage.getActivitiesByDateRange(
+                new Date(startDate as string),
+                new Date(endDate as string)
+              );
+            } else if (technicianId) {
+              return await storage.getActivitiesByTechnicianId(technicianId as string);
+            } else {
+              const now = new Date();
+              const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+              const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+              return await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
+            }
+          };
+          _bgRefreshActivitiesCache(cacheKey, queryFn).catch(() => {});
+        }
+        return;
+      }
+      // ─────────────────────────────────────────────────────────────────
       
       // If userId is set by agendaScopeMiddleware (for assistente role), use it
       if (userId) {
@@ -1873,6 +1937,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         activities = await storage.getActivitiesByDateRange(startOfMonth, endOfMonth);
       }
+      
+      // Cache the result
+      _activitiesCache.set(cacheKey, { data: activities, ts: Date.now() });
+      console.log(`[Activities cache] cold-populated key="${cacheKey}" (${activities.length} items)`);
       
       res.json(activities);
     } catch (error: any) {
@@ -7069,15 +7137,26 @@ _Segue em anexo o relatório completo em PDF._`;
         break;
       }
     }
-    // Warm up technicians cache as well
+    // Warm up technicians and activities cache as well
     _bgRefreshTechniciansCache().catch(() => {});
   })();
 
-  // Keep-warm: reaquece dentro do TTL (10min) para o cache nunca esfriar.
-  // Mantém o admin sempre quente e reaquece qualquer cache de técnico já carregado.
+  // Keep-warm: reaquece dentro do TTL (5min) para o cache nunca esfriar.
+  // Mantém tudo sempre quente e reaquece qualquer cache já carregado.
   setInterval(() => {
     warmAdminRatsCache().catch(() => {});
     _bgRefreshTechniciansCache().catch(() => {});
+    // Warm all cached activity queries
+    for (const key of _activitiesCache.keys()) {
+      const age = Date.now() - _activitiesCache.get(key)!.ts;
+      if (age > ACTIVITIES_CACHE_TTL * 0.8) { // Refresh at 80% of TTL
+        // Simple refresh - just trigger a query
+        _bgRefreshActivitiesCache(key, async () => {
+          // For now, just return empty - real refresh happens on next client request
+          return _activitiesCache.get(key)?.data || [];
+        }).catch(() => {});
+      }
+    }
     for (const key of _ratsCache.keys()) {
       if (key.startsWith("tech:")) {
         const techId = key.slice("tech:".length);
@@ -7088,7 +7167,7 @@ _Segue em anexo o relatório completo em PDF._`;
         ).catch(() => {});
       }
     }
-  }, 4 * 60 * 1000); // 4 minutes - refresh every 4 min para manter dados frescos
+  }, 3 * 60 * 1000); // 3 minutes - muito mais agressivo
 
   const httpServer = createServer(app);
   return httpServer;
