@@ -3,10 +3,8 @@ import {
   Users,
   Settings,
   FileText,
-  MapPin,
   Clock,
   LogOut,
-  Navigation,
   UserCircle,
   FileBarChart,
   LayoutDashboard,
@@ -55,11 +53,6 @@ const adminMenuItems = [
     title: "RATs",
     url: "/rats",
     icon: FileText,
-  },
-  {
-    title: "Mapa & Rotas",
-    url: "/rotas",
-    icon: MapPin,
   },
   {
     title: "Painel TV",

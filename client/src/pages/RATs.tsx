@@ -928,10 +928,7 @@ export default function RATs() {
           <div className="flex items-center justify-between gap-2 mb-4 pt-2 flex-wrap">
             <div className="flex items-center gap-2 min-w-0">
               <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
-              <h1 className="text-lg sm:text-xl font-semibold truncate">
-                <span className="sm:hidden">RATs</span>
-                <span className="hidden sm:inline">Relatórios de Assistência Técnica</span>
-              </h1>
+              <h1 className="text-lg sm:text-xl font-semibold truncate">RAT</h1>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {ratsRetrying && !ratsError && (

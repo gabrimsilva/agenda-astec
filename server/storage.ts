@@ -241,8 +241,20 @@ export class DatabaseStorage implements IStorage {
       await db.delete(activities).where(eq(activities.technicianId, technician.id));
     }
     
-    // Delete audit logs (foreign key constraint)
+    // Delete records that reference this user (foreign keys without cascade)
     await db.delete(auditLogs).where(eq(auditLogs.userId, id));
+    await db.delete(activityReschedules).where(eq(activityReschedules.rescheduledBy, id));
+    await db.delete(approvals).where(or(eq(approvals.submittedBy, id), eq(approvals.reviewedBy, id)));
+    await db.delete(timeEntries).where(eq(timeEntries.createdBy, id));
+    
+    // Update activities that have this user as responsible
+    await db.update(activities)
+      .set({ responsibleUserId: null })
+      .where(eq(activities.responsibleUserId, id));
+    
+    // Delete notifications and push subscriptions (have CASCADE but explicit for clarity)
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    await db.delete(userPushSubscriptions).where(eq(userPushSubscriptions.userId, id));
     
     // Delete user (CASCADE will automatically delete technician)
     await db.delete(users).where(eq(users.id, id));
