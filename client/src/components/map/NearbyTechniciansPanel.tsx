@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DatasulClientField, DatasulClientResult } from "@/components/activities/DatasulClientField";
 import { Separator } from "@/components/ui/separator";
-import { Search, MapPin, Clock, X, Calendar, CalendarRange, ChevronDown, Route } from "lucide-react";
+import { Search, MapPin, Clock, X, Calendar, CalendarRange, ChevronDown, Route, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ActivityWithDistance {
   id: string;
@@ -84,6 +85,9 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
   } | null>(null);
   const [enhancedResults, setEnhancedResults] = useState<EnhancedNearbyTechnician[]>([]);
   const [isSearchingEnhanced, setIsSearchingEnhanced] = useState(false);
+  
+  // Estado para modo de busca
+  const [searchMode, setSearchMode] = useState<"activity" | "base">("activity");
   
   // Estados para filtro de período
   const getLocalDateString = () => {
@@ -202,7 +206,7 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
     onLocationSearched?.(null);
   };
 
-  // Buscar técnicos próximos com base em atividades agendadas
+  // Buscar técnicos próximos com base em atividades agendadas OU base do técnico
   const handleEnhancedSearch = async () => {
     if (!searchedLocation) {
       toast({
@@ -215,15 +219,15 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
 
     setIsSearchingEnhanced(true);
     try {
-      const effectiveDateRange = periodStartDate && periodEndDate
+      const effectiveDateRange = (searchMode === "activity" && periodStartDate && periodEndDate)
         ? { start: periodStartDate, end: periodEndDate }
         : undefined;
         
       const response = await apiRequest("POST", "/api/technicians/nearby/search", {
         destinationLat: searchedLocation.lat,
         destinationLng: searchedLocation.lng,
-        locationSource: "activity", // Sempre usar atividades agendadas
-        dateRange: effectiveDateRange,
+        locationSource: searchMode, // "activity" ou "base"
+        dateRange: effectiveDateRange, // Apenas para "activity"
       });
 
       if (!response.ok) {
@@ -236,9 +240,12 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
       setEnhancedResults(technicians);
 
       if (technicians.length === 0) {
+        const message = searchMode === "activity"
+          ? "Não foram encontrados técnicos com atividades agendadas próximas neste período."
+          : "Não foram encontrados técnicos com base próxima.";
         toast({
           title: "Nenhum técnico encontrado",
-          description: "Não foram encontrados técnicos com atividades agendadas próximas neste período.",
+          description: message,
         });
       }
     } catch (error: any) {
@@ -309,41 +316,72 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
 
         <Separator />
 
-        {/* Period Date Range Filter */}
+        {/* Search Mode Selection */}
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground flex items-center gap-1">
-            <CalendarRange className="h-3 w-3" />
-            Período para busca de atividades:
+            <Search className="h-3 w-3" />
+            Modo de busca:
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-0.5">
-              <label className="text-[10px] text-muted-foreground">Início</label>
-              <Input
-                type="date"
-                value={periodStartDate}
-                onChange={(e) => setPeriodStartDate(e.target.value)}
-                data-testid="input-period-start"
-                className="text-xs h-8"
-              />
-            </div>
-            <div className="space-y-0.5">
-              <label className="text-[10px] text-muted-foreground">Fim</label>
-              <Input
-                type="date"
-                value={periodEndDate}
-                onChange={(e) => setPeriodEndDate(e.target.value)}
-                min={periodStartDate}
-                data-testid="input-period-end"
-                className="text-xs h-8"
-              />
-            </div>
-          </div>
+          <Tabs value={searchMode} onValueChange={(val) => setSearchMode(val as "activity" | "base")} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="activity" className="text-xs gap-1">
+                <Calendar className="h-3 w-3" />
+                Atividades
+              </TabsTrigger>
+              <TabsTrigger value="base" className="text-xs gap-1">
+                <Home className="h-3 w-3" />
+                Base
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           <p className="text-[10px] text-muted-foreground leading-tight">
-            Busca técnicos com atividades agendadas neste período próximas ao cliente
+            {searchMode === "activity"
+              ? "Encontra técnicos com atividades agendadas próximas"
+              : "Encontra técnicos com base (local registrado) próxima"
+            }
           </p>
         </div>
 
-        {/* Search Button */}
+        {/* Period Date Range Filter - Only for Activity Mode */}
+        {searchMode === "activity" && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground flex items-center gap-1">
+                <CalendarRange className="h-3 w-3" />
+                Período para busca de atividades:
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <label className="text-[10px] text-muted-foreground">Início</label>
+                  <Input
+                    type="date"
+                    value={periodStartDate}
+                    onChange={(e) => setPeriodStartDate(e.target.value)}
+                    data-testid="input-period-start"
+                    className="text-xs h-8"
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[10px] text-muted-foreground">Fim</label>
+                  <Input
+                    type="date"
+                    value={periodEndDate}
+                    onChange={(e) => setPeriodEndDate(e.target.value)}
+                    min={periodStartDate}
+                    data-testid="input-period-end"
+                    className="text-xs h-8"
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                Busca técnicos com atividades agendadas neste período próximas ao cliente
+              </p>
+            </div>
+          </>
+        )}
+
+        <Separator />
         <Button
           onClick={handleEnhancedSearch}
           disabled={!searchedLocation || isSearchingEnhanced}
@@ -358,7 +396,7 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
           ) : (
             <>
               <Search className="h-3.5 w-3.5 mr-2" />
-              Buscar Técnicos Próximos
+              {searchMode === "activity" ? "Buscar Técnicos com Atividades" : "Buscar Técnicos por Base"}
             </>
           )}
         </Button>
