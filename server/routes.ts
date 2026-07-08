@@ -4997,7 +4997,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           if (finalWorkCompleted === false && finalTravelJustification) {
             travelNotes += ` | Trabalho NÃO realizado - Justificativa: ${finalTravelJustification}`;
           } else if (finalWorkCompleted === true || finalWorkCompleted === undefined) {
-            travelNotes += ` | Deslocamento produtivo`;
+            travelNotes += ` | Deslocamento`;
           }
           
           // Use source "ida_travel" to identify IDA travel entries

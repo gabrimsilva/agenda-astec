@@ -411,6 +411,14 @@ export default function Reports() {
     }
 
     try {
+      // Função para sanitizar notas: remover "produtivo" do texto
+      const sanitizeNotes = (notes: string | null): string => {
+        if (!notes) return "-";
+        return notes
+          .replace(/\| Deslocamento produtivo/g, "| Deslocamento")
+          .replace(/Deslocamento produtivo/g, "Deslocamento");
+      };
+
       const workbook = new ExcelJS.Workbook();
       
       // ===== ABA 1: RESUMO COM GRÁFICO DE PIZZA =====
@@ -697,7 +705,7 @@ export default function Reports() {
             entry.activityName || "-",
             formatMinutes(entry.minutes),
             entry.minutes,
-            entry.notes || "-"
+            sanitizeNotes(entry.notes)
           ];
         } else {
           row.values = [
@@ -708,7 +716,7 @@ export default function Reports() {
             entry.activityName || "-",
             formatMinutes(entry.minutes),
             entry.minutes,
-            entry.notes || "-"
+            sanitizeNotes(entry.notes)
           ];
         }
         row.alignment = { vertical: "middle" };
