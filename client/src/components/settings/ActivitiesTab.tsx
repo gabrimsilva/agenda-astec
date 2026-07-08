@@ -372,16 +372,18 @@ export default function ActivitiesTab() {
       }
     }
     
-    // Se está editando e requiresTravel mudou, usa endpoint separado e NÃO inclui no PUT
-    const requiresTravelChanged = editingType && (editingType as any).requiresTravel !== requiresTravel;
-    
-    if (requiresTravelChanged) {
-      // Atualiza apenas requiresTravel via POST (contorna WAF)
-      toggleRequiresTravelMutation.mutate({ id: editingType!.id, requiresTravel });
+    // Se está editando e requiresTravel mudou, APENAS usa POST (não faz PUT)
+    if (editingType && (editingType as any).requiresTravel !== requiresTravel) {
+      // Salva APENAS requiresTravel via POST (contorna WAF completamente)
+      toggleRequiresTravelMutation.mutate({ id: editingType.id, requiresTravel });
+      // Fecha o dialog após sucesso
+      setDialogOpen(false);
+      setEditingType(null);
+      return;
     }
     
-    // Prepara dados para atualização (SEM requiresTravel se mudou)
-    let dataToSubmit: any = {
+    // Prepara dados para atualização (sem requiresTravel)
+    const dataToSubmit: any = {
       ...values,
       category,
       requiresRat,
@@ -389,11 +391,6 @@ export default function ActivitiesTab() {
       locations,
       color: categoryColorPalette[category][0],
     };
-    
-    // Se requiresTravel mudou, NÃO inclui no PUT para evitar WAF
-    if (!requiresTravelChanged) {
-      dataToSubmit.requiresTravel = requiresTravel;
-    }
     
     if (editingType) {
       updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
