@@ -2554,6 +2554,78 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
+  // Alternative POST endpoint for deleting activities (WAF workaround - some WAFs block DELETE method)
+  app.post("/api/activities/:id/delete", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const activity = await storage.getActivity(req.params.id);
+      
+      if (!activity) {
+        return res.status(404).json({ error: "Atividade não encontrada" });
+      }
+      
+      // Verificar permissões: apenas admin ou técnico dono pode deletar
+      const user = await storage.getUser(req.user!.userId);
+      if (!user) {
+        return res.status(403).json({ error: "Usuário não autorizado" });
+      }
+      
+      const isAdmin = user.role === "admin";
+      const userTechnician = await storage.getTechnicianByUserId(user.id);
+      const isOwner = activity.technicianId && userTechnician?.id === activity.technicianId;
+      
+      console.log(`[POST /api/activities/:id/delete] User: ${user.id}, Role: ${user.role}, isAdmin: ${isAdmin}, UserTechnicianId: ${userTechnician?.id}, ActivityTechnicianId: ${activity.technicianId}, isOwner: ${isOwner}`);
+      
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: "Você não tem permissão para excluir esta atividade" });
+      }
+      
+      // Não permitir exclusão de atividades concluídas ou canceladas
+      if (activity.status === "concluido" || activity.status === "cancelado") {
+        return res.status(400).json({ 
+          error: `Não é possível excluir atividades com status "${activity.status}". Apenas atividades planejadas, a caminho ou em execução podem ser excluídas.` 
+        });
+      }
+      
+      const actId = req.params.id;
+
+      // Limpa registros sem ON DELETE CASCADE antes de excluir a atividade
+      await db.update(timeEntries)
+        .set({ agendaActivityId: null })
+        .where(eq(timeEntries.agendaActivityId, actId));
+
+      await db.update(travelSegments)
+        .set({ agendaActivityId: null })
+        .where(eq(travelSegments.agendaActivityId, actId));
+
+      await db.delete(approvals)
+        .where(eq(approvals.activityId, actId));
+
+      await db.delete(activityAttachments)
+        .where(eq(activityAttachments.activityId, actId));
+
+      await storage.deleteActivity(actId);
+      
+      // Invalidate activities cache to force refresh
+      invalidateActivitiesCache();
+      
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user!.userId,
+        action: "DELETE",
+        entityType: "activity",
+        entityId: req.params.id,
+        changes: null,
+      });
+      
+      // Broadcast activity deletion to all connected clients
+      broadcastActivityUpdate(activity, "deleted");
+      
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Approvals routes
   app.get("/api/approvals", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
