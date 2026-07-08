@@ -17,6 +17,7 @@ import { Plus, Edit, Trash2, UserIcon, Phone, Mail, MapPin, Users as UsersIcon, 
 import { useToast } from "@/hooks/use-toast";
 import type { Technician, User } from "@shared/schema";
 import { deleteUser } from "@/lib/api/users";
+import { Switch } from "@/components/ui/switch";
 
 // Base schema with common fields
 const baseFormSchema = z.object({
@@ -32,6 +33,7 @@ const baseFormSchema = z.object({
   licenseNumber: z.string().optional(),
   workHoursPerDay: z.coerce.number().min(1).max(24).default(8),
   datasulUsername: z.string().optional(),
+  isActive: z.boolean().default(true),
   // Base address fields (home office)
   baseCep: z.string().optional(),
   baseAddress: z.string().optional(),
@@ -153,6 +155,7 @@ export default function TechniciansTab() {
       licenseNumber: "",
       workHoursPerDay: 8,
       datasulUsername: "",
+      isActive: true,
     },
   });
 
@@ -200,6 +203,7 @@ export default function TechniciansTab() {
       licenseNumber: technician.licenseNumber || "",
       workHoursPerDay: technician.workHoursPerDay || 8,
       datasulUsername: user?.datasulUsername || "",
+      isActive: user?.isActive ?? true,
       baseCep: (technician as any).baseCep || "",
       baseAddress: technician.baseAddress || "",
       baseNumero: technician.baseNumero || "",
@@ -228,6 +232,7 @@ export default function TechniciansTab() {
       licenseNumber: "",
       workHoursPerDay: 8,
       datasulUsername: "",
+      isActive: true,
       baseCep: "",
       baseAddress: "",
       baseNumero: "",
@@ -438,6 +443,15 @@ export default function TechniciansTab() {
                           <span>{tech.vehicleInfo} {tech.licenseNumber ? `• ${tech.licenseNumber}` : ""}</span>
                         </div>
                       )}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.isActive 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                        }`}>
+                          {user.isActive ? '✓ Ativo' : '○ Inativo'}
+                        </span>
+                      </div>
                     </div>
                   </CardContent>
                 )}
@@ -517,6 +531,28 @@ export default function TechniciansTab() {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3 space-y-0">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Status do Usuário</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Usuários inativos não conseguem fazer login e não aparecem nas listas, mas seu histórico é preservado
+                        </p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-is-active"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <FormField

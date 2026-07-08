@@ -69,6 +69,37 @@ async function fixAgendaBlockDates(): Promise<void> {
 }
 
 /**
+ * Adiciona coluna is_active à tabela users se não existir
+ */
+async function addIsActiveToUsers(): Promise<void> {
+  try {
+    console.log("🔧 Verificando coluna is_active na tabela users...");
+    
+    // Verifica se a coluna já existe
+    const checkColumn = await db.execute(sql.raw(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'is_active'
+    `));
+    
+    if (checkColumn.rows.length === 0) {
+      // Coluna não existe, adiciona
+      console.log("  ➕ Adicionando coluna is_active...");
+      await db.execute(sql.raw(`
+        ALTER TABLE users 
+        ADD COLUMN is_active BOOLEAN DEFAULT true NOT NULL
+      `));
+      console.log("  ✅ Coluna is_active adicionada com sucesso");
+    } else {
+      console.log("  ✅ Coluna is_active já existe");
+    }
+  } catch (error: any) {
+    console.error("❌ Erro ao adicionar coluna is_active:", error.message);
+    // Não interrompe a migração se este step falhar
+  }
+}
+
+/**
  * Cria índices de performance para queries lentas
  */
 async function createPerformanceIndexes(): Promise<void> {
@@ -164,10 +195,13 @@ export async function runMigrations(): Promise<void> {
       }
     }
 
-    // 6. Aplicar fixes de dados se necessário
+    // 7. Aplicar fixes de dados se necessário
     await fixAgendaBlockDates();
+    
+    // 7b. Adicionar coluna isActive para usuários
+    await addIsActiveToUsers();
 
-    // 7. Criar índices de performance
+    // 8. Criar índices de performance
     await createPerformanceIndexes();
 
     // 8. Registrar migração bem-sucedida
