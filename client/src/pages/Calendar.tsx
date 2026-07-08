@@ -382,13 +382,9 @@ export default function Calendar() {
   const { start: monthStart, end: monthEnd } = getMonthRange(date);
 
   const { data: activities = [] } = useQuery<Activity[]>({
-    queryKey: ["/api/activities", monthStart.toISOString(), monthEnd.toISOString()],
+    queryKey: ["/api/activities"],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        startDate: monthStart.toISOString(),
-        endDate: monthEnd.toISOString(),
-      });
-      const response = await fetch(`/api/activities?${params.toString()}`, {
+      const response = await fetch(`/api/activities`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('astec_token')}`
         },
@@ -396,7 +392,8 @@ export default function Calendar() {
       if (!response.ok) throw new Error('Failed to fetch activities');
       return response.json();
     },
-    staleTime: 0, // Sempre considera dados como "stale" para forçar refetch ao mudar de mês
+    staleTime: 0,
+    refetchInterval: 10000, // Auto-refresh every 10 seconds for faster updates
   });
 
   // Fetch reschedule ghost events for the calendar
