@@ -52,6 +52,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   datasulUsername: text("datasul_username"), // login do Datasul associado (perfil Datasul)
   avatarUrl: text("avatar_url"),
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
