@@ -1094,7 +1094,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
   // Suporta grupos 71 (Coatings) e 88 (Alumínio).
   // Busca é feita DIRETAMENTE no ERP (sem cache de clientes em memória).
   // Auth: header "x-datasul-auth: Basic <base64>" (token devolvido no login).
-  app.get("/api/datasul/clientes", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+  app.get("/api/datasul/clientes", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const authHeader = getDatasulAuthHeader(req);
       if (!authHeader) {
@@ -2876,6 +2876,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       const { page, limit, search, region, segment, active } = req.query;
       
+      console.log(`[/api/clients] User role: ${req.user?.role}, userId: ${req.user?.userId}, limit: ${limit}`);
+      
       // Validate and cap pagination params
       const parsedPage = page ? parseInt(page as string) : 1;
       const parsedLimit = limit ? parseInt(limit as string) : 50;
@@ -2897,8 +2899,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         active: active !== undefined ? active === "true" : undefined,
       });
       
+      console.log(`[/api/clients] Returning ${result.clients.length} clients`);
       res.json(result);
     } catch (error: any) {
+      console.error("[/api/clients] Error:", error);
       res.status(400).json({ error: error.message });
     }
   });
