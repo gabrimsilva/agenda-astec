@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X } from "lucide-react";
+import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X, Navigation } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { ActivityType } from "@shared/schema";
@@ -188,6 +188,23 @@ export default function ActivitiesTab() {
     },
   });
 
+  const toggleRequiresTravelMutation = useMutation({
+    mutationFn: ({ id, requiresTravel }: { id: string; requiresTravel: boolean }) => 
+      updateActivityType(id, { requiresTravel }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-types"] });
+      toast({ 
+        title: variables.requiresTravel ? "Trajeto ativado" : "Trajeto desativado", 
+        description: variables.requiresTravel 
+          ? "Atividades deste tipo calcularão trajeto (IDA/VOLTA)" 
+          : "Atividades deste tipo não calcularão trajeto (apenas iniciar e concluir)" 
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    },
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -315,6 +332,15 @@ export default function ActivitiesTab() {
           onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: type.id, isActive: checked })}
           data-testid={`switch-active-${type.id}`}
         />
+        <Button 
+          size="icon" 
+          variant="ghost"
+          title={(type as any).requiresTravel !== false ? "Desativar cálculo de trajeto" : "Ativar cálculo de trajeto"}
+          onClick={() => toggleRequiresTravelMutation.mutate({ id: type.id, requiresTravel: (type as any).requiresTravel !== false ? false : true })}
+          data-testid={`button-toggle-requires-travel-${type.id}`}
+        >
+          <Navigation className={`w-4 h-4 ${(type as any).requiresTravel !== false ? 'text-blue-600' : 'text-gray-400'}`} />
+        </Button>
         <Button 
           size="icon" 
           variant="ghost" 
