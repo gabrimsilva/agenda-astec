@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Calendar as CalendarIcon, Plus, User as UserIcon, Building2, FileText, Clock, MapPin, X, Search, Copy, CheckCircle, Edit, Check, ChevronsUpDown, Loader2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Calendar as CalendarIcon, Plus, User as UserIcon, Building2, FileText, Clock, MapPin, X, Search, Copy, CheckCircle, Edit, Check, ChevronsUpDown, Loader2, ChevronDown, ChevronLeft, ChevronRight, Palette } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -2426,7 +2426,7 @@ export default function Calendar() {
         <Card className="p-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-muted-foreground" />
+              <Palette className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Categorias:</span>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -2461,9 +2461,6 @@ export default function Calendar() {
               </Badge>
               <Badge variant="outline" className="gap-1">
                 <kbd className="px-1.5 py-0.5 bg-muted rounded">T</kbd> Hoje
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">F</kbd> Filtros
               </Badge>
             </div>
           </div>
