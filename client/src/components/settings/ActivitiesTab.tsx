@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X } from "lucide-react";
+import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X, Route, Navigation2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { ActivityType } from "@shared/schema";
@@ -332,6 +332,15 @@ export default function ActivitiesTab() {
           onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: type.id, isActive: checked })}
           data-testid={`switch-active-${type.id}`}
         />
+        <Button 
+          size="icon" 
+          variant={type.requiresTravel === false ? "secondary" : "ghost"}
+          title={type.requiresTravel === false ? "Clique para ativar cálculo de trajeto" : "Clique para desativar cálculo de trajeto"}
+          onClick={() => toggleRequiresTravelMutation.mutate({ id: type.id, requiresTravel: !(type.requiresTravel ?? true) })}
+          data-testid={`button-toggle-requires-travel-${type.id}`}
+        >
+          <Route className="w-4 h-4" />
+        </Button>
         <Button 
           size="icon" 
           variant="ghost" 
@@ -764,18 +773,19 @@ export default function ActivitiesTab() {
                   </div>
                 )}
                 {!watchParentId ? (
-                  <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
                     <div className="space-y-0.5">
                       <p className="text-sm font-medium">Requer cálculo de trajeto</p>
                       <p className="text-xs text-muted-foreground">
-                        Quando desativado, a atividade é apenas iniciada e concluída (sem IDA/VOLTA). Use o botão de toggle na lista para alterar.
+                        {form.getValues().requiresTravel === false 
+                          ? "✓ Desativado: sem IDA/VOLTA" 
+                          : "✓ Ativado: com cálculo de IDA/VOLTA"}
                       </p>
                     </div>
-                    <Switch
-                      checked={(values: FormValues) => values.requiresTravel}
-                      disabled
-                      data-testid="switch-requires-travel-readonly"
-                    />
+                    <Badge variant="outline" className="text-xs">
+                      <Route className="w-3 h-3 mr-1" />
+                      {form.getValues().requiresTravel === false ? "Sem trajeto" : "Com trajeto"}
+                    </Badge>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between rounded-lg border p-3 opacity-60">
