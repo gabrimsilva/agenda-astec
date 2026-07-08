@@ -1533,6 +1533,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               a.latitude && a.longitude && a.status !== "cancelado"
             );
             
+            console.log(`[NearbySearch] Technician ${technician.name} (${technician.id}): ${techActivities.length} total, ${validActivities.length} valid activities`);
+            
             if (validActivities.length === 0) {
               return null; // No activities in the period
             }
@@ -1591,6 +1593,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             allActivitiesWithDistance = activitiesWithRouteInfo
               .filter(a => a !== null)
               .sort((a, b) => a!.distanceKm - b!.distanceKm) as any[];
+            
+            console.log(`[NearbySearch] ${technician.name}: Returning ${allActivitiesWithDistance.length} activities after distance calc`);
             
             if (allActivitiesWithDistance.length === 0) {
               return null;

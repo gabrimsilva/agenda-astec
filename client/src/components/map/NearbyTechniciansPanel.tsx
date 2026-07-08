@@ -457,7 +457,7 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                           onClick={() => onActivitySelected?.(tech.closestActivity)}
                         >
                           <p className="text-[10px] font-medium text-primary mb-0.5">
-                            Atividade mais próxima:
+                            🎯 Atividade mais próxima:
                           </p>
                           <div className="space-y-0.5">
                             <p className="text-xs font-medium truncate">{tech.closestActivity.clientName}</p>
@@ -492,19 +492,19 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                         </div>
                       )}
 
-                      {/* Other Activities Accordion */}
+                      {/* Other Activities Accordion - Auto Open if Multiple */}
                       {hasMultipleActivities && (
-                        <Collapsible className="mt-3">
+                        <Collapsible className="mt-3" defaultOpen={otherActivities.length > 0}>
                           <CollapsibleTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="w-full justify-between h-auto py-2 px-2 text-xs"
+                              className="w-full justify-between h-auto py-2 px-2 text-xs bg-muted/40 hover:bg-muted/60"
                               data-testid={`button-view-all-activities-${tech.id}`}
                             >
                               <span className="flex items-center gap-1">
                                 <CalendarRange className="h-3 w-3" />
-                                Ver todas as {tech.allActivities?.length} atividades
+                                Outras {otherActivities.length} atividade(s)
                               </span>
                               <ChevronDown className="h-4 w-4" />
                             </Button>
@@ -513,14 +513,14 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                             {otherActivities.map((activity, index) => (
                               <div
                                 key={activity.id}
-                                className="p-2 bg-muted/50 rounded-md text-xs cursor-pointer hover:bg-muted/80 transition-colors"
+                                className="p-2 bg-muted/50 rounded-md text-xs cursor-pointer hover:bg-muted/80 transition-colors border border-muted"
                                 onClick={() => onActivitySelected?.(activity)}
                                 data-testid={`activity-item-${tech.id}-${index}`}
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1">
                                     <p className="font-medium">{activity.clientName}</p>
-                                    <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                                    <div className="flex items-center gap-2 text-muted-foreground mt-1 flex-wrap">
                                       <span className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
                                         {activity.formattedDate}
@@ -531,15 +531,15 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                                       </span>
                                     </div>
                                     {activity.address && (
-                                      <p className="text-muted-foreground mt-1">
+                                      <p className="text-muted-foreground mt-1 text-[10px]">
                                         <MapPin className="h-3 w-3 inline mr-1" />
                                         {activity.address}
                                       </p>
                                     )}
                                   </div>
-                                  <div className="text-right text-muted-foreground">
-                                    <p className="font-medium">{activity.distanceKm.toFixed(1)} km</p>
-                                    <p>~{activity.estimatedTimeMin} min</p>
+                                  <div className="text-right text-muted-foreground flex-shrink-0">
+                                    <p className="font-medium text-[10px]">{activity.distanceKm.toFixed(1)} km</p>
+                                    <p className="text-[10px]">~{activity.estimatedTimeMin} min</p>
                                   </div>
                                 </div>
                               </div>
