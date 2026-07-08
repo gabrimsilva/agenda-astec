@@ -15,7 +15,6 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { SplashScreen } from "@/components/SplashScreen";
 import { GPSTrackingProvider } from "@/hooks/useGPSTracking";
 import { OneSignalProvider } from "@/hooks/useOneSignal";
-import { FieldModeToggle } from "@/components/FieldModeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PageTitleProvider, usePageTitle } from "@/hooks/usePageTitle";
 import NotFound from "@/pages/not-found";
@@ -98,7 +97,6 @@ function PageHeader() {
         </div>
         <div className="flex items-center gap-2 p-3">
           <NotificationBell />
-          <FieldModeToggle />
           <ThemeToggle />
         </div>
       </header>
@@ -107,7 +105,6 @@ function PageHeader() {
         <span className="font-bold text-base tracking-tight">{title || "ASTEC"}</span>
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <FieldModeToggle />
           <ThemeToggle />
         </div>
       </header>
