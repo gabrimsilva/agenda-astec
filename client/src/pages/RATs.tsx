@@ -941,7 +941,7 @@ export default function RATs() {
                 </Button>
               )}
               <Badge variant="outline" className="text-sm" data-testid="badge-total-rats">
-                {baseFilteredRats.length} RATs
+                {baseFilteredRats.length} RAT
               </Badge>
             </div>
           </div>
