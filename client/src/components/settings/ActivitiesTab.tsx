@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X, Navigation } from "lucide-react";
+import { Plus, Edit, Trash2, Palette, FolderPlus, ChevronDown, ChevronRight, Eye, EyeOff, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { ActivityType } from "@shared/schema";
@@ -334,15 +334,6 @@ export default function ActivitiesTab() {
         />
         <Button 
           size="icon" 
-          variant="ghost"
-          title={(type as any).requiresTravel !== false ? "Desativar cálculo de trajeto" : "Ativar cálculo de trajeto"}
-          onClick={() => toggleRequiresTravelMutation.mutate({ id: type.id, requiresTravel: (type as any).requiresTravel !== false ? false : true })}
-          data-testid={`button-toggle-requires-travel-${type.id}`}
-        >
-          <Navigation className={`w-4 h-4 ${(type as any).requiresTravel !== false ? 'text-blue-600' : 'text-gray-400'}`} />
-        </Button>
-        <Button 
-          size="icon" 
           variant="ghost" 
           onClick={() => handleEdit(type)} 
           data-testid={`button-edit-${type.id}`}
@@ -380,20 +371,41 @@ export default function ActivitiesTab() {
         locations = (parent as any).locations ?? [];
       }
     }
-    const dataToSubmit = {
-      ...values,
-      category,
-      requiresRat,
-      requiresTravel,
-      categorization,
-      locations,
-      color: categoryColorPalette[category][0],
-    };
     
-    if (editingType) {
-      updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
+    // Se está editando e requiresTravel mudou, precisa usar endpoint separado para evitar WAF
+    if (editingType && (editingType as any).requiresTravel !== requiresTravel) {
+      // Salva requiresTravel via endpoint separado (POST alternativo)
+      toggleRequiresTravelMutation.mutate({ id: editingType.id, requiresTravel });
+      
+      // Atualiza o resto dos dados sem requiresTravel
+      const { requiresTravel: _, ...dataWithoutTravel } = {
+        ...values,
+        category,
+        requiresRat,
+        requiresTravel,
+        categorization,
+        locations,
+        color: categoryColorPalette[category][0],
+      };
+      
+      updateMutation.mutate({ id: editingType.id, data: dataWithoutTravel });
     } else {
-      createMutation.mutate(dataToSubmit);
+      // Cria ou atualiza sem mudança em requiresTravel
+      const dataToSubmit = {
+        ...values,
+        category,
+        requiresRat,
+        requiresTravel,
+        categorization,
+        locations,
+        color: categoryColorPalette[category][0],
+      };
+      
+      if (editingType) {
+        updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
+      } else {
+        createMutation.mutate(dataToSubmit);
+      }
     }
   };
 
