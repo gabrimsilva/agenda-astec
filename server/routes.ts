@@ -1975,6 +1975,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       const { startDate, endDate, technicianId, userId } = req.query;
       
+      console.log(`[Activities] Request user role: ${req.user?.role}, userId from query: ${userId}, technicianId: ${technicianId}`);
+      
       // ✅ NOVO: Normalizar cache key para intervalos padrão de 90 dias
       // RATs.tsx sempre pede ~90 dias. Se o intervalo solicitado é ~90 dias,
       // use cache key genérica em vez de datas específicas, para reutilizar warmup
@@ -2005,6 +2007,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       const cached = _activitiesCache.get(cacheKey);
       if (cached) {
         // Always serve cached data immediately
+        console.log(`[Activities cache] SERVING CACHED: key="${cacheKey}" (${cached.data.length} items)`);
         res.json(cached.data);
         // Trigger background refresh only if TTL has expired
         const age = Date.now() - cached.ts;
@@ -2014,6 +2017,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             if (userId) {
               const technicians = await storage.getAllTechnicians();
               const technician = technicians.find(t => t.userId === userId);
+              console.log(`[Activities cache] BG: Found technician for userId ${userId}: ${technician ? technician.id : 'NOT FOUND'}`);
               return technician ? await storage.getActivitiesByTechnicianId(technician.id) : [];
             } else if (normalizedStartDate && normalizedEndDate) {
               return await storage.getActivitiesByDateRange(
@@ -2049,6 +2053,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         // Find technician by userId
         const technicians = await storage.getAllTechnicians();
         const technician = technicians.find(t => t.userId === userId);
+        console.log(`[Activities] Finding technician for userId ${userId}. Found: ${technician ? technician.id : 'NOT FOUND'}`);
         if (technician) {
           activities = await storage.getActivitiesByTechnicianId(technician.id);
         } else {
@@ -2078,10 +2083,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       // Cache the result
       _activitiesCache.set(cacheKey, { data: activities, ts: Date.now() });
-      console.log(`[Activities cache] key="${cacheKey}" (${activities.length} items)`);
+      console.log(`[Activities cache] key="${cacheKey}" (${activities.length} items, fetched fresh)`);
       
       res.json(activities);
     } catch (error: any) {
+      console.error("[Activities] Error:", error);
       res.status(400).json({ error: error.message });
     }
   });
