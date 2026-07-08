@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Filter, Calendar as CalendarIcon, Plus, User as UserIcon, Building2, FileText, Clock, MapPin, X, Search, BarChart3, Copy, CheckCircle, Edit, Check, ChevronsUpDown, Loader2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Calendar as CalendarIcon, Plus, User as UserIcon, Building2, FileText, Clock, MapPin, X, Search, Copy, CheckCircle, Edit, Check, ChevronsUpDown, Loader2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -184,13 +184,6 @@ export default function Calendar() {
   const [activeTooltipEventId, setActiveTooltipEventId] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number; showBelow?: boolean } | null>(null);
   const tooltipOpenedAtRef = useRef<number>(0);
-  
-  // Filtros avançados
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [typeFilter, setTypeFilter] = useState<string>("todos");
-  const [periodFilter, setPeriodFilter] = useState<string>("todos");
-  const [showFilters, setShowFilters] = useState(false);
   
   // Atualizar hora atual a cada minuto para mover o indicador de tempo
   useEffect(() => {
@@ -723,107 +716,8 @@ export default function Calendar() {
     return technicians.find(tech => tech.userId === user.id);
   }, [user, technicians]);
 
-  // Cálculo de métricas de produtividade
-  const productivityMetrics = useMemo(() => {
-    let filteredActivities = activities;
-    
-    // Aplicar os mesmos filtros que nos eventos
-    if (selectedUser === "my-calendar") {
-      if (userTechnician) {
-        filteredActivities = filteredActivities.filter((a) => a.technicianId === userTechnician.id);
-      } else {
-        filteredActivities = [];
-      }
-    } else if (selectedUser !== "all") {
-      filteredActivities = filteredActivities.filter((a) => a.technicianId === selectedUser);
-    }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filteredActivities = filteredActivities.filter((activity) => {
-        const clientNameMatch = (activity.clientName || "").toLowerCase().includes(query);
-        const descriptionMatch = (activity.description || "").toLowerCase().includes(query);
-        const client = clients.find((c) => c.id === activity.clientId);
-        const clientMatch = client?.companyName.toLowerCase().includes(query) || false;
-        return clientNameMatch || descriptionMatch || clientMatch;
-      });
-    }
-
-    if (statusFilter !== "todos") {
-      filteredActivities = filteredActivities.filter((a) => a.status === statusFilter);
-    }
-
-    if (typeFilter !== "todos") {
-      filteredActivities = filteredActivities.filter((a) => a.activityTypeId === typeFilter);
-    }
-
-    if (periodFilter !== "todos") {
-      const now = moment();
-      filteredActivities = filteredActivities.filter((activity) => {
-        const activityDate = moment(activity.scheduledDate);
-        switch (periodFilter) {
-          case "hoje":
-            return activityDate.isSame(now, "day");
-          case "semana":
-            return activityDate.isSame(now, "week");
-          case "mes":
-            return activityDate.isSame(now, "month");
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Calcular total de horas por categoria
-    const hoursByCategory: Record<string, number> = {
-      Efetivo: 0,
-      Adicional: 0,
-      Perda: 0,
-    };
-
-    // Contador por status
-    const countByStatus: Record<string, number> = {
-      planejado: 0,
-      emExecucao: 0,
-      concluido: 0,
-      reprovado: 0,
-      cancelado: 0,
-    };
-
-    filteredActivities.forEach((activity) => {
-      // Calcular duração em horas
-      const [startHour, startMin] = activity.startTime.split(":").map(Number);
-      const [endHour, endMin] = activity.endTime.split(":").map(Number);
-      const durationHours = (endHour * 60 + endMin - (startHour * 60 + startMin)) / 60;
-
-      // Encontrar categoria do tipo de atividade
-      const activityType = activityTypes.find((t) => t.id === activity.activityTypeId);
-      const category = activityType?.category || "Efetivo";
-      
-      if (hoursByCategory[category] !== undefined) {
-        hoursByCategory[category] += durationHours;
-      }
-
-      // Contar por status
-      if (countByStatus[activity.status] !== undefined) {
-        countByStatus[activity.status]++;
-      }
-    });
-
-    const totalActivities = filteredActivities.length;
-    const completedActivities = countByStatus.concluido;
-    const completionPercentage = totalActivities > 0 
-      ? Math.round((completedActivities / totalActivities) * 100) 
-      : 0;
-
-    return {
-      hoursByCategory,
-      countByStatus,
-      totalActivities,
-      completedActivities,
-      completionPercentage,
-    };
-  }, [activities, selectedUser, userTechnician, searchQuery, statusFilter, typeFilter, periodFilter, clients, activityTypes]);
+  // Cálculo de métricas de produtividade - removido (filtros descontinuados)
+  // const productivityMetrics = useMemo(...);
 
   const events = useMemo<CalendarEvent[]>(() => {
     let filtered = activities;
@@ -839,45 +733,17 @@ export default function Calendar() {
       filtered = filtered.filter((a) => a.technicianId === selectedUser);
     }
 
-    // Filtro de busca rápida (cliente, descrição)
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((activity) => {
-        const clientNameMatch = (activity.clientName || "").toLowerCase().includes(query);
-        const descriptionMatch = (activity.description || "").toLowerCase().includes(query);
-        const client = clients.find((c) => c.id === activity.clientId);
-        const clientMatch = client?.companyName.toLowerCase().includes(query) || false;
-        return clientNameMatch || descriptionMatch || clientMatch;
-      });
-    }
+    // Filtro de busca rápida (cliente, descrição) - REMOVIDO
+    // if (searchQuery.trim()) { ... }
 
-    // Filtro por status
-    if (statusFilter !== "todos") {
-      filtered = filtered.filter((a) => a.status === statusFilter);
-    }
+    // Filtro por status - REMOVIDO
+    // if (statusFilter !== "todos") { ... }
 
-    // Filtro por tipo de atividade
-    if (typeFilter !== "todos") {
-      filtered = filtered.filter((a) => a.activityTypeId === typeFilter);
-    }
+    // Filtro por tipo de atividade - REMOVIDO
+    // if (typeFilter !== "todos") { ... }
 
-    // Filtro por período
-    if (periodFilter !== "todos") {
-      const now = moment();
-      filtered = filtered.filter((activity) => {
-        const activityDate = moment(activity.scheduledDate);
-        switch (periodFilter) {
-          case "hoje":
-            return activityDate.isSame(now, "day");
-          case "semana":
-            return activityDate.isSame(now, "week");
-          case "mes":
-            return activityDate.isSame(now, "month");
-          default:
-            return true;
-        }
-      });
-    }
+    // Filtro por período - REMOVIDO
+    // if (periodFilter !== "todos") { ... }
 
     const regularEvents = filtered.map((activity) => {
       // scheduledDate, startTime, endTime come as strings from API
@@ -1024,7 +890,7 @@ export default function Calendar() {
     }
 
     return [...regularEvents, ...ghostEvents, ...blockEvents];
-  }, [activities, rescheduleGhosts, agendaBlocks, selectedUser, userTechnician, searchQuery, statusFilter, typeFilter, periodFilter, clients]);
+  }, [activities, rescheduleGhosts, agendaBlocks, selectedUser, userTechnician, clients]);
 
   // Helper para encontrar próximo horário disponível (definido ANTES dos useEffects)
   const findNextAvailableSlot = useCallback((technicianId: string, date: string) => {
@@ -1176,11 +1042,8 @@ export default function Calendar() {
         
         case "/":
           e.preventDefault();
-          setShowFilters(true);
-          setTimeout(() => {
-            const searchInput = document.querySelector('[data-testid="input-search-activities"]') as HTMLInputElement;
-            searchInput?.focus();
-          }, 100);
+          const searchInput = document.querySelector('[data-testid="input-search-activities"]') as HTMLInputElement;
+          searchInput?.focus();
           break;
         
         case "arrowleft":
@@ -1196,11 +1059,6 @@ export default function Calendar() {
         case "t":
           e.preventDefault();
           handleTodayClick();
-          break;
-        
-        case "f":
-          e.preventDefault();
-          setShowFilters((prev) => !prev);
           break;
         
         default:
@@ -2304,232 +2162,9 @@ export default function Calendar() {
       `}</style>
       <div className="flex flex-col h-full gap-4 pb-20 md:pb-6" data-testid="page-calendar">
 
-        {/* Filtros Avançados */}
-        {showFilters && (
-          <Card className="p-4 shrink-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Campo de Busca */}
-              <div className="lg:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar por título, cliente ou descrição..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                    data-testid="input-search-activities"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      data-testid="button-clear-search"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Filtros Avançados - REMOVIDO */}
 
-              {/* Filtro de Status */}
-              <div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger data-testid="select-status-filter">
-                    <SelectValue placeholder="Filtrar por status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os status</SelectItem>
-                    <SelectItem value="planejado">Planejado</SelectItem>
-                    <SelectItem value="emExecucao">Em Execução</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                    <SelectItem value="reprovado">Reprovado</SelectItem>
-                    <SelectItem value="cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filtro de Tipo de Atividade */}
-              <div>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger data-testid="select-type-filter">
-                    <SelectValue placeholder="Tipo de atividade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os tipos</SelectItem>
-                    {activityTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filtro de Período */}
-              <div>
-                <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                  <SelectTrigger data-testid="select-period-filter">
-                    <SelectValue placeholder="Filtrar por período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os períodos</SelectItem>
-                    <SelectItem value="hoje">Hoje</SelectItem>
-                    <SelectItem value="semana">Esta Semana</SelectItem>
-                    <SelectItem value="mes">Este Mês</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Botão para limpar todos os filtros */}
-              {(searchQuery || statusFilter !== "todos" || typeFilter !== "todos" || periodFilter !== "todos") && (
-                <div className="lg:col-span-4 flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setStatusFilter("todos");
-                      setTypeFilter("todos");
-                      setPeriodFilter("todos");
-                    }}
-                    data-testid="button-clear-all-filters"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Limpar Filtros
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-        )}
-
-        {/* Card de Resumo de Produtividade */}
-        {(showFilters || periodFilter !== "todos") && (
-          <Card className="p-4 shrink-0">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Resumo de Produtividade</h3>
-              <Badge variant="outline" className="ml-auto">
-                {productivityMetrics.totalActivities} {productivityMetrics.totalActivities === 1 ? "atividade" : "atividades"}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Horas por Categoria */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Horas por Categoria</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                    <span className="text-sm font-medium">Efetivo</span>
-                    <span className="text-lg font-bold text-green-700 dark:text-green-400">
-                      {productivityMetrics.hoursByCategory.Efetivo.toFixed(1)}h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800">
-                    <span className="text-sm font-medium">Adicional</span>
-                    <span className="text-lg font-bold text-yellow-700 dark:text-yellow-400">
-                      {productivityMetrics.hoursByCategory.Adicional.toFixed(1)}h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-                    <span className="text-sm font-medium">Perda</span>
-                    <span className="text-lg font-bold text-red-700 dark:text-red-400">
-                      {productivityMetrics.hoursByCategory.Perda.toFixed(1)}h
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contador por Status */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Por Status</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Planejado</span>
-                    <Badge variant="secondary">{productivityMetrics.countByStatus.planejado}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Em Execução</span>
-                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 border-blue-200">
-                      {productivityMetrics.countByStatus.emExecucao}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Concluído</span>
-                    <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-200">
-                      {productivityMetrics.countByStatus.concluido}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Reprovado</span>
-                    <Badge className="bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400 border-red-200">
-                      {productivityMetrics.countByStatus.reprovado}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Cancelado</span>
-                    <Badge variant="outline">{productivityMetrics.countByStatus.cancelado}</Badge>
-                  </div>
-                </div>
-              </div>
-
-              {/* Percentual de Conclusão */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Taxa de Conclusão</p>
-                <div className="flex flex-col items-center justify-center h-full">
-                  <div className="relative w-32 h-32">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="none"
-                        className="text-muted/20"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 56}`}
-                        strokeDashoffset={`${2 * Math.PI * 56 * (1 - productivityMetrics.completionPercentage / 100)}`}
-                        className="text-green-500 transition-all duration-500"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-3xl font-bold">{productivityMetrics.completionPercentage}%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    {productivityMetrics.completedActivities} de {productivityMetrics.totalActivities} concluídas
-                  </p>
-                </div>
-              </div>
-
-              {/* Total de Horas */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Total Geral</p>
-                <div className="flex flex-col items-center justify-center h-full">
-                  <div className="text-center">
-                    <Clock className="w-12 h-12 mx-auto mb-2 text-primary" />
-                    <p className="text-4xl font-bold text-primary">
-                      {(productivityMetrics.hoursByCategory.Efetivo + 
-                        productivityMetrics.hoursByCategory.Adicional + 
-                        productivityMetrics.hoursByCategory.Perda).toFixed(1)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">horas totais</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
+        {/* Card de Resumo de Produtividade - REMOVIDO */}
 
         <Card className="flex flex-col flex-1 min-h-0">
         <div className="p-2 border-b flex flex-wrap gap-2 items-center justify-between flex-shrink-0">
@@ -2569,22 +2204,6 @@ export default function Calendar() {
           </div>
 
           <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              size="sm"
-              className="h-8 px-2"
-              onClick={() => setShowFilters(!showFilters)}
-              data-testid="button-toggle-filters"
-            >
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline ml-1">Filtros</span>
-              {(searchQuery || statusFilter !== "todos" || typeFilter !== "todos" || periodFilter !== "todos") && (
-                <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs">
-                  {[searchQuery, statusFilter !== "todos", typeFilter !== "todos", periodFilter !== "todos"].filter(Boolean).length}
-                </Badge>
-              )}
-            </Button>
-            
             <Select value={selectedUser} onValueChange={setSelectedUser}>
               <SelectTrigger className="w-auto min-w-[100px] sm:w-[160px] h-8" data-testid="select-user-filter">
                 <Users className="w-4 h-4 mr-1" />
