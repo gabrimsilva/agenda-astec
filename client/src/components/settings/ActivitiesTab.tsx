@@ -372,40 +372,35 @@ export default function ActivitiesTab() {
       }
     }
     
-    // Se está editando e requiresTravel mudou, precisa usar endpoint separado para evitar WAF
-    if (editingType && (editingType as any).requiresTravel !== requiresTravel) {
-      // Salva requiresTravel via endpoint separado (POST alternativo)
-      toggleRequiresTravelMutation.mutate({ id: editingType.id, requiresTravel });
-      
-      // Atualiza o resto dos dados sem requiresTravel
-      const { requiresTravel: _, ...dataWithoutTravel } = {
-        ...values,
-        category,
-        requiresRat,
-        requiresTravel,
-        categorization,
-        locations,
-        color: categoryColorPalette[category][0],
-      };
-      
-      updateMutation.mutate({ id: editingType.id, data: dataWithoutTravel });
+    // Se está editando e requiresTravel mudou, usa endpoint separado e NÃO inclui no PUT
+    const requiresTravelChanged = editingType && (editingType as any).requiresTravel !== requiresTravel;
+    
+    if (requiresTravelChanged) {
+      // Atualiza apenas requiresTravel via POST (contorna WAF)
+      toggleRequiresTravelMutation.mutate({ id: editingType!.id, requiresTravel });
+    }
+    
+    // Prepara dados para atualização (SEM requiresTravel se mudou)
+    let dataToSubmit: any = {
+      ...values,
+      category,
+      requiresRat,
+      categorization,
+      locations,
+      color: categoryColorPalette[category][0],
+    };
+    
+    // Se requiresTravel mudou, NÃO inclui no PUT para evitar WAF
+    if (!requiresTravelChanged) {
+      dataToSubmit.requiresTravel = requiresTravel;
+    }
+    
+    if (editingType) {
+      updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
     } else {
-      // Cria ou atualiza sem mudança em requiresTravel
-      const dataToSubmit = {
-        ...values,
-        category,
-        requiresRat,
-        requiresTravel,
-        categorization,
-        locations,
-        color: categoryColorPalette[category][0],
-      };
-      
-      if (editingType) {
-        updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
-      } else {
-        createMutation.mutate(dataToSubmit);
-      }
+      // Ao criar, sempre inclui requiresTravel
+      dataToSubmit.requiresTravel = requiresTravel;
+      createMutation.mutate(dataToSubmit);
     }
   };
 
