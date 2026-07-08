@@ -1670,6 +1670,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .filter(t => t !== null)
         .sort((a, b) => a!.distanceKm - b!.distanceKm);
       
+      console.log(`[NearbySearch] FINAL RESULT: ${validTechnicians.length} technicians found`);
+      validTechnicians.forEach((tech, idx) => {
+        console.log(`  [${idx}] ${tech.name}: ${tech.allActivities?.length || 0} activities, ${tech.totalActivitiesInPeriod} total`);
+      });
+      
       res.json({
         destination: { lat: searchLat, lng: searchLng },
         technicians: validTechnicians,
