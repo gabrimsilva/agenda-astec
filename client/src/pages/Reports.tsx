@@ -523,7 +523,7 @@ export default function Reports() {
 
         // Cabeçalhos da tabela de técnicos
         const techHeaderRow = summarySheet.getRow(techSummaryRow);
-        techHeaderRow.values = ["Técnico", "Efetivo", "Adicional", "Perda", "Total", "% do Total"];
+        techHeaderRow.values = ["Técnico", "Efetivo", "Adicional", "Não Produtivo", "Total", "% do Total"];
         techHeaderRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
         techHeaderRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4472C4" } };
         techHeaderRow.alignment = { horizontal: "center", vertical: "middle" };
@@ -622,7 +622,7 @@ export default function Reports() {
       detailSheet.getCell("A3").font = { bold: true };
 
       let detailFilterInfo = [];
-      if (filterCategory !== "all") detailFilterInfo.push(`Categoria: ${filterCategory === "efetivo" ? "Efetivo" : filterCategory === "adicional" ? "Adicional" : "Perda"}`);
+      if (filterCategory !== "all") detailFilterInfo.push(`Categoria: ${filterCategory === "efetivo" ? "Efetivo" : filterCategory === "adicional" ? "Adicional" : "Não Produtivo"}`);
       if (filterType !== "all") detailFilterInfo.push(`Tipo: ${filterType === "timer" ? "Execução" : filterType === "ida_travel" ? "IDA" : filterType === "volta_travel" ? "VOLTA" : "Manual"}`);
       if (filterOrigin !== "all") detailFilterInfo.push(`Origem: ${filterOrigin}`);
       if (detailFilterInfo.length > 0) {
@@ -640,7 +640,7 @@ export default function Reports() {
       const categoryLabelsExcel: Record<string, string> = {
         efetivo: "Efetivo",
         adicional: "Adicional",
-        perda: "Perda",
+        perda: "Não Produtivo",
       };
 
       const sourceLabelsExcel: Record<string, string> = {
@@ -1306,7 +1306,7 @@ export default function Reports() {
               const catMeta: Record<string, { label: string; color: string }> = {
                 efetivo: { label: "Efetivo", color: "#BBF7D0" },
                 adicional: { label: "Adicional", color: "#FDE68A" },
-                perda: { label: "Perda", color: "#FECACA" },
+                perda: { label: "Não Produtivo", color: "#FECACA" },
               };
               const palette = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#a855f7", "#06b6d4", "#f97316", "#8b5cf6", "#14b8a6", "#f43f5e"];
               const pieData = (locationReport?.byLocation || []).map((l) => ({ name: l.location, value: l.minutes, percentage: l.percentage }));
@@ -1335,7 +1335,7 @@ export default function Reports() {
                               <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totals.adicional)}</TableCell>
                             </TableRow>
                             <TableRow style={{ backgroundColor: "#FECACA" }}>
-                              <TableCell className="font-bold">Perda</TableCell>
+                              <TableCell className="font-bold">Não Produtivo</TableCell>
                               <TableCell className="text-right font-bold tabular-nums">{formatHoursClock(report.totals.perda)}</TableCell>
                             </TableRow>
                             <TableRow style={{ backgroundColor: "#DDD6FE" }}>
@@ -1549,7 +1549,7 @@ export default function Reports() {
                           <SelectItem value="all">Todas</SelectItem>
                           <SelectItem value="efetivo">Efetivo</SelectItem>
                           <SelectItem value="adicional">Adicional</SelectItem>
-                          <SelectItem value="perda">Perda</SelectItem>
+                          <SelectItem value="perda">Não Produtivo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1674,7 +1674,7 @@ export default function Reports() {
                                     >
                                       {entry.category === "efetivo" ? "Efetivo" : 
                                        entry.category === "adicional" ? "Adicional" : 
-                                       entry.category === "perda" ? "Perda" : entry.category}
+                                       entry.category === "perda" ? "Não Produtivo" : entry.category}
                                     </Badge>
                                   </TableCell>
                                   )}
