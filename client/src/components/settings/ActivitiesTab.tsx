@@ -372,21 +372,11 @@ export default function ActivitiesTab() {
       }
     }
     
-    // Se está editando e requiresTravel mudou, APENAS usa POST (não faz PUT)
-    if (editingType && (editingType as any).requiresTravel !== requiresTravel) {
-      // Salva APENAS requiresTravel via POST (contorna WAF completamente)
-      toggleRequiresTravelMutation.mutate({ id: editingType.id, requiresTravel });
-      // Fecha o dialog após sucesso
-      setDialogOpen(false);
-      setEditingType(null);
-      return;
-    }
-    
-    // Prepara dados para atualização (sem requiresTravel)
     const dataToSubmit: any = {
       ...values,
       category,
       requiresRat,
+      requiresTravel,
       categorization,
       locations,
       color: categoryColorPalette[category][0],
@@ -395,8 +385,6 @@ export default function ActivitiesTab() {
     if (editingType) {
       updateMutation.mutate({ id: editingType.id, data: dataToSubmit });
     } else {
-      // Ao criar, sempre inclui requiresTravel
-      dataToSubmit.requiresTravel = requiresTravel;
       createMutation.mutate(dataToSubmit);
     }
   };
@@ -776,27 +764,19 @@ export default function ActivitiesTab() {
                   </div>
                 )}
                 {!watchParentId ? (
-                  <FormField
-                    control={form.control}
-                    name="requiresTravel"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Requer cálculo de trajeto</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Quando desativado, a atividade é apenas iniciada e concluída (sem IDA/VOLTA)
-                          </p>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            data-testid="switch-requires-travel"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Requer cálculo de trajeto</p>
+                      <p className="text-xs text-muted-foreground">
+                        Quando desativado, a atividade é apenas iniciada e concluída (sem IDA/VOLTA). Use o botão de toggle na lista para alterar.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={(values: FormValues) => values.requiresTravel}
+                      disabled
+                      data-testid="switch-requires-travel-readonly"
+                    />
+                  </div>
                 ) : (
                   <div className="flex items-center justify-between rounded-lg border p-3 opacity-60">
                     <div className="space-y-0.5">
