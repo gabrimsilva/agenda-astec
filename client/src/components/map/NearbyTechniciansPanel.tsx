@@ -342,44 +342,43 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
           </p>
         </div>
 
-        {/* Period Date Range Filter - Only for Activity Mode */}
-        {searchMode === "activity" && (
-          <>
-            <Separator />
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground flex items-center gap-1">
-                <CalendarRange className="h-3 w-3" />
-                Período para busca de atividades:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-0.5">
-                  <label className="text-[10px] text-muted-foreground">Início</label>
-                  <Input
-                    type="date"
-                    value={periodStartDate}
-                    onChange={(e) => setPeriodStartDate(e.target.value)}
-                    data-testid="input-period-start"
-                    className="text-xs h-8"
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <label className="text-[10px] text-muted-foreground">Fim</label>
-                  <Input
-                    type="date"
-                    value={periodEndDate}
-                    onChange={(e) => setPeriodEndDate(e.target.value)}
-                    min={periodStartDate}
-                    data-testid="input-period-end"
-                    className="text-xs h-8"
-                  />
-                </div>
-              </div>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                Busca técnicos com atividades agendadas neste período próximas ao cliente
-              </p>
+        {/* Period Date Range Filter - Always show for consistency */}
+        <Separator />
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground flex items-center gap-1">
+            <CalendarRange className="h-3 w-3" />
+            {searchMode === "activity" ? "Período para busca de atividades:" : "Período (referência):"}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-0.5">
+              <label className="text-[10px] text-muted-foreground">Início</label>
+              <Input
+                type="date"
+                value={periodStartDate}
+                onChange={(e) => setPeriodStartDate(e.target.value)}
+                data-testid="input-period-start"
+                className="text-xs h-8"
+              />
             </div>
-          </>
-        )}
+            <div className="space-y-0.5">
+              <label className="text-[10px] text-muted-foreground">Fim</label>
+              <Input
+                type="date"
+                value={periodEndDate}
+                onChange={(e) => setPeriodEndDate(e.target.value)}
+                min={periodStartDate}
+                data-testid="input-period-end"
+                className="text-xs h-8"
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            {searchMode === "activity"
+              ? "Busca técnicos com atividades agendadas neste período próximas ao cliente"
+              : "Busca técnicos com base próxima (período é apenas referência)"
+            }
+          </p>
+        </div>
 
         <Separator />
         <Button
@@ -439,19 +438,55 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <div
-                          className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                          className="h-2.5 w-2.5 rounded-full flex-shrink-0 cursor-pointer hover:opacity-75"
                           style={{ backgroundColor: tech.color || "#3b82f6" }}
+                          onClick={() => {
+                            if (onTechnicianSelect && searchedLocation) {
+                              onTechnicianSelect(
+                                tech.id,
+                                tech.location.latitude,
+                                tech.location.longitude,
+                                selectedClient
+                              );
+                            }
+                          }}
+                          title="Clique para mostrar no mapa"
                         />
                         <p className="font-semibold text-xs truncate">{tech.name}</p>
-                        {tech.totalActivitiesInPeriod && tech.totalActivitiesInPeriod > 0 && (
+                        {searchMode === "activity" && tech.totalActivitiesInPeriod && tech.totalActivitiesInPeriod > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
                             {tech.totalActivitiesInPeriod} atividade(s)
                           </Badge>
                         )}
                       </div>
                       
-                      {/* Closest Activity Highlight */}
-                      {tech.closestActivity && (
+                      {/* Base Location Info - only for Base mode */}
+                      {searchMode === "base" && (
+                        <div className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded">
+                          <p className="text-[10px] font-medium text-primary mb-0.5">📍 Base Registrada</p>
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                              <div className="flex items-center gap-0.5">
+                                <Route className="h-2.5 w-2.5" />
+                                <span>{tech.distanceKm.toFixed(1)} km</span>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" />
+                                <span>~{tech.estimatedTimeMin} min</span>
+                              </div>
+                            </div>
+                            {tech.location.description && (
+                              <p className="text-xs text-muted-foreground">
+                                <MapPin className="h-3 w-3 inline mr-1" />
+                                {tech.location.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Closest Activity Highlight - only for Activity mode */}
+                      {searchMode === "activity" && tech.closestActivity && (
                         <div 
                           className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded cursor-pointer hover:bg-primary/10 transition-colors"
                           onClick={() => onActivitySelected?.(tech.closestActivity)}

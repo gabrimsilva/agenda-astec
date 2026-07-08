@@ -611,6 +611,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActivitiesByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    console.log(`[Storage] getActivitiesByDateRange called: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
     const results = await db
       .select({
         activity: activities,
@@ -657,6 +659,8 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(activities.scheduledDate);
+    
+    console.log(`[Storage] Found ${results.length} activities in range`);
     
     return results.map(r => ({ 
       ...r.activity, 

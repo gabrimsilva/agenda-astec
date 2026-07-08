@@ -1475,18 +1475,24 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       // Get activities for the date range (for "activity" location source)
       let activitiesByTechnician: Map<string, any[]> = new Map();
       if (locationSource === "activity" && dateRange) {
-        // Parse dates ensuring we get local midnight, not UTC
+        // Parse dates as LOCAL time (not UTC)
+        // Input format: "2026-07-08" should be interpreted as midnight in local timezone
         const startParts = dateRange.start.split('-').map(Number);
         const endParts = dateRange.end.split('-').map(Number);
         
-        // Start date: beginning of day (00:00:00)
-        const start = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0, 0);
-        // End date: end of day (23:59:59.999) to include all activities on that day
-        const end = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59, 999);
+        // Create dates in local timezone, then convert to UTC for query
+        const startLocal = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0, 0);
+        const endLocal = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59, 999);
         
-        console.log(`[NearbySearch] Date range: ${start.toISOString()} to ${end.toISOString()}`);
+        // Adjust for timezone offset to get correct UTC boundaries
+        const tzOffset = new Date().getTimezoneOffset() * 60 * 1000; // Get local offset in ms
+        const startUtc = new Date(startLocal.getTime() + tzOffset);
+        const endUtc = new Date(endLocal.getTime() + tzOffset);
         
-        const activities = await storage.getActivitiesByDateRange(start, end);
+        console.log(`[NearbySearch] Date range (LOCAL): ${startLocal.toLocaleString()} to ${endLocal.toLocaleString()}`);
+        console.log(`[NearbySearch] Date range (UTC adjusted): ${startUtc.toISOString()} to ${endUtc.toISOString()}`);
+        
+        const activities = await storage.getActivitiesByDateRange(startUtc, endUtc);
         
         // Get activity types for enrichment
         const allActivityTypes = await storage.getAllActivityTypes();
