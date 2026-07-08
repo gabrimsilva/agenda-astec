@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { fetchActivityTypes, createActivityType, updateActivityType, deleteActivityType } from "@/lib/api/activityTypes";
+import { fetchActivityTypes, createActivityType, updateActivityType, deleteActivityType, toggleRequiresTravel } from "@/lib/api/activityTypes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,6 +188,23 @@ export default function ActivitiesTab() {
     },
   });
 
+  const toggleRequiresTravelMutation = useMutation({
+    mutationFn: ({ id, requiresTravel }: { id: string; requiresTravel: boolean }) => 
+      toggleRequiresTravel(id, requiresTravel),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-types"] });
+      toast({ 
+        title: variables.requiresTravel ? "Trajeto ativado" : "Trajeto desativado", 
+        description: variables.requiresTravel 
+          ? "Atividades deste tipo agora exigem cálculo de IDA/VOLTA" 
+          : "Atividades deste tipo serão apenas iniciadas e concluídas (sem IDA/VOLTA)" 
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    },
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -315,6 +332,14 @@ export default function ActivitiesTab() {
           onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: type.id, isActive: checked })}
           data-testid={`switch-active-${type.id}`}
         />
+        {!(type as any).parentId && (
+          <Switch
+            checked={(type as any).requiresTravel ?? true}
+            onCheckedChange={(checked) => toggleRequiresTravelMutation.mutate({ id: type.id, requiresTravel: checked })}
+            data-testid={`switch-requires-travel-${type.id}`}
+            title={checked ? "Requer trajeto (IDA/VOLTA)" : "Sem trajeto (apenas inicia/conclui)"}
+          />
+        )}
         <Button 
           size="icon" 
           variant="ghost" 

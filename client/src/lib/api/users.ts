@@ -16,6 +16,12 @@ export async function updateUser(id: string, data: Partial<InsertUser>): Promise
   return res.json();
 }
 
+export async function toggleIsActive(id: string, isActive: boolean): Promise<User> {
+  const res = await apiRequest("PATCH", `/api/users/${id}/is-active`, { isActive });
+  return res.json();
+}
+
 export async function deleteUser(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/users/${id}`);
 }
+

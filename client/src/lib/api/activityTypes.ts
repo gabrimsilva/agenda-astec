@@ -16,6 +16,12 @@ export async function updateActivityType(id: string, data: Partial<InsertActivit
   return res.json();
 }
 
+export async function toggleRequiresTravel(id: string, requiresTravel: boolean): Promise<ActivityType> {
+  const res = await apiRequest("PATCH", `/api/activity-types/${id}/requires-travel`, { requiresTravel });
+  return res.json();
+}
+
 export async function deleteActivityType(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/activity-types/${id}`);
 }
+

@@ -13,10 +13,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserIcon, Phone, Mail, MapPin, Users as UsersIcon, Car, Loader2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, UserIcon, Phone, Mail, MapPin, Users as UsersIcon, Car, Loader2, Search, Power } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Technician, User } from "@shared/schema";
-import { deleteUser } from "@/lib/api/users";
+import { deleteUser, toggleIsActive } from "@/lib/api/users";
 import { Switch } from "@/components/ui/switch";
 
 // Base schema with common fields
@@ -133,6 +133,25 @@ export default function TechniciansTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "Usuário removido", description: "Usuário removido com sucesso" });
       setDeleteId(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const toggleIsActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      await toggleIsActive(id, isActive);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/technicians"] });
+      toast({ 
+        title: variables.isActive ? "Usuário ativado" : "Usuário desativado", 
+        description: variables.isActive 
+          ? "Usuário agora pode fazer login" 
+          : "Usuário não conseguirá fazer login. Histórico foi preservado" 
+      });
     },
     onError: (error: any) => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -405,6 +424,17 @@ export default function TechniciansTab() {
                           data-testid={`button-edit-technician-${tech.id}`}
                         >
                           <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {user && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleIsActiveMutation.mutate({ id: user.id, isActive: !user.isActive })}
+                          title={user.isActive ? "Desativar usuário" : "Ativar usuário"}
+                          data-testid={`button-toggle-active-${user.id}`}
+                        >
+                          <Power className={`w-4 h-4 ${user.isActive ? 'text-green-600' : 'text-gray-400'}`} />
                         </Button>
                       )}
                       <Button
