@@ -1472,6 +1472,18 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .filter(({ user }) => user?.role === "assistente")
         .map(({ technician }) => technician);
       
+      console.log(`[NearbySearch] Total technicians: ${filteredTechnicians.length}, Assistente role: ${assistenteTechnicians.length}`);
+      console.log(`[NearbySearch] Assistente technician IDs: ${assistenteTechnicians.map(t => t.id).join(', ')}`);
+      
+      // Log which activity technicians don't exist in assistente list
+      if (locationSource === "activity" && dateRange && activities) {
+        const activityTechIds = new Set(activities.filter(a => a.technicianId).map(a => a.technicianId));
+        const missingTechs = Array.from(activityTechIds).filter(id => !assistenteTechnicians.find(t => t.id === id));
+        if (missingTechs.length > 0) {
+          console.log(`[NearbySearch] WARNING: Activities assigned to non-assistente techs: ${missingTechs.join(', ')}`);
+        }
+      }
+      
       // Get activities for the date range (for "activity" location source)
       let activitiesByTechnician: Map<string, any[]> = new Map();
       if (locationSource === "activity" && dateRange) {
@@ -1493,6 +1505,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         console.log(`[NearbySearch] Date range (UTC adjusted): ${startUtc.toISOString()} to ${endUtc.toISOString()}`);
         
         const activities = await storage.getActivitiesByDateRange(startUtc, endUtc);
+        console.log(`[NearbySearch] Found activities: ${activities.length}`);
+        activities.forEach(a => {
+          console.log(`  - Activity: ${a.id}, Tech: ${a.technicianId}, Client: ${a.clientName}, Date: ${a.scheduledDate}`);
+        });
         
         // Get activity types for enrichment
         const allActivityTypes = await storage.getAllActivityTypes();
@@ -1511,6 +1527,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           };
           activitiesByTechnician.get(activity.technicianId)!.push(enrichedActivity);
         }
+        
+        console.log(`[NearbySearch] Activities by technician: ${Array.from(activitiesByTechnician.entries()).map(([tid, acts]) => `${tid}: ${acts.length}`).join(', ')}`);
       }
       
       // Calculate distances for each technician
@@ -1535,6 +1553,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           } else if (locationSource === "activity") {
             // Calculate distance for ALL activities in the period
             const techActivities = activitiesByTechnician.get(technician.id) || [];
+            
+            if (techActivities.length > 0) {
+              console.log(`[NearbySearch] Tech ${technician.name} (${technician.id}) has activities in map!`);
+            }
+            
             const validActivities = techActivities.filter(a => 
               a.latitude && a.longitude && a.status !== "cancelado"
             );
@@ -5748,6 +5771,24 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         return res.status(400).json({ error: "Only activities with 'planejado' status can be rescheduled" });
       }
       
+      // Parse newDate correctly - it comes as ISO string, extract the date part
+      let parsedNewDate: Date;
+      if (typeof newDate === 'string') {
+        // If it's an ISO string like "2026-07-09T12:00:00.000Z", extract just the date
+        const datePartMatch = newDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (datePartMatch) {
+          const [, year, month, day] = datePartMatch;
+          // Create date in local timezone (same as frontend intention)
+          parsedNewDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0);
+        } else {
+          parsedNewDate = new Date(newDate);
+        }
+      } else {
+        parsedNewDate = new Date(newDate);
+      }
+      
+      console.log(`[Reschedule] Activity ${id}: ${activity.scheduledDate} → ${parsedNewDate.toLocaleDateString()}`);
+      
       // Calculate new reschedule number
       const rescheduleNumber = (activity.rescheduleCount || 0) + 1;
       
@@ -5757,7 +5798,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         previousDate: activity.scheduledDate,
         previousStartTime: activity.startTime,
         previousEndTime: activity.endTime,
-        newDate: new Date(newDate),
+        newDate: parsedNewDate,
         newStartTime,
         newEndTime,
         reason,
@@ -5767,7 +5808,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       // For multi-day activities, recalculate endDate to preserve duration
       const updateData: any = {
-        scheduledDate: new Date(newDate),
+        scheduledDate: parsedNewDate,
         startTime: newStartTime,
         endTime: newEndTime,
         rescheduleCount: rescheduleNumber,
@@ -5776,8 +5817,21 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       if (activity.endDate) {
         if (newEndDate) {
-          const parsedEndDate = new Date(newEndDate);
-          if (parsedEndDate < new Date(newDate)) {
+          // Parse endDate the same way
+          let parsedEndDate: Date;
+          if (typeof newEndDate === 'string') {
+            const datePartMatch = newEndDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (datePartMatch) {
+              const [, year, month, day] = datePartMatch;
+              parsedEndDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
+            } else {
+              parsedEndDate = new Date(newEndDate);
+            }
+          } else {
+            parsedEndDate = new Date(newEndDate);
+          }
+          
+          if (parsedEndDate < parsedNewDate) {
             return res.status(400).json({ error: "A data fim não pode ser anterior à data início." });
           }
           updateData.endDate = parsedEndDate;
@@ -5785,8 +5839,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           const originalStart = new Date(activity.scheduledDate);
           const originalEnd = new Date(activity.endDate);
           const durationMs = originalEnd.getTime() - originalStart.getTime();
-          const newStartDate = new Date(newDate);
-          updateData.endDate = new Date(newStartDate.getTime() + durationMs);
+          updateData.endDate = new Date(parsedNewDate.getTime() + durationMs);
         }
       }
       
