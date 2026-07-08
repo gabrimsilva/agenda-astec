@@ -2256,6 +2256,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       const activity = await storage.createActivity(data);
       
+      // Invalidate activities cache to force refresh
+      invalidateActivitiesCache();
+      
       // Create audit log
       await storage.createAuditLog({
         userId: req.user!.userId,
@@ -2459,6 +2462,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       const activity = await storage.updateActivity(req.params.id, data);
       
+      // Invalidate activities cache to force refresh
+      invalidateActivitiesCache();
+      
       // Create audit log
       await storage.createAuditLog({
         userId: req.user!.userId,
@@ -2523,6 +2529,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .where(eq(activityAttachments.activityId, actId));
 
       await storage.deleteActivity(actId);
+      
+      // Invalidate activities cache to force refresh
+      invalidateActivitiesCache();
       
       // Create audit log
       await storage.createAuditLog({
