@@ -407,6 +407,21 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
+  // Alternative POST endpoint for toggling isActive (some WAFs block PATCH; this workaround uses POST)
+  app.post("/api/users/:id/toggle-active", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const { isActive } = req.body;
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ error: "isActive deve ser um booleano" });
+      }
+      const user = await storage.updateUser(req.params.id, { isActive });
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.delete("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       await storage.deleteUser(req.params.id);
@@ -1836,6 +1851,20 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
   // Lightweight PATCH endpoint for toggling requiresTravel (avoids WAF blocking large PUTs)
   app.patch("/api/activity-types/:id/requires-travel", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const { requiresTravel } = req.body;
+      if (typeof requiresTravel !== 'boolean') {
+        return res.status(400).json({ error: "requiresTravel deve ser um booleano" });
+      }
+      const type = await storage.updateActivityType(req.params.id, { requiresTravel });
+      res.json(type);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Alternative POST endpoint for toggling requiresTravel (some WAFs block PATCH; this workaround uses POST)
+  app.post("/api/activity-types/:id/toggle-requires-travel", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       const { requiresTravel } = req.body;
       if (typeof requiresTravel !== 'boolean') {

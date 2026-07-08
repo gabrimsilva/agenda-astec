@@ -17,7 +17,8 @@ export async function updateUser(id: string, data: Partial<InsertUser>): Promise
 }
 
 export async function toggleIsActive(id: string, isActive: boolean): Promise<User> {
-  const res = await apiRequest("PATCH", `/api/users/${id}/is-active`, { isActive });
+  // Use POST endpoint instead of PATCH to avoid WAF blocking PATCH requests
+  const res = await apiRequest("POST", `/api/users/${id}/toggle-active`, { isActive });
   return res.json();
 }
 

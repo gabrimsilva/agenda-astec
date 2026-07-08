@@ -17,7 +17,8 @@ export async function updateActivityType(id: string, data: Partial<InsertActivit
 }
 
 export async function toggleRequiresTravel(id: string, requiresTravel: boolean): Promise<ActivityType> {
-  const res = await apiRequest("PATCH", `/api/activity-types/${id}/requires-travel`, { requiresTravel });
+  // Use POST endpoint instead of PATCH to avoid WAF blocking PATCH requests
+  const res = await apiRequest("POST", `/api/activity-types/${id}/toggle-requires-travel`, { requiresTravel });
   return res.json();
 }
 
