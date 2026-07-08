@@ -337,7 +337,6 @@ export default function ActivitiesTab() {
             checked={(type as any).requiresTravel ?? true}
             onCheckedChange={(checked) => toggleRequiresTravelMutation.mutate({ id: type.id, requiresTravel: checked })}
             data-testid={`switch-requires-travel-${type.id}`}
-            title={((type as any).requiresTravel ?? true) ? "Requer trajeto (IDA/VOLTA)" : "Sem trajeto (apenas inicia/conclui)"}
           />
         )}
         <Button 
