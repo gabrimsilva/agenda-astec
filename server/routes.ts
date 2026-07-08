@@ -2498,7 +2498,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       const isAdmin = user.role === "admin";
-      const isOwner = activity.technicianId && (await storage.getTechnicianByUserId(user.id))?.id === activity.technicianId;
+      const userTechnician = await storage.getTechnicianByUserId(user.id);
+      const isOwner = activity.technicianId && userTechnician?.id === activity.technicianId;
+      
+      console.log(`[DELETE /api/activities] User: ${user.id}, Role: ${user.role}, isAdmin: ${isAdmin}, UserTechnicianId: ${userTechnician?.id}, ActivityTechnicianId: ${activity.technicianId}, isOwner: ${isOwner}`);
       
       if (!isAdmin && !isOwner) {
         return res.status(403).json({ error: "Você não tem permissão para excluir esta atividade" });
