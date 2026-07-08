@@ -96,9 +96,13 @@ export function RescheduleModal({
     
     setIsSubmitting(true);
     try {
+      // Format dates as YYYY-MM-DD strings (not ISO with timezone conversion)
+      const newDateStr = format(selectedDate, "yyyy-MM-dd");
+      const newEndDateStr = selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : undefined;
+      
       await onConfirm({
-        newDate: selectedDate.toISOString(),
-        newEndDate: selectedEndDate ? selectedEndDate.toISOString() : undefined,
+        newDate: newDateStr,
+        newEndDate: newEndDateStr,
         newStartTime: startTime,
         newEndTime: endTime,
         reason: reason.trim(),

@@ -5805,12 +5805,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       // Parse newDate correctly - it comes as ISO string, extract the date part
       let parsedNewDate: Date;
       if (typeof newDate === 'string') {
-        // If it's an ISO string like "2026-07-09T12:00:00.000Z", extract just the date
+        // If it's an ISO string like "2026-07-09" or "2026-07-09T12:00:00.000Z", extract just the date
         const datePartMatch = newDate.match(/(\d{4})-(\d{2})-(\d{2})/);
         if (datePartMatch) {
           const [, year, month, day] = datePartMatch;
-          // Create date in local timezone (same as frontend intention)
-          parsedNewDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0);
+          // Create date at MIDNIGHT LOCAL timezone to represent the full day
+          parsedNewDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
         } else {
           parsedNewDate = new Date(newDate);
         }
@@ -5818,7 +5818,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         parsedNewDate = new Date(newDate);
       }
       
-      console.log(`[Reschedule] Activity ${id}: ${activity.scheduledDate} → ${parsedNewDate.toLocaleDateString()}`);
+      console.log(`[Reschedule] Activity ${id}: Old date=${new Date(activity.scheduledDate).toLocaleDateString()} → New date=${parsedNewDate.toLocaleDateString()} (ISO: ${parsedNewDate.toISOString()})`);
       
       // Calculate new reschedule number
       const rescheduleNumber = (activity.rescheduleCount || 0) + 1;
@@ -5854,6 +5854,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             const datePartMatch = newEndDate.match(/(\d{4})-(\d{2})-(\d{2})/);
             if (datePartMatch) {
               const [, year, month, day] = datePartMatch;
+              // Create endDate at 23:59:59 to represent the full day
               parsedEndDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
             } else {
               parsedEndDate = new Date(newEndDate);
@@ -5880,6 +5881,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .set(updateData)
         .where(eq(activities.id, id))
         .returning();
+      
+      console.log(`[Reschedule] Activity ${id} updated successfully. New scheduledDate: ${updatedActivity.scheduledDate}`);
+      
+      // Invalidate caches
+      invalidateActivitiesCache();
       
       res.json(updatedActivity);
     } catch (error: any) {
