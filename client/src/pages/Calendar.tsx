@@ -2130,7 +2130,7 @@ export default function Calendar() {
           
           /* Reduzir altura mínima das linhas do mês */
           .rbc-month-row {
-            min-height: 60px !important;
+            min-height: 100px !important;
           }
           
           /* Botão de more events menor */
