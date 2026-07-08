@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserIcon, Phone, Mail, MapPin, Users as UsersIcon, Car, Loader2, Search, Power } from "lucide-react";
+import { Plus, Edit, Trash2, UserIcon, Phone, Mail, MapPin, Users as UsersIcon, Car, Loader2, Search, Power, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Technician, User } from "@shared/schema";
 import { deleteUser, toggleIsActive } from "@/lib/api/users";
@@ -69,6 +69,7 @@ export default function TechniciansTab() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const { data: technicians, isLoading } = useQuery({
     queryKey: ["/api/technicians"],
@@ -81,6 +82,13 @@ export default function TechniciansTab() {
 
   // Filter users with role "assistente"
   const assistenteUsers = users.filter((u) => u.role === "assistente");
+
+  // Filter to show active or inactive users based on toggle
+  const filteredUsers = showInactive 
+    ? users 
+    : users.filter((u) => u.isActive !== false);
+
+  const inactiveCount = users.filter((u) => u.isActive === false).length;
 
   const createMutation = useMutation({
     mutationFn: createUserAndTechnician,
@@ -380,22 +388,34 @@ export default function TechniciansTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h3 className="text-lg font-medium">Usuários</h3>
           <p className="text-sm text-muted-foreground">
             Gerencie os usuários e técnicos do sistema
           </p>
         </div>
-        <Button onClick={handleAdd} data-testid="button-add-technician">
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Usuário
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          {inactiveCount > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowInactive(!showInactive)}
+              data-testid="button-toggle-inactive"
+            >
+              {showInactive ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showInactive ? "Ocultar inativos" : `Mostrar inativos (${inactiveCount})`}
+            </Button>
+          )}
+          <Button onClick={handleAdd} data-testid="button-add-technician">
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Usuário
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
-        {users && users.length > 0 ? (
-          users.map((user) => {
+        {filteredUsers && filteredUsers.length > 0 ? (
+          filteredUsers.map((user) => {
             const tech = technicians?.find((t) => t.userId === user.id);
             return (
               <Card key={user.id} data-testid={`card-user-${user.id}`}>

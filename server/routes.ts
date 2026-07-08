@@ -654,7 +654,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       );
       
       const assistenteTechnicians = fieldTechnicians
-        .filter(({ user }) => user?.role === "assistente")
+        .filter(({ user }) => user?.role === "assistente" && user?.isActive !== false)
         .map(({ technician }) => technician);
       
       // Get today's activities to determine current activity status
