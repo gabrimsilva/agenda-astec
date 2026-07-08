@@ -566,8 +566,8 @@ export default function TechniciansTab() {
                   control={form.control}
                   name="isActive"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-3 space-y-0">
-                      <div className="space-y-0.5">
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5 flex-1">
                         <FormLabel className="text-base">Status do Usuário</FormLabel>
                         <p className="text-sm text-muted-foreground">
                           Usuários inativos não conseguem fazer login e não aparecem nas listas, mas seu histórico é preservado
