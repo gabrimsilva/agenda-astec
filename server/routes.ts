@@ -1460,32 +1460,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         );
       }
       
-      // Filter to show only field technicians (assistente role)
-      const fieldTechnicians = await Promise.all(
-        filteredTechnicians.map(async (technician) => {
-          const user = await storage.getUser(technician.userId);
-          return { technician, user };
-        })
-      );
-      
-      const assistenteTechnicians = fieldTechnicians
-        .filter(({ user }) => user?.role === "assistente")
-        .map(({ technician }) => technician);
-      
-      console.log(`[NearbySearch] Total technicians: ${filteredTechnicians.length}, Assistente role: ${assistenteTechnicians.length}`);
-      console.log(`[NearbySearch] Assistente technician IDs: ${assistenteTechnicians.map(t => t.id).join(', ')}`);
-      
-      // Log which activity technicians don't exist in assistente list
-      if (locationSource === "activity" && dateRange && activities) {
-        const activityTechIds = new Set(activities.filter(a => a.technicianId).map(a => a.technicianId));
-        const missingTechs = Array.from(activityTechIds).filter(id => !assistenteTechnicians.find(t => t.id === id));
-        if (missingTechs.length > 0) {
-          console.log(`[NearbySearch] WARNING: Activities assigned to non-assistente techs: ${missingTechs.join(', ')}`);
-        }
-      }
-      
-      // Get activities for the date range (for "activity" location source)
+      // Get activities for the date range FIRST (for "activity" location source)
+      let allActivitiesInPeriod: any[] = [];
       let activitiesByTechnician: Map<string, any[]> = new Map();
+      
       if (locationSource === "activity" && dateRange) {
         // Parse dates as LOCAL time (not UTC)
         // Input format: "2026-07-08" should be interpreted as midnight in local timezone
@@ -1504,32 +1482,85 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         console.log(`[NearbySearch] Date range (LOCAL): ${startLocal.toLocaleString()} to ${endLocal.toLocaleString()}`);
         console.log(`[NearbySearch] Date range (UTC adjusted): ${startUtc.toISOString()} to ${endUtc.toISOString()}`);
         
-        const activities = await storage.getActivitiesByDateRange(startUtc, endUtc);
-        console.log(`[NearbySearch] Found activities: ${activities.length}`);
-        activities.forEach(a => {
+        allActivitiesInPeriod = await storage.getActivitiesByDateRange(startUtc, endUtc);
+        console.log(`[NearbySearch] Found activities: ${allActivitiesInPeriod.length}`);
+        allActivitiesInPeriod.forEach(a => {
           console.log(`  - Activity: ${a.id}, Tech: ${a.technicianId}, Client: ${a.clientName}, Date: ${a.scheduledDate}`);
         });
         
-        // Get activity types for enrichment
-        const allActivityTypes = await storage.getAllActivityTypes();
-        const activityTypesMap = new Map(allActivityTypes.map(t => [t.id, t]));
-        
-        for (const activity of activities) {
+        // Group activities by technician
+        for (const activity of allActivitiesInPeriod) {
           if (!activitiesByTechnician.has(activity.technicianId)) {
             activitiesByTechnician.set(activity.technicianId, []);
           }
-          // Enrich activity with type name
-          const enrichedActivity = {
-            ...activity,
-            activityTypeName: activity.activityTypeId 
-              ? activityTypesMap.get(activity.activityTypeId)?.name 
-              : null
-          };
-          activitiesByTechnician.get(activity.technicianId)!.push(enrichedActivity);
+          activitiesByTechnician.get(activity.technicianId)!.push(activity);
         }
-        
-        console.log(`[NearbySearch] Activities by technician: ${Array.from(activitiesByTechnician.entries()).map(([tid, acts]) => `${tid}: ${acts.length}`).join(', ')}`);
       }
+      
+      // Filter to show only field technicians (assistente role) - BUT keep all technicians if in "activity" mode
+      const fieldTechnicians = await Promise.all(
+        filteredTechnicians.map(async (technician) => {
+          const user = await storage.getUser(technician.userId);
+          return { technician, user };
+        })
+      );
+      
+      // In "activity" mode, include technicians with activities even if they're not "assistente"
+      // In other modes, filter to only "assistente" technicians
+      let assistenteTechnicians: any[];
+      if (locationSource === "activity") {
+        // Show technicians that have activities in the period, regardless of role
+        const techWithActivities = new Set(activitiesByTechnician.keys());
+        assistenteTechnicians = fieldTechnicians
+          .filter(({ technician, user }) => {
+            // Include if has activities in period, OR if is assistente role
+            return techWithActivities.has(technician.id) || user?.role === "assistente";
+          })
+          .map(({ technician }) => technician);
+      } else {
+        // For other modes (base, gps), filter to only "assistente"
+        assistenteTechnicians = fieldTechnicians
+          .filter(({ user }) => user?.role === "assistente")
+          .map(({ technician }) => technician);
+      }
+      
+      console.log(`[NearbySearch] Total technicians: ${filteredTechnicians.length}, Filtered: ${assistenteTechnicians.length}`);
+      console.log(`[NearbySearch] Filtered technician IDs: ${assistenteTechnicians.map(t => t.id).join(', ')}`);
+      
+      // Log which activity technicians are shown
+      if (locationSource === "activity" && allActivitiesInPeriod.length > 0) {
+        const activityTechIds = new Set(allActivitiesInPeriod.filter(a => a.technicianId).map(a => a.technicianId));
+        const shownTechs = assistenteTechnicians.filter(t => activityTechIds.has(t.id));
+        const notShown = Array.from(activityTechIds).filter(id => !assistenteTechnicians.find(t => t.id === id));
+        console.log(`[NearbySearch] Technicians with activities: ${Array.from(activityTechIds).join(', ')}`);
+        console.log(`[NearbySearch] Technicians being shown: ${shownTechs.map(t => t.id).join(', ')}`);
+        if (notShown.length > 0) {
+          console.log(`[NearbySearch] WARNING: Activities for non-existent/non-listed techs: ${notShown.join(', ')}`);
+        }
+      }
+      
+      // Get activity types for enrichment (if we have activities)
+      const allActivityTypes = await storage.getAllActivityTypes();
+      const activityTypesMap = new Map(allActivityTypes.map(t => [t.id, t]));
+      
+      // Enrich activities with type names
+      const enrichedActivities = allActivitiesInPeriod.map(activity => ({
+        ...activity,
+        activityTypeName: activity.activityTypeId 
+          ? activityTypesMap.get(activity.activityTypeId)?.name 
+          : null
+      }));
+      
+      // Re-group enriched activities by technician
+      activitiesByTechnician.clear();
+      for (const activity of enrichedActivities) {
+        if (!activitiesByTechnician.has(activity.technicianId)) {
+          activitiesByTechnician.set(activity.technicianId, []);
+        }
+        activitiesByTechnician.get(activity.technicianId)!.push(activity);
+      }
+      
+      console.log(`[NearbySearch] Activities by technician: ${Array.from(activitiesByTechnician.entries()).map(([tid, acts]) => `${tid}: ${acts.length}`).join(', ')}`);
       
       // Calculate distances for each technician
       const techniciansWithDistance = await Promise.all(
