@@ -835,9 +835,8 @@ export default function Calendar() {
       // Filtrar apenas atividades do técnico do usuário logado
       if (userTechnician) {
         filtered = filtered.filter((a) => a.technicianId === userTechnician.id);
-      } else {
-        filtered = [];
       }
+      // Se não tem técnico associado (admin sem técnico), mostrar todas as atividades
     } else if (selectedUser !== "all") {
       // Filtrar por técnico específico
       filtered = filtered.filter((a) => a.technicianId === selectedUser);
