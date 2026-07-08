@@ -972,8 +972,6 @@ export default function Reports() {
         <div className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileBarChart className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold">Relatórios</h1>
             </div>
             <Button variant="outline" size="sm" data-testid="button-export" onClick={handleExportExcel} disabled={!report || isLoading}>
               <Download className="h-4 w-4 mr-2" />
