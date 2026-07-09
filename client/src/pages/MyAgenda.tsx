@@ -148,7 +148,7 @@ export default function MyAgenda() {
     queryKey: ["/api/activities"],
     queryFn: async () => {
       console.log('[MyAgenda] Fetching /api/activities...');
-      const result = await apiRequest("/api/activities", { method: "GET" }).then(r => r.json());
+      const result = await apiRequest("GET", "/api/activities").then(r => r.json());
       console.log(`[MyAgenda] Received ${result.length} activities from backend`);
       return result;
     },
