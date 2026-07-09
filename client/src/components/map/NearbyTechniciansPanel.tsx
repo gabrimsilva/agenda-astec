@@ -442,12 +442,10 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0 cursor-pointer hover:opacity-75"
                           style={{ backgroundColor: tech.color || "#3b82f6" }}
                           onClick={() => {
-                            if (onTechnicianSelect && searchedLocation) {
-                              onTechnicianSelect(
-                                tech.id,
+                            if (onLocationSelect) {
+                              onLocationSelect(
                                 tech.location.latitude,
-                                tech.location.longitude,
-                                selectedClient
+                                tech.location.longitude
                               );
                             }
                           }}
@@ -456,12 +454,10 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                         <p 
                           className="font-semibold text-xs truncate cursor-pointer hover:text-primary transition-colors"
                           onClick={() => {
-                            if (onTechnicianSelect && searchedLocation) {
-                              onTechnicianSelect(
-                                tech.id,
+                            if (onLocationSelect) {
+                              onLocationSelect(
                                 tech.location.latitude,
-                                tech.location.longitude,
-                                selectedClient
+                                tech.location.longitude
                               );
                             }
                           }}
