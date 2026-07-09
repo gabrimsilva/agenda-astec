@@ -883,7 +883,6 @@ export default function Routes() {
                   dateRange={activityDateRange}
                   onLocationSelect={(lat, lng) => {
                     // Mostrar a distância no mapa da base até o cliente
-                    console.log("[NearbyPanel] Showing distance from base:", { lat, lng });
                     setSelectedBase({ lat, lng });
                   }}
                   onTechnicianSelect={(technicianId, lat, lng, selectedClient) => {
