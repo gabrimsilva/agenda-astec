@@ -410,8 +410,13 @@ export default function MyAgenda() {
 
   // Filtrar apenas atividades do técnico logado
   const activities = useMemo(() => {
-    if (!myTechnician) return [];
-    return allActivities.filter(activity => activity.technicianId === myTechnician.id);
+    if (!myTechnician) {
+      console.log('[MyAgenda] myTechnician not found');
+      return [];
+    }
+    const filtered = allActivities.filter(activity => activity.technicianId === myTechnician.id);
+    console.log(`[MyAgenda] allActivities: ${allActivities.length}, filtered: ${filtered.length}, technicianId: ${myTechnician.id}`);
+    return filtered;
   }, [allActivities, myTechnician]);
 
   // Calcular início e fim da semana selecionada
@@ -446,7 +451,7 @@ export default function MyAgenda() {
   // Filtrar atividades do dia selecionado (incluindo multi-dia, excluindo dias cancelados/reagendados)
   const selectedDateStr = selectedDate.format("YYYY-MM-DD");
   const selectedDateActivities = useMemo(() => {
-    return activities
+    const filtered = activities
       .filter((activity) => {
         const activityStartDate = moment(activity.scheduledDate).format("YYYY-MM-DD");
         const activityEndDate = (activity as any).endDate 
@@ -475,6 +480,8 @@ export default function MyAgenda() {
         const timeB = (isMultiDayB && dayStatusB?.startTime) ? dayStatusB.startTime : (b.startTime || "00:00");
         return timeA.localeCompare(timeB);
       });
+    console.log(`[MyAgenda] selectedDateActivities for ${selectedDateStr}: ${filtered.length} activities (input: ${activities.length})`);
+    return filtered;
   }, [activities, selectedDateStr, cancelledDayKeys, dayStatusMap]);
 
   // Bloqueios (férias/compromisso) que abrangem o dia selecionado
@@ -618,7 +625,7 @@ export default function MyAgenda() {
     });
     
     // Calcular nextActivityTravelMinutes: tempo de IDA da próxima atividade = tempo de VOLTA desta
-    return baseStops.map((stop, index) => {
+    const result = baseStops.map((stop, index) => {
       const isLast = index === baseStops.length - 1;
       const nextStop = baseStops[index + 1];
       
@@ -628,6 +635,8 @@ export default function MyAgenda() {
         nextActivityTravelMinutes: nextStop?.actualTravelMinutes || null,
       };
     });
+    console.log(`[MyAgenda] stops derived: ${result.length} stops from ${baseStops.length} baseStops`);
+    return result;
   }, [selectedDateActivities, activityTypes, activityRatMap, dayStatusMap, selectedDateStr, timeRecordsByDayMap]);
 
   // Calcular porcentagem de atividades efetivas da semana
