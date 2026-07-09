@@ -1031,7 +1031,19 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+      toast({
+        title: "Atividade concluída",
+        description: "Próximo passo registrado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao concluir atividade",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
