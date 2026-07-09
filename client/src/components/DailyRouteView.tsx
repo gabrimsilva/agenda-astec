@@ -254,7 +254,7 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                     </div>
                   </button>
 
-                  {/* Botão Iniciar Navegação - Sempre visível (fora do expandível) */}
+                  {/* Botão Iniciar Deslocamento - Substitui o passo de navegação */}
                   {stop.status === "pending" && stop.statusLabel !== "aCaminho" && !stop.hideNavigation && (
                     <div className="px-4 pb-3">
                       <Button 
@@ -264,10 +264,10 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                           e.stopPropagation();
                           onStartSingleNavigation?.(stop.id);
                         }}
-                        data-testid={`button-start-nav-${stop.id}`}
+                        data-testid={`button-start-displacement-${stop.id}`}
                       >
                         <Navigation className="h-4 w-4" />
-                        Iniciar Navegação
+                        Iniciar Deslocamento
                       </Button>
                     </div>
                   )}

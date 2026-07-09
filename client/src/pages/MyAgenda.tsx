@@ -1532,13 +1532,9 @@ export default function MyAgenda() {
     setNavigationDialogOpen(true);
   };
 
-  // Navegar para uma atividade individual
+  // Iniciar deslocamento (substitui navegação - apenas registra tempo e pula para cheguei)
   const handleStartSingleNavigation = (activityId: string) => {
-    const singleActivity = selectedDateActivities.find(a => a.id === activityId);
-    if (singleActivity) {
-      setSelectedActivityForNav(activityId);
-      setNavigationDialogOpen(true);
-    }
+    startNavigationMutation.mutate({ activityId });
   };
 
   // Handler para excluir atividade
