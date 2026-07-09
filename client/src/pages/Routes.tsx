@@ -848,6 +848,12 @@ export default function Routes() {
                   onLocationSearched={(location) => setSearchedLocation(location)}
                   onActivitySelected={(activity) => setSelectedActivity(activity)}
                   dateRange={activityDateRange}
+                  onLocationSelect={(lat, lng) => {
+                    // Apenas mostrar a distância no mapa, sem abrir modal
+                    // Criar um marcador temporário apenas para visualizar a distância
+                    console.log("[NearbyPanel] Showing distance from base:", { lat, lng });
+                    // O mapa já mostra o searchedLocation, então basta mostrar a linha de distância
+                  }}
                   onTechnicianSelect={(technicianId, lat, lng, selectedClient) => {
                     // Find technician data from the technicians list
                     const tech = technicians.find(t => t.technicianId === technicianId);

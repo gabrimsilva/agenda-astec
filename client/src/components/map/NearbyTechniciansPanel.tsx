@@ -65,10 +65,11 @@ interface NearbyTechniciansPanelProps {
     country?: string;
   } | null) => void;
   onActivitySelected?: (activity: ActivityWithDistance | null) => void;
+  onLocationSelect?: (lat: number, lng: number) => void; // Nova callback para mostrar distância sem abrir modal
   dateRange?: { start: string; end: string };
 }
 
-export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocationSearched, onActivitySelected, dateRange: externalDateRange }: NearbyTechniciansPanelProps) {
+export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocationSearched, onActivitySelected, onLocationSelect, dateRange: externalDateRange }: NearbyTechniciansPanelProps) {
   const [clientSearchText, setClientSearchText] = useState<string>("");
   const [selectedClient, setSelectedClient] = useState<DatasulClientResult | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<{ 
@@ -480,12 +481,10 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                         <div 
                           className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded cursor-pointer hover:bg-primary/10 transition-colors"
                           onClick={() => {
-                            if (onTechnicianSelect && searchedLocation) {
-                              onTechnicianSelect(
-                                tech.id,
+                            if (onLocationSelect) {
+                              onLocationSelect(
                                 tech.location.latitude,
-                                tech.location.longitude,
-                                selectedClient
+                                tech.location.longitude
                               );
                             }
                           }}
