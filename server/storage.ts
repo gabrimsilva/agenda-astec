@@ -593,6 +593,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActivitiesByTechnicianId(technicianId: string): Promise<any[]> {
+    console.log(`[Storage] getActivitiesByTechnicianId called with technicianId: "${technicianId}"`);
     const results = await db
       .select({
         activity: activities,
@@ -607,6 +608,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(activities.technicianId, technicianId))
       .orderBy(desc(activities.scheduledDate));
     
+    console.log(`[Storage] getActivitiesByTechnicianId returned ${results.length} activities`);
     return results.map(r => ({ ...r.activity, client: r.client }));
   }
 
