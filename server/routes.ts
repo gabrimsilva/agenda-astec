@@ -609,8 +609,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       // ── Stale-while-revalidate for technicians ────────────────────────
       if (_techniciansCache.data) {
-        // Always serve cached data immediately
-        res.json(_techniciansCache.data);
+        // Filter to only active users
+        const activeTechnicians = _techniciansCache.data.filter((tech: any) => tech.user?.isActive !== false);
+        res.json(activeTechnicians);
         // Trigger background refresh only if TTL has expired
         const age = Date.now() - _techniciansCache.ts;
         if (age > TECHNICIANS_CACHE_TTL) {
@@ -626,7 +627,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         _techniciansCache.data = technicians;
         _techniciansCache.ts = Date.now();
         console.log(`[Technicians cache] populated (${technicians.length} items)`);
-        res.json(technicians);
+        // Filter to only active users
+        const activeTechnicians = technicians.filter((tech: any) => tech.user?.isActive !== false);
+        res.json(activeTechnicians);
       } catch (dbErr: any) {
         console.error(`[Technicians] DB query failed:`, dbErr.message);
         return res.status(503).json({ 
