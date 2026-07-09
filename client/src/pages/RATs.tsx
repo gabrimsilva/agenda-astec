@@ -94,6 +94,7 @@ const SENT_STYLE = {
 
 export default function RATs() {
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sentFilter, setSentFilter] = useState<string>("all"); // "all" | "sent" | "not_sent"
