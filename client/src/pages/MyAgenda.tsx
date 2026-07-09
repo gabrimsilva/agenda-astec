@@ -146,8 +146,15 @@ export default function MyAgenda() {
 
   const { data: allActivities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
-    queryFn: async () => apiRequest("/api/activities", { method: "GET" }).then(r => r.json()),
+    queryFn: async () => {
+      console.log('[MyAgenda] Fetching /api/activities...');
+      const result = await apiRequest("/api/activities", { method: "GET" }).then(r => r.json());
+      console.log(`[MyAgenda] Received ${result.length} activities from backend`);
+      return result;
+    },
     staleTime: 0, // Always consider data stale
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
@@ -415,7 +422,10 @@ export default function MyAgenda() {
       return [];
     }
     const filtered = allActivities.filter(activity => activity.technicianId === myTechnician.id);
-    console.log(`[MyAgenda] allActivities: ${allActivities.length}, filtered: ${filtered.length}, technicianId: ${myTechnician.id}`);
+    console.log(`[MyAgenda] allActivities count: ${allActivities.length}, myTechnician.id: ${myTechnician.id}, filtered: ${filtered.length}`);
+    filtered.forEach((a, i) => {
+      console.log(`  [${i}] Activity: ${a.id} - ${a.title} - status: ${a.status}`);
+    });
     return filtered;
   }, [allActivities, myTechnician]);
 
