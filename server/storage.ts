@@ -664,12 +664,19 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`[Storage] Found ${results.length} activities in range`);
     
-    return results.map(r => ({ 
+    const mapped = results.map(r => ({ 
       ...r.activity, 
       client: r.client, 
       technician: r.technician,
       activityType: r.activityType
     }));
+    
+    // Log first 5 activities to see technicianId
+    mapped.slice(0, 5).forEach((a, i) => {
+      console.log(`  [${i}] Activity ${a.id}: technicianId=${a.technicianId}, title=${a.title}`);
+    });
+    
+    return mapped;
   }
 
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
