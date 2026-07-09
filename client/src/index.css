@@ -616,13 +616,13 @@ body {
  * (padrão visual do credito.rennercoatings.com)
  * ============================================================ */
 [data-sidebar="menu-button"][data-active="true"] {
-  background: linear-gradient(90deg, hsl(var(--primary) / 0.18) 0%, hsl(var(--primary) / 0.05) 100%) !important;
-  box-shadow: inset 3px 0 0 hsl(var(--primary));
+  background: transparent !important;
+  box-shadow: none !important;
   color: hsl(var(--sidebar-foreground)) !important;
   font-weight: 600;
 }
 [data-sidebar="menu-button"][data-active="true"] svg {
-  color: hsl(var(--primary));
+  color: hsl(var(--sidebar-foreground));
 }
 [data-sidebar="menu-button"]:hover:not([data-active="true"]) {
   background: hsl(var(--sidebar-accent) / 0.55);
