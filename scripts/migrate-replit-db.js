@@ -5,15 +5,13 @@
  * Evita duplicatas comparando chaves primárias
  */
 
-const fs = require('fs');
-const path = require('path');
+import { Client } from 'pg';
 
 // Connection strings
 const REPLIT_DB = "postgresql://neondb_owner:npg_TEmNFius6W0n@ep-dark-credit-ae6dljaq.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require";
 const LOCAL_DB = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/astec";
 
 async function connectDB(connectionString, name) {
-  const { Client } = require('pg');
   const client = new Client({ connectionString });
   try {
     await client.connect();
@@ -42,8 +40,9 @@ async function getPrimaryKeyColumns(client, tableName) {
     FROM pg_index i
     JOIN pg_attribute a ON a.attrelid = i.indrelid
       AND a.attnum = ANY(i.indkey)
-    WHERE i.indrelname = $1;
-  `, [`${tableName}_pkey`]);
+    WHERE i.indrelid = $1::regclass
+    AND i.indisprimary;
+  `, [tableName]);
   
   if (result.rows.length === 0) {
     // Se não houver PK, usar a primeira coluna
@@ -51,6 +50,7 @@ async function getPrimaryKeyColumns(client, tableName) {
       SELECT column_name 
       FROM information_schema.columns 
       WHERE table_name = $1 
+      ORDER BY ordinal_position
       LIMIT 1;
     `, [tableName]);
     return tableInfo.rows.map(r => r.column_name);
@@ -194,4 +194,4 @@ async function main() {
   }
 }
 
-main();
+await main();
