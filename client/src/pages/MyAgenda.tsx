@@ -147,7 +147,6 @@ export default function MyAgenda() {
   const { data: allActivities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
     queryFn: async () => apiRequest("/api/activities", { method: "GET" }).then(r => r.json()),
-    refetchInterval: 3000, // Auto-refresh every 3 seconds for faster updates
     staleTime: 0, // Always consider data stale
   });
 
