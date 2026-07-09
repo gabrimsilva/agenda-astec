@@ -741,7 +741,7 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       setNewActivityDialogOpen(false);
       form.reset();
       setCepValue("");
@@ -781,7 +781,7 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
     },
   });
 
@@ -829,7 +829,7 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
     },
   });
 
@@ -840,7 +840,7 @@ export default function MyAgenda() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       toast({
         title: "Atividade excluída",
         description: "A atividade foi excluída com sucesso",
@@ -862,7 +862,7 @@ export default function MyAgenda() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       setRescheduleModalOpen(false);
       setActivityToReschedule(null);
       toast({
@@ -933,7 +933,7 @@ export default function MyAgenda() {
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       setEditActivityDialogOpen(false);
       setActivityBeingEdited(null);
       editForm.reset();
@@ -970,8 +970,8 @@ export default function MyAgenda() {
         title: "Deslocamento iniciado",
         description: "Você iniciou o deslocamento com sucesso.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
     },
     onError: (error: any) => {
       toast({
@@ -998,9 +998,9 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
     },
   });
 
@@ -1020,8 +1020,8 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
     },
   });
 
@@ -1153,8 +1153,8 @@ export default function MyAgenda() {
           throw new Error(error.error || "Erro ao iniciar dia da atividade");
         }
         
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
       } else {
         await checkInMutation.mutateAsync(stopId);
       }
@@ -1259,8 +1259,8 @@ export default function MyAgenda() {
           throw new Error(error.error || "Erro ao concluir dia da atividade");
         }
         
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
       } else {
         // Single-day: checkout normal
         await checkOutMutation.mutateAsync({
@@ -1781,8 +1781,8 @@ export default function MyAgenda() {
       
       try {
         await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
         setEditActivityDialogOpen(false);
         setActivityBeingEdited(null);
         editForm.reset();
