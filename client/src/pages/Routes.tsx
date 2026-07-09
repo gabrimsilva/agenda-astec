@@ -955,21 +955,6 @@ export default function Routes() {
         <TabsContent value="clients" className="flex-1 mt-2 data-[state=active]:flex data-[state=active]:flex-col min-h-0">
           {/* Barra de filtros para clientes */}
           <div className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-muted/50 rounded-lg">
-            <Button
-              variant={routePanelOpen ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setRoutePanelOpen(!routePanelOpen)}
-              data-testid="button-toggle-route-panel"
-              className="gap-2"
-            >
-              <Navigation className="h-4 w-4" />
-              Calcular Rota
-              {selectedClients.length > 0 && (
-                <Badge variant="default" className="ml-1">
-                  {selectedClients.length}
-                </Badge>
-              )}
-            </Button>
             <FiltersDrawer
               onFiltersChange={handleFiltersChange}
               availableGroups={filterOptions?.groups || []}
