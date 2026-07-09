@@ -452,7 +452,22 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                           }}
                           title="Clique para mostrar no mapa"
                         />
-                        <p className="font-semibold text-xs truncate">{tech.name}</p>
+                        <p 
+                          className="font-semibold text-xs truncate cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => {
+                            if (onTechnicianSelect && searchedLocation) {
+                              onTechnicianSelect(
+                                tech.id,
+                                tech.location.latitude,
+                                tech.location.longitude,
+                                selectedClient
+                              );
+                            }
+                          }}
+                          title="Clique para mostrar no mapa"
+                        >
+                          {tech.name}
+                        </p>
                         {searchMode === "activity" && tech.totalActivitiesInPeriod && tech.totalActivitiesInPeriod > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
                             {tech.totalActivitiesInPeriod} atividade(s)
@@ -462,7 +477,20 @@ export function NearbyTechniciansPanel({ onClose, onTechnicianSelect, onLocation
                       
                       {/* Base Location Info - only for Base mode */}
                       {searchMode === "base" && (
-                        <div className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded">
+                        <div 
+                          className="mt-1.5 p-1.5 bg-primary/5 border border-primary/20 rounded cursor-pointer hover:bg-primary/10 transition-colors"
+                          onClick={() => {
+                            if (onTechnicianSelect && searchedLocation) {
+                              onTechnicianSelect(
+                                tech.id,
+                                tech.location.latitude,
+                                tech.location.longitude,
+                                selectedClient
+                              );
+                            }
+                          }}
+                          title="Clique para mostrar a distância no mapa"
+                        >
                           <p className="text-[10px] font-medium text-primary mb-0.5">📍 Base Registrada</p>
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
