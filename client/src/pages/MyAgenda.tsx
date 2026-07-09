@@ -146,7 +146,8 @@ export default function MyAgenda() {
 
   const { data: allActivities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
-    refetchInterval: 10000, // Auto-refresh every 10 seconds for faster updates
+    queryFn: async () => apiRequest("/api/activities", { method: "GET" }).then(r => r.json()),
+    refetchInterval: 3000, // Auto-refresh every 3 seconds for faster updates
     staleTime: 0, // Always consider data stale
   });
 
@@ -957,8 +958,19 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: () => {
+      toast({
+        title: "Deslocamento iniciado",
+        description: "Você iniciou o deslocamento com sucesso.",
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao iniciar deslocamento",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
