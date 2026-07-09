@@ -232,6 +232,7 @@ export default function Routes() {
     country?: string;
   } | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null); // Localização do endereço pesquisado com componentes
+  const [selectedBase, setSelectedBase] = useState<{ lat: number; lng: number } | null>(null); // Base selecionada do técnico
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false); // Controla o dialog de agendamento
   const [selectedScheduleData, setSelectedScheduleData] = useState<{
     technicianId: string;
@@ -736,6 +737,37 @@ export default function Routes() {
                       />
                     </>
                   )}
+
+                  {/* Marcador da base selecionada */}
+                  {selectedBase && searchedLocation && (
+                    <>
+                      <Marker
+                        position={[selectedBase.lat, selectedBase.lng]}
+                        icon={routeOriginIcon}
+                        data-testid="selected-base-marker"
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <p className="font-semibold text-red-600">📍 Base do Técnico</p>
+                            <p className="text-xs text-muted-foreground mt-1">Distância até o cliente</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+
+                      {/* Linha de visualização entre cliente e base */}
+                      <Polyline
+                        positions={[
+                          [searchedLocation.lat, searchedLocation.lng],
+                          [selectedBase.lat, selectedBase.lng]
+                        ]}
+                        color="red"
+                        dashArray="5, 5"
+                        weight={2}
+                        opacity={0.6}
+                        data-testid="base-distance-line"
+                      />
+                    </>
+                  )}
                   
                   {/* Controlador para centralizar mapa automaticamente */}
                   <MapCenterController location={searchedLocation} />
@@ -844,15 +876,15 @@ export default function Routes() {
                     setNearbyPanelOpen(false);
                     setSearchedLocation(null); // Limpa o marcador ao fechar o painel
                     setSelectedActivity(null); // Limpa atividade selecionada
+                    setSelectedBase(null); // Limpa base selecionada
                   }}
                   onLocationSearched={(location) => setSearchedLocation(location)}
                   onActivitySelected={(activity) => setSelectedActivity(activity)}
                   dateRange={activityDateRange}
                   onLocationSelect={(lat, lng) => {
-                    // Apenas mostrar a distância no mapa, sem abrir modal
-                    // Criar um marcador temporário apenas para visualizar a distância
+                    // Mostrar a distância no mapa da base até o cliente
                     console.log("[NearbyPanel] Showing distance from base:", { lat, lng });
-                    // O mapa já mostra o searchedLocation, então basta mostrar a linha de distância
+                    setSelectedBase({ lat, lng });
                   }}
                   onTechnicianSelect={(technicianId, lat, lng, selectedClient) => {
                     // Find technician data from the technicians list
