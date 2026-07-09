@@ -1190,12 +1190,8 @@ export default function RATs() {
                             <FileUp className="h-3 w-3 mr-1" />
                             PDF
                           </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs no-default-hover-elevate no-default-active-elevate">
-                            <FileText className="h-3 w-3 mr-1" />
-                            Completa
-                          </Badge>
-                        )}
+                        ) : null
+                        }
                       </div>
                       
                       <div className="flex items-center gap-1 shrink-0">
