@@ -2047,7 +2047,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       const { startDate, endDate, technicianId, userId } = req.query;
       
-      console.log(`[Activities] Request user role: ${req.user?.role}, userId from query: ${userId}, technicianId: ${technicianId}`);
+      console.log(`[Activities] Request user role: ${req.user?.role}, userId from query: ${userId}, technicianId: ${technicianId}, user.id: ${req.user?.id}`);
       
       // ✅ NOVO: Normalizar cache key para intervalos padrão de 90 dias
       // RATs.tsx sempre pede ~90 dias. Se o intervalo solicitado é ~90 dias,
@@ -2079,7 +2079,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       const cached = _activitiesCache.get(cacheKey);
       if (cached) {
         // Always serve cached data immediately
-        console.log(`[Activities cache] SERVING CACHED: key="${cacheKey}" (${cached.data.length} items)`);
+        console.log(`[Activities cache] SERVING CACHED: key="${cacheKey}" (${cached.data.length} items, age: ${Date.now() - cached.ts}ms)`);
         res.json(cached.data);
         // Trigger background refresh only if TTL has expired
         const age = Date.now() - cached.ts;
@@ -2128,21 +2128,26 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         console.log(`[Activities] Finding technician for userId ${userId}. Found: ${technician ? technician.id : 'NOT FOUND'}`);
         if (technician) {
           activities = await storage.getActivitiesByTechnicianId(technician.id);
+          console.log(`[Activities] Got ${activities.length} activities for technician ${technician.id}`);
         } else {
           activities = [];
+          console.log(`[Activities] No technician found for userId ${userId}, returning empty array`);
         }
       } else if (normalizedStartDate && normalizedEndDate) {
         activities = await storage.getActivitiesByDateRange(
           new Date(normalizedStartDate),
           new Date(normalizedEndDate)
         );
+        console.log(`[Activities] Got ${activities.length} activities for date range (normalized)`);
       } else if (startDate && endDate) {
         activities = await storage.getActivitiesByDateRange(
           new Date(startDate as string),
           new Date(endDate as string)
         );
+        console.log(`[Activities] Got ${activities.length} activities for date range ${startDate} to ${endDate}`);
       } else if (technicianId) {
         activities = await storage.getActivitiesByTechnicianId(technicianId as string);
+        console.log(`[Activities] Got ${activities.length} activities for technicianId ${technicianId}`);
       } else {
         // Default to 90 days back (matches RATs.tsx default)
         const now = new Date();
@@ -2151,6 +2156,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         ninetyDaysAgo.setHours(0, 0, 0, 0);
         now.setHours(23, 59, 59, 999);
         activities = await storage.getActivitiesByDateRange(ninetyDaysAgo, now);
+        console.log(`[Activities] Got ${activities.length} activities for default 90-day range`);
       }
       
       // Cache the result
