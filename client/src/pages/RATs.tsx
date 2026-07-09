@@ -34,7 +34,6 @@ import {
   User,
   Upload,
   FileUp,
-  Download,
   X,
   ClipboardList
 } from "lucide-react";
@@ -140,10 +139,6 @@ export default function RATs() {
   const isTouching = useRef(false);
   const isUsingPointer = useRef(false);
   const lastTouchEndTime = useRef(0);
-  
-  const [exportingAllPdfs, setExportingAllPdfs] = useState(false);
-  
-  const isAdmin = user?.role === "admin";
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
@@ -279,47 +274,6 @@ export default function RATs() {
     },
   });
 
-  const handleExportAllPdfs = async () => {
-    setExportingAllPdfs(true);
-    try {
-      const token = localStorage.getItem("astec_token");
-      const response = await fetch("/api/rats/export-all-pdfs", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erro ao exportar PDFs");
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `RATs_Export_${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Exportação concluída",
-        description: "O arquivo ZIP com todas as RATs foi baixado.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro na exportação",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setExportingAllPdfs(false);
-    }
-  };
-
-  // Base filtrada por TODOS os filtros, EXCETO o status.
-  // Usada tanto para a contagem dos cards quanto como base da lista,
-  // garantindo que cards e lista fiquem sempre consistentes.
   const baseFilteredRats = useMemo(() => {
     let filtered = rats;
 
@@ -950,17 +904,26 @@ export default function RATs() {
             {Object.entries(STATUS_CONFIG).map(([status, config]) => (
               <Card
                 key={status}
-                className={`cursor-pointer transition-all hover-elevate ${
-                  statusFilter === status ? "ring-2 ring-primary" : ""
+                className={`cursor-pointer transition-all duration-200 border-2 ${
+                  statusFilter === status 
+                    ? "ring-2 ring-primary border-primary shadow-md scale-105" 
+                    : "border-muted hover:border-primary/50 hover:shadow-sm"
                 }`}
                 onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
                 data-testid={`card-status-${status}`}
               >
-                <CardContent className="p-3 text-center">
-                  <div className={`text-2xl font-bold ${config.text}`}>
+                <CardContent className="p-4 text-center">
+                  <div className={`text-3xl font-bold ${config.text} mb-2`}>
                     {statusCounts[status] || 0}
                   </div>
-                  <div className="text-xs text-muted-foreground">{config.label}</div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {config.label}
+                  </div>
+                  {statusFilter === status && (
+                    <div className="text-[10px] text-primary font-semibold mt-2">
+                      ✓ Selecionado
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -984,17 +947,6 @@ export default function RATs() {
                   <Filter className="h-4 w-4" />
                 </Button>
               </CollapsibleTrigger>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  onClick={handleExportAllPdfs}
-                  disabled={exportingAllPdfs}
-                  data-testid="button-export-all-pdfs"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {exportingAllPdfs ? "Exportando..." : "Exportar PDFs"}
-                </Button>
-              )}
             </div>
             <CollapsibleContent className="mt-3">
               <Card className="p-4">
