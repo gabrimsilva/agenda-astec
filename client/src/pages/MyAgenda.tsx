@@ -1163,8 +1163,9 @@ export default function MyAgenda() {
           throw new Error(error.error || "Erro ao iniciar dia da atividade");
         }
         
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+        // Força refetch imediato
+        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all", multiDayActivityIds.join(",")] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       } else {
         await checkInMutation.mutateAsync(stopId);
       }
@@ -1269,8 +1270,10 @@ export default function MyAgenda() {
           throw new Error(error.error || "Erro ao concluir dia da atividade");
         }
         
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+        // Força refetch imediato
+        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all", multiDayActivityIds.join(",")] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+        await queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk", multiDayActivityIds.join(",")] });
       } else {
         // Single-day: checkout normal
         await checkOutMutation.mutateAsync({
