@@ -753,9 +753,9 @@ export default function Calendar() {
   };
 
   const technicianUsers = useMemo(() => {
-    // Allow both admin and assistente roles to have agenda
-    return users.filter((u) => u.role === "assistente" || u.role === "admin");
-  }, [users]);
+    // Allow both admin and assistente roles to have agenda, but only active technicians
+    return users.filter((u) => (u.role === "assistente" || u.role === "admin") && technicians.some((t) => t.userId === u.id && t.isActive !== false));
+  }, [users, technicians]);
 
   // Map users to technicians for the filter
   const technicianOptions = useMemo(() => {
