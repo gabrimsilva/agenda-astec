@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { fetchActivityTypes, createActivityType, updateActivityType, deleteActivityType } from "@/lib/api/activityTypes";
+import { fetchActivityTypes, createActivityType, updateActivityType, deleteActivityType, toggleRequiresTravel } from "@/lib/api/activityTypes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -202,7 +202,7 @@ export default function ActivitiesTab() {
 
   const toggleRequiresTravelMutation = useMutation({
     mutationFn: ({ id, requiresTravel }: { id: string; requiresTravel: boolean }) => 
-      updateActivityType(id, { requiresTravel }),
+      toggleRequiresTravel(id, requiresTravel),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/activity-types"] });
       toast({ 
