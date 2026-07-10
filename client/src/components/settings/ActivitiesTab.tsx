@@ -124,7 +124,10 @@ export default function ActivitiesTab() {
       setParentName("");
     },
     onError: (error: any) => {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const errorMessage = error?.message?.includes("DOCTYPE") 
+        ? "Erro ao conectar com o servidor. Verifique sua conexão e tente novamente."
+        : error?.message || "Erro ao criar tipo de atividade";
+      toast({ title: "Erro ao criar", description: errorMessage, variant: "destructive" });
     },
   });
 
@@ -152,7 +155,10 @@ export default function ActivitiesTab() {
       setEditingType(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const errorMessage = error?.message?.includes("DOCTYPE") 
+        ? "Erro ao conectar com o servidor. Verifique sua conexão e tente novamente."
+        : error?.message || "Erro ao atualizar tipo de atividade";
+      toast({ title: "Erro ao atualizar", description: errorMessage, variant: "destructive" });
     },
   });
 
@@ -164,7 +170,10 @@ export default function ActivitiesTab() {
       setDeleteId(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const errorMessage = error?.message?.includes("DOCTYPE") 
+        ? "Erro ao conectar com o servidor. Verifique sua conexão e tente novamente."
+        : error?.message || "Erro ao remover tipo de atividade";
+      toast({ title: "Erro ao remover", description: errorMessage, variant: "destructive" });
     },
   });
 
@@ -184,7 +193,10 @@ export default function ActivitiesTab() {
       });
     },
     onError: (error: any) => {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const errorMessage = error?.message?.includes("DOCTYPE") 
+        ? "Erro ao conectar com o servidor. Verifique sua conexão e tente novamente."
+        : error?.message || "Erro ao atualizar status do tipo de atividade";
+      toast({ title: "Erro ao atualizar", description: errorMessage, variant: "destructive" });
     },
   });
 
@@ -201,7 +213,10 @@ export default function ActivitiesTab() {
       });
     },
     onError: (error: any) => {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const errorMessage = error?.message?.includes("DOCTYPE") 
+        ? "Erro ao conectar com o servidor. Verifique sua conexão e tente novamente."
+        : error?.message || "Erro ao atualizar configuração de trajeto";
+      toast({ title: "Erro ao atualizar trajeto", description: errorMessage, variant: "destructive" });
     },
   });
 
