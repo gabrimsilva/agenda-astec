@@ -601,10 +601,15 @@ export class DatabaseStorage implements IStorage {
           contactName: clients.contactName,
           contactPhone: clients.contactPhone,
           contactEmail: clients.contactEmail,
+        },
+        activityType: {
+          id: activityTypes.id,
+          name: activityTypes.name,
         }
       })
       .from(activities)
       .leftJoin(clients, eq(activities.clientId, clients.id))
+      .leftJoin(activityTypes, eq(activities.activityTypeId, activityTypes.id))
       .where(eq(activities.technicianId, technicianId))
       .orderBy(desc(activities.scheduledDate));
     
