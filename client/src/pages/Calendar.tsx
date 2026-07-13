@@ -364,9 +364,24 @@ export default function Calendar() {
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
     queryKey: ["/api/activity-types"],
+    queryFn: async () => {
+      const response = await fetch(`/api/activity-types`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('astec_token')}`
+        },
+      });
+      if (!response.ok) {
+        console.error(`[Calendar] Failed to fetch activity types: ${response.status}`);
+        return [];
+      }
+      const data = await response.json();
+      console.log(`[Calendar] Loaded ${data.length} activity types`);
+      return data;
+    },
     staleTime: Infinity, // Activity types rarely change, cache forever
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 3, // Retry up to 3 times on failure
   });
 
   const getMonthRange = (currentDate: Date) => {
@@ -1395,6 +1410,11 @@ export default function Calendar() {
     const activityType = activityTypes.find((t) => t.id === activity.activityTypeId);
     const color = activityType?.color || "#3b82f6";
     const technician = technicians.find((t) => t.id === activity.technicianId);
+    
+    // Debug logging
+    if (!activityType && activity.activityTypeId) {
+      console.warn(`[Calendar] Activity type not found for ID: ${activity.activityTypeId}. Available types: ${activityTypes.length}`);
+    }
     const ghostEventId = isGhost ? `ghost-${event.id}` : null;
     const tooltipId = isGhost ? ghostEventId! : activity.id;
     const isTooltipOpen = activeTooltipEventId === tooltipId;
