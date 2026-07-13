@@ -121,7 +121,9 @@ export default function Calendar() {
   // Real-time updates for activities
   useActivityRealtime();
   
+  console.error("🔴🔴🔴 [AGENDA.TSX] Component is rendering - OLD COMPONENT! 🔴🔴🔴");
   console.log("🔴 [AGENDA.TSX] Component is rendering - OLD COMPONENT!");
+  alert("AGENDA.TSX CARREGADO!");
   
   // Detectar mobile e usar view "agenda" por padrão
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
