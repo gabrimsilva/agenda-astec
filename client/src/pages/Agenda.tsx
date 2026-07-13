@@ -1,4 +1,9 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+
+// ALERT IMEDIATO PARA DEBUG
+alert("🔴 AGENDA.TSX FILE LOADED!");
+console.error("🔴🔴🔴 AGENDA.TSX FILE LOADED!");
+
 import { Calendar as BigCalendar, momentLocalizer, View, SlotInfo } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
