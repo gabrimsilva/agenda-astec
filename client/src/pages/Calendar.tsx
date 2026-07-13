@@ -159,6 +159,8 @@ export default function Calendar() {
   // Real-time updates for activities
   useActivityRealtime();
   
+  console.log("🟢 [CALENDAR.TSX] Component is rendering - NEW COMPONENT!");
+  
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
   const [selectedUser, setSelectedUser] = useState<string>("my-calendar");

@@ -121,6 +121,8 @@ export default function Calendar() {
   // Real-time updates for activities
   useActivityRealtime();
   
+  console.log("🔴 [AGENDA.TSX] Component is rendering - OLD COMPONENT!");
+  
   // Detectar mobile e usar view "agenda" por padrão
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const [view, setView] = useState<View>(isMobile ? "agenda" : "month");
