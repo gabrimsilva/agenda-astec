@@ -1539,11 +1539,6 @@ export default function Calendar() {
                   (tipo de atividade)
                 </span>
               ) : null}
-              {activity.title && (
-                <span className="text-[10px] text-muted-foreground/80 pl-2 leading-tight truncate font-medium">
-                  {activity.title}
-                </span>
-              )}
               <span className="text-[10px] text-muted-foreground/70 pl-2 leading-tight">
                 {activity.startTime}~{activity.endTime}
               </span>
