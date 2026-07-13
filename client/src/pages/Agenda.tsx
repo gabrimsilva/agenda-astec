@@ -745,6 +745,9 @@ export default function Calendar() {
   const CustomEvent = ({ event }: { event: CalendarEvent }) => {
     const activity = event.resource;
     
+    // Log completo da atividade para debug
+    console.log('[Agenda CustomEvent] Activity object:', JSON.stringify(activity, null, 2));
+    
     // Tentar pegar do objeto activity primeiro (já vem do backend)
     const activityTypeName = activity.activityType?.name || null;
     const activityTypeFromArray = activityTypes.find((t) => t.id === activity.activityTypeId);
@@ -765,6 +768,11 @@ export default function Calendar() {
         {activityTypeName && (
           <span className="text-[9px] text-muted-foreground/70 pl-3.5 font-semibold">
             {activityTypeName}
+          </span>
+        )}
+        {!activityTypeName && activity.activityTypeId && (
+          <span className="text-[9px] text-red-500 pl-3.5 font-semibold">
+            DEBUG: TypeID={activity.activityTypeId}
           </span>
         )}
         <span className="text-[10px] text-muted-foreground/70 pl-3.5">
