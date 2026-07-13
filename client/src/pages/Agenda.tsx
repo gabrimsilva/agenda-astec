@@ -243,6 +243,20 @@ export default function Calendar() {
 
   const { data: activityTypes = [] } = useQuery<ActivityType[]>({
     queryKey: ["/api/activity-types"],
+    queryFn: async () => {
+      const response = await fetch(`/api/activity-types`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('astec_token')}`
+        },
+      });
+      if (!response.ok) {
+        console.error(`[Agenda] Failed to fetch activity types: ${response.status}`);
+        return [];
+      }
+      const data = await response.json();
+      console.log(`[Agenda] Loaded ${data.length} activity types`);
+      return data;
+    },
   });
 
   const getMonthRange = (currentDate: Date) => {
