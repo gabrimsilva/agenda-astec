@@ -1,9 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-
-// ALERT IMEDIATO PARA DEBUG
-alert("🔴 AGENDA.TSX FILE LOADED!");
-console.error("🔴🔴🔴 AGENDA.TSX FILE LOADED!");
-
 import { Calendar as BigCalendar, momentLocalizer, View, SlotInfo } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
@@ -125,10 +120,6 @@ const formSchema = z.object({
 export default function Calendar() {
   // Real-time updates for activities
   useActivityRealtime();
-  
-  console.error("🔴🔴🔴 [AGENDA.TSX] Component is rendering - OLD COMPONENT! 🔴🔴🔴");
-  console.log("🔴 [AGENDA.TSX] Component is rendering - OLD COMPONENT!");
-  alert("AGENDA.TSX CARREGADO!");
   
   // Detectar mobile e usar view "agenda" por padrão
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -753,15 +744,11 @@ export default function Calendar() {
 
   const CustomEvent = ({ event }: { event: CalendarEvent }) => {
     const activity = event.resource;
-    const activityType = activityTypes.find((t) => t.id === activity.activityTypeId);
-    const color = activityType?.color || "#3b82f6";
-
-    // Debug: log if activityType not found
-    if (!activityType && activity.activityTypeId) {
-      console.warn(`[Agenda CustomEvent] Activity type not found for ID: ${activity.activityTypeId}`);
-      console.warn(`[Agenda CustomEvent] Available activity types:`, activityTypes.map(t => ({ id: t.id, name: t.name })));
-      console.warn(`[Agenda CustomEvent] Activity data:`, activity);
-    }
+    
+    // Tentar pegar do objeto activity primeiro (já vem do backend)
+    const activityTypeName = activity.activityType?.name || null;
+    const activityTypeFromArray = activityTypes.find((t) => t.id === activity.activityTypeId);
+    const color = activityTypeFromArray?.color || activity.activityType?.color || "#3b82f6";
 
     return (
       <div 
@@ -775,9 +762,9 @@ export default function Calendar() {
           />
           <span className="text-xs font-medium truncate">{event.title}</span>
         </div>
-        {activityType && (
+        {activityTypeName && (
           <span className="text-[9px] text-muted-foreground/70 pl-3.5 font-semibold">
-            {activityType.name}
+            {activityTypeName}
           </span>
         )}
         <span className="text-[10px] text-muted-foreground/70 pl-3.5">

@@ -1,9 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-
-// ALERT IMEDIATO PARA DEBUG
-alert("🟢 CALENDAR.TSX FILE LOADED!");
-console.error("🟢🟢🟢 CALENDAR.TSX FILE LOADED!");
-
 import { Calendar as BigCalendar, momentLocalizer, View, SlotInfo } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
@@ -163,10 +158,6 @@ const formSchema = z.object({
 export default function Calendar() {
   // Real-time updates for activities
   useActivityRealtime();
-  
-  console.error("🟢🟢🟢 [CALENDAR.TSX] Component is rendering - NEW COMPONENT! 🟢🟢🟢");
-  console.log("🟢 [CALENDAR.TSX] Component is rendering - NEW COMPONENT!");
-  alert("CALENDAR.TSX CARREGADO!");
   
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
