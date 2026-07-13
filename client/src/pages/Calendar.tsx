@@ -1506,6 +1506,11 @@ export default function Calendar() {
                 />
                 <span className="text-[11px] font-medium truncate leading-tight">{activity.clientName || "Sem cliente"}</span>
               </div>
+              {activityType && (
+                <span className="text-[9px] text-muted-foreground/70 pl-2 leading-tight truncate font-semibold">
+                  {activityType.name}
+                </span>
+              )}
               {activity.title && (
                 <span className="text-[10px] text-muted-foreground/80 pl-2 leading-tight truncate font-medium">
                   {activity.title}
