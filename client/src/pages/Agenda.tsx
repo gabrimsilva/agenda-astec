@@ -745,6 +745,11 @@ export default function Calendar() {
           />
           <span className="text-xs font-medium truncate">{event.title}</span>
         </div>
+        {activityType && (
+          <span className="text-[9px] text-muted-foreground/70 pl-3.5 font-semibold">
+            {activityType.name}
+          </span>
+        )}
         <span className="text-[10px] text-muted-foreground/70 pl-3.5">
           {activity.startTime} ~ {activity.endTime}
         </span>
