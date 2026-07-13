@@ -747,6 +747,13 @@ export default function Calendar() {
     const activityType = activityTypes.find((t) => t.id === activity.activityTypeId);
     const color = activityType?.color || "#3b82f6";
 
+    // Debug: log if activityType not found
+    if (!activityType && activity.activityTypeId) {
+      console.warn(`[Agenda CustomEvent] Activity type not found for ID: ${activity.activityTypeId}`);
+      console.warn(`[Agenda CustomEvent] Available activity types:`, activityTypes.map(t => ({ id: t.id, name: t.name })));
+      console.warn(`[Agenda CustomEvent] Activity data:`, activity);
+    }
+
     return (
       <div 
         className="flex flex-col gap-0.5 h-full w-full"
