@@ -375,9 +375,15 @@ export default function Calendar() {
   const { start: monthStart, end: monthEnd } = getMonthRange(date);
 
   const { data: activities = [] } = useQuery<Activity[]>({
-    queryKey: ["/api/activities"],
+    queryKey: ["/api/activities", selectedUser],
     queryFn: async () => {
-      const response = await fetch(`/api/activities`, {
+      // Build URL with query params for filtered technician views
+      let url = `/api/activities`;
+      if (selectedUser && selectedUser !== "all" && selectedUser !== "my-calendar") {
+        url += `?technicianId=${encodeURIComponent(selectedUser)}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('astec_token')}`
         },
@@ -499,7 +505,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
       toast({
         title: "Atividade criada",
         description: "A atividade foi criada com sucesso.",
@@ -523,7 +529,7 @@ export default function Calendar() {
       await apiRequest("POST", `/api/activities/${activityId}/delete`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
       setViewDialogOpen(false);
       setSelectedActivity(null);
       toast({
@@ -546,7 +552,7 @@ export default function Calendar() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/reschedules/calendar-ghosts"] });
       setRescheduleModalOpen(false);
       setViewDialogOpen(false);
@@ -599,7 +605,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
       toast({
         title: "Atividade atualizada",
         description: "A atividade foi atualizada com sucesso.",
@@ -651,7 +657,7 @@ export default function Calendar() {
     },
     onMutate: async ({ activity, start, end }) => {
       // Cancela queries pendentes
-      await queryClient.cancelQueries({ queryKey: ["/api/activities"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/activities"], exact: false });
       
       // Snapshot do valor anterior
       const previousActivities = queryClient.getQueryData<Activity[]>(["/api/activities"]);
@@ -692,7 +698,7 @@ export default function Calendar() {
     },
     onSettled: () => {
       // Refetch para garantir sincronização com o servidor
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
     },
   });
 
@@ -1221,7 +1227,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
       toast({
         title: "Atividade concluída",
         description: "A atividade foi marcada como concluída.",
