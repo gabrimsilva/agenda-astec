@@ -1,4 +1,6 @@
 import { Switch, Route } from "wouter";
+import { useEffect } from "react";
+import { useLocation as useWouterLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -37,8 +39,6 @@ import MapaTV from "@/pages/MapaTV";
 import PainelTV from "@/pages/PainelTV";
 import { useAuth } from "@/hooks/useAuth";
 import { useDbWarmup } from "@/hooks/useDbWarmup";
-import { useLocation as useWouterLocation } from "wouter";
-import { useEffect } from "react";
 
 function HomeRedirect() {
   const { user } = useAuth();
@@ -61,7 +61,13 @@ function ProtectedRouter() {
         <Route path="/" component={HomeRedirect} />
         <Route path="/relatorios" component={Reports} />
         <Route path="/calendario" component={Calendar} />
-        <Route path="/agenda" component={Calendar} />
+        <Route path="/agenda" component={() => {
+          const [, setLocation] = useWouterLocation();
+          useEffect(() => {
+            setLocation("/calendario");
+          }, [setLocation]);
+          return null;
+        }} />
         <Route path="/aprovacoes" component={Approvals} />
         <Route path="/minha-agenda" component={MyAgenda} />
         <Route path="/rats" component={RATs} />
