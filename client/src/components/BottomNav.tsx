@@ -13,7 +13,7 @@ export default function BottomNav() {
       // Técnico: Minha Agenda, Calendário, RATs, Relatórios, Perfil
       return [
         { icon: Clock, label: "Minha Agenda", path: "/minha-agenda" },
-        { icon: Calendar, label: "Calendário", path: "/agenda" },
+        { icon: Calendar, label: "Calendário", path: "/calendario" },
         { icon: FileText, label: "RATs", path: "/rats" },
         { icon: FileBarChart, label: "Relatórios", path: "/relatorios" },
         { icon: User, label: "Perfil", path: "/perfil" },

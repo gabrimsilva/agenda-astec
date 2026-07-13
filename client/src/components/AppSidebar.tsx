@@ -91,7 +91,7 @@ const assistenteMenuItems = [
   },
   {
     title: "Calendário",
-    url: "/agenda",
+    url: "/calendario",
     icon: Calendar,
   },
   {

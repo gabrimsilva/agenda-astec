@@ -61,7 +61,7 @@ function ProtectedRouter() {
         <Route path="/" component={HomeRedirect} />
         <Route path="/relatorios" component={Reports} />
         <Route path="/calendario" component={Calendar} />
-        <Route path="/agenda" component={Agenda} />
+        <Route path="/agenda" component={Calendar} />
         <Route path="/aprovacoes" component={Approvals} />
         <Route path="/minha-agenda" component={MyAgenda} />
         <Route path="/rats" component={RATs} />
