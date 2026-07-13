@@ -614,7 +614,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(activities.scheduledDate));
     
     console.log(`[Storage] getActivitiesByTechnicianId returned ${results.length} activities`);
-    return results.map(r => ({ ...r.activity, client: r.client }));
+    return results.map(r => ({ ...r.activity, client: r.client, activityType: r.activityType }));
   }
 
   async getActivitiesByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
