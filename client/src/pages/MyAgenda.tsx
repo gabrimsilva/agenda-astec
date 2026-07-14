@@ -916,6 +916,8 @@ export default function MyAgenda() {
       if (data.longitude) activityData.longitude = data.longitude;
       if (data.notes) activityData.notes = data.notes;
       
+      console.log("[updateActivity] Sending payload:", activityData);
+      
       // Envia via fetch para tratar bloqueio de agenda (409 AGENDA_BLOCK).
       const token = localStorage.getItem("astec_token");
       const putActivity = async (body: any) =>
@@ -923,6 +925,8 @@ export default function MyAgenda() {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(body),
