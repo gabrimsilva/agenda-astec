@@ -895,27 +895,26 @@ export default function MyAgenda() {
         ? `${data.endDate}T${data.endTime}:00` 
         : null;
       
-      const activityData = {
+      const activityData: any = {
         clientId: data.clientId,
         clientName: data.clientName,
         activityTypeId: data.activityTypeId,
         title: data.title,
         description: data.description || "",
-        address: null,
-        numero: null,
-        bairro: null,
         city: data.city,
         state: data.state,
-        location: data.location || null,
-        latitude: data.latitude,
-        longitude: data.longitude,
         scheduledDate: scheduledDateTime,
         endDate: endDateTime,
         startTime: data.startTime,
         endTime: data.endTime,
         transportMode: data.transportMode || "carro",
-        notes: data.notes,
       };
+      
+      // Only include optional fields if they have values
+      if (data.location) activityData.location = data.location;
+      if (data.latitude) activityData.latitude = data.latitude;
+      if (data.longitude) activityData.longitude = data.longitude;
+      if (data.notes) activityData.notes = data.notes;
       
       // Envia via fetch para tratar bloqueio de agenda (409 AGENDA_BLOCK).
       const token = localStorage.getItem("astec_token");
@@ -1724,23 +1723,22 @@ export default function MyAgenda() {
       }
       
       // Salvar demais dados da atividade (sem alterar startTime/endTime base)
-      const activityData = {
+      const activityData: any = {
         clientId: data.clientId,
         clientName: data.clientName,
         activityTypeId: data.activityTypeId,
         title: data.title,
         description: data.description || "",
-        address: null,
-        numero: null,
-        bairro: null,
         city: data.city,
         state: data.state,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        location: data.location || null,
         transportMode: data.transportMode || "carro",
-        notes: data.notes,
       };
+      
+      // Only include optional fields if they have values
+      if (data.location) activityData.location = data.location;
+      if (data.latitude) activityData.latitude = data.latitude;
+      if (data.longitude) activityData.longitude = data.longitude;
+      if (data.notes) activityData.notes = data.notes;
       
       try {
         await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
