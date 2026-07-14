@@ -2566,6 +2566,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
   app.put("/api/activities/:id", authMiddleware, updateActivityHandler);
   app.patch("/api/activities/:id", authMiddleware, updateActivityHandler);
+  // POST alias para evitar bloqueio de WAF
+  app.post("/api/activities/:id/update", authMiddleware, updateActivityHandler);
+
 
   app.delete("/api/activities/:id", authMiddleware, async (req: AuthRequest, res) => {
     try {

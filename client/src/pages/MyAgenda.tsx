@@ -919,10 +919,11 @@ export default function MyAgenda() {
       console.log("[updateActivity] Sending payload:", activityData);
       
       // Envia via fetch para tratar bloqueio de agenda (409 AGENDA_BLOCK).
+      // Usando POST para evitar bloqueio do WAF
       const token = localStorage.getItem("astec_token");
       const putActivity = async (body: any) =>
-        fetch(`/api/activities/${activityId}`, {
-          method: "PATCH",
+        fetch(`/api/activities/${activityId}/update`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
