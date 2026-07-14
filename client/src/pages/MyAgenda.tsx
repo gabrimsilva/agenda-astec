@@ -920,7 +920,7 @@ export default function MyAgenda() {
       const token = localStorage.getItem("astec_token");
       const putActivity = async (body: any) =>
         fetch(`/api/activities/${activityId}`, {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),

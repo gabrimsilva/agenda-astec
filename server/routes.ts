@@ -2363,11 +2363,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
-  app.put("/api/activities/:id", authMiddleware, async (req: AuthRequest, res) => {
+  // Shared handler for PUT and PATCH /api/activities/:id
+  const updateActivityHandler = async (req: AuthRequest, res: Response) => {
     try {
-      console.log("[PUT /api/activities/:id] Request body:", JSON.stringify(req.body, null, 2));
+      console.log(`[${req.method} /api/activities/:id] Request body:`, JSON.stringify(req.body, null, 2));
       const data = updateActivitySchema.parse(req.body);
-      console.log("[PUT /api/activities/:id] Parsed data:", JSON.stringify(data, null, 2));
+      console.log(`[${req.method} /api/activities/:id] Parsed data:`, JSON.stringify(data, null, 2));
       const activityId = req.params.id;
       
       // Helper function to extract date string (YYYY-MM-DD) from various formats
@@ -2561,7 +2562,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
-  });
+  };
+
+  app.put("/api/activities/:id", authMiddleware, updateActivityHandler);
+  app.patch("/api/activities/:id", authMiddleware, updateActivityHandler);
 
   app.delete("/api/activities/:id", authMiddleware, async (req: AuthRequest, res) => {
     try {
