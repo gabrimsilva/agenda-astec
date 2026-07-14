@@ -1,0 +1,624 @@
+
+╔════════════════════════════════════════════════════════════╗
+║   RELATÓRIO DE DOWNLOAD DE PDFs DO REPLIT - ASTEC         ║
+╚════════════════════════════════════════════════════════════╝
+
+Data do Download: 13/07/2026, 15:58:05
+
+📊 RESUMO:
+  • Total de RATs processadas: 100
+  • ✅ Downloads bem-sucedidos: 0
+  • ❌ Falhas: 100
+  • Taxa de sucesso: 0.0%
+
+📁 LOCAL DE ARMAZENAMENTO:
+  C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\downloaded_pdfs
+
+📋 DETALHES POR RAT:
+  ❌ RAT #RAT-2026-0371 - Cliente: ED COLOR
+        Técnico ID: f0d6149d-d324-4579-a517-3caa26d1a4ae
+        Data de Abertura: null
+        Data de Criação: Wed Jul 08 2026 11:50:34 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0367 - Cliente: INDUSTRIA DE MATERIAL BELICO DO BRASIL IMBEL
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Thu Jul 02 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Jul 06 2026 10:42:36 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0364 - Cliente: Macchine Maquinas é Equipamentos
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Sat Jul 04 2026 19:45:38 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0361 - Cliente: ENGEA€O IND COM DE FERRO E A€O LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Wed Jul 01 2026 18:10:33 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0360 - Cliente: KAMAQ MAQUINAS E IMPLEMENTOS AGRICOLAS LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue Jun 30 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Jul 01 2026 01:35:50 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0359 - Cliente: NB MAQUINAS LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Mon Jun 29 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Jul 01 2026 01:33:18 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0358 - Cliente: MERIGO & CIA LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Tue Jun 30 2026 20:46:26 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0352 - Cliente: PERTO S A PERIFERICOS PARA AUTOMACAO
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Sat Jun 27 2026 02:26:46 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0350 - Cliente: Jato Parts Jateamento e Pintura 
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 25 2026 20:35:12 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0349 - Cliente: PINHALENSE S/A.-MAQUINAS AGRICOLAS
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue Jun 23 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Jun 23 2026 21:17:45 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0348 - Cliente: TP PINTURAS
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Tue Jun 23 2026 18:50:59 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0346 - Cliente: TECNO PORTAS 
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Mon Jun 22 2026 10:53:19 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0342 - Cliente: MERIGO & CIA LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Fri Jun 19 2026 19:07:26 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0341 - Cliente: ENGEA€O IND COM DE FERRO E A€O LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 18 2026 21:59:11 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0337 - Cliente: Realce Eletrdomesticos
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 18 2026 14:40:54 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0336 - Cliente: Enertrafo Transformadores
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 18 2026 14:39:27 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0335 - Cliente: Enertrafo Transformadores
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 18 2026 14:37:26 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0332 - Cliente: HEINEKEN
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Fri Jun 12 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Jun 15 2026 15:27:58 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0328 - Cliente: GREENBRIER MAXION EQUIPAMENTOS E SERVI€OS FERROVIARIOS S.A
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Fri Jun 12 2026 20:05:40 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0326 - Cliente: FERCAR METALURGICA LTDA 
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Thu Jun 11 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri Jun 12 2026 11:26:25 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0324 - Cliente: MANOS IMPLEMENTOS RODOVIARIOS LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 11 2026 18:32:34 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0323 - Cliente: IDUGEL INDUSTRIAL EIRELI
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 11 2026 15:13:21 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0322 - Cliente: IMETAL INDUSTRIA METALURGICA LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Jun 11 2026 15:09:38 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0319 - Cliente: TECNOKOR
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: null
+        Data de Criação: Wed Jun 10 2026 16:57:58 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0318 - Cliente: ENGEA€O IND COM DE FERRO E A€O LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Wed Jun 10 2026 12:21:42 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0317 - Cliente: METALURGICA FERCAR LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue Jun 09 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Jun 10 2026 11:30:51 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0316 - Cliente: TECNOAR
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Tue Jun 09 2026 16:23:08 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0314 - Cliente: SEW-EURODRIVE BRASIL LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Mon Jun 08 2026 02:20:06 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0313 - Cliente: NB MAQUINAS LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Wed Jun 03 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Jun 03 2026 18:16:37 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0312 - Cliente: ZACCARIA
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Wed Jun 03 2026 15:37:34 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0310 - Cliente: METASA S/A IND METALURGICA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Tue Jun 02 2026 22:33:41 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0309 - Cliente: Stara
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Tue Jun 02 2026 22:17:49 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0307 - Cliente: CEMAG - CEARA MAQUINAS AGRICOLAS LTDA
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Thu May 28 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Jun 01 2026 14:55:58 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0300 - Cliente: ELLAN
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Fri May 29 2026 10:41:22 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0296 - Cliente: Marinha do Brasil Salvador 
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Tue May 26 2026 13:17:01 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0295 - Cliente: REFINARIA DE MANAUS S.A.
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Tue May 26 2026 12:15:28 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0294 - Cliente: Eletrocentro Industria e Comércio 
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Fri May 22 2026 19:11:20 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0292 - Cliente: NORDESTE FABRICACOES E SERVICOS LTDA
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Fri May 22 2026 09:56:20 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0287 - Cliente: CONSTRUTORA RAMALHO MOREIRA LTDA
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Wed May 20 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Thu May 21 2026 12:38:55 GMT-0300 (Horário Padrão de Brasília)
+        Status: rascunho
+
+  ❌ RAT #RAT-2026-0279 - Cliente: NSA fabricaçoes 
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Mon May 18 2026 10:38:22 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0275 - Cliente: MARCOPOLO S/A
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Fri May 15 2026 22:22:58 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0273 - Cliente: DIPAWA IND COM E CONSTRUTORA LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Thu May 14 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri May 15 2026 10:04:43 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0268 - Cliente: ENGEA€O IND COM DE FERRO E A€O LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Mon May 11 2026 18:39:22 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0263 - Cliente: GIL CADEIRAS 
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: null
+        Data de Criação: Wed May 06 2026 14:57:41 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0262 - Cliente: MADSON SUGGAR 
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue May 05 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed May 06 2026 14:54:18 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0260 - Cliente: DRYTEC 
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Fri Apr 24 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Apr 28 2026 10:49:29 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0258 - Cliente: ADELCO SISTEMAS DE ENERGIA LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Mon Apr 27 2026 04:10:23 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0256 - Cliente: B2G INDUSTRIA
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Fri Apr 24 2026 17:40:16 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0253 - Cliente: MARCOPOLO S/A
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Apr 23 2026 00:33:18 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0252 - Cliente: JAC INDUSTRIA
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Wed Apr 22 2026 20:51:21 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0245 - Cliente: B2G INDUSTRIA
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Thu Apr 16 2026 18:32:20 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0241 - Cliente: TESSARO
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Wed Apr 15 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Thu Apr 16 2026 11:27:29 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0240 - Cliente: Claumann Esquadrias 
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Apr 16 2026 01:04:55 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0239 - Cliente: Pipercenter Fortaleza 
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Wed Apr 15 2026 19:54:31 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0236 - Cliente: MULLER INDUSTRIA METALURGICA LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue Apr 14 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Apr 14 2026 22:11:07 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0233 - Cliente: BALDIN BIOENERGIA S.A.
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Tue Apr 14 2026 01:09:08 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0232 - Cliente: Meraki Metalúrgica 
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Tue Apr 14 2026 00:50:23 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0231 - Cliente: MULLER INDUSTRIA METALURGICA LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Mon Apr 13 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Apr 14 2026 00:04:35 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0230 - Cliente: ADELCO SISTEMAS DE ENERGIA LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Sat Apr 11 2026 17:55:57 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0229 - Cliente: CONSTRUTORA JL / BLAST BRASIL 
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Sat Apr 11 2026 16:58:56 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0227 - Cliente: Roto Fermax
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Fri Apr 10 2026 17:57:02 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0224 - Cliente: CEMAG - CEARA MAQUINAS AGRICOLAS LTDA
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Wed Apr 08 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri Apr 10 2026 17:18:57 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0222 - Cliente: HERCULES MOTORES ELETRICOS LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Apr 09 2026 23:23:18 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0220 - Cliente: BASFORT
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Thu Apr 09 2026 20:16:29 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0218 - Cliente: HERCULES MOTORES ELETRICOS LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Thu Apr 09 2026 12:34:31 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0214 - Cliente: METALPARTS JAU METALURGICA LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Tue Apr 07 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Apr 08 2026 09:52:20 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0208 - Cliente: IGUATEMI INDUSTRIA E COMÉRCIO 
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: Thu Apr 02 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Apr 06 2026 10:26:58 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0207 - Cliente: EMPRESA DE NAVEGA€ÇO ELCANO S/A
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Mon Apr 06 2026 10:17:08 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0199 - Cliente: MARCHER BRASIL AGROINDUSTRIAL SA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Wed Apr 01 2026 11:12:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0197 - Cliente: TROX BRASIL DIF.AR ACUST.FILT.VENTILLTD
+        Técnico ID: f0d6149d-d324-4579-a517-3caa26d1a4ae
+        Data de Abertura: Mon Mar 30 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Mar 30 2026 16:47:48 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0195 - Cliente: NETOCOLOR 
+        Técnico ID: f0d6149d-d324-4579-a517-3caa26d1a4ae
+        Data de Abertura: null
+        Data de Criação: Mon Mar 30 2026 11:43:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0192 - Cliente: GALZERANO
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Fri Mar 27 2026 21:20:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0190 - Cliente: CONSTRUTORA RAMALHO MOREIRA LTDA
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Thu Mar 26 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri Mar 27 2026 11:37:45 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0188 - Cliente: CASALE EQUIPAMENTOS LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: null
+        Data de Criação: Thu Mar 26 2026 20:12:13 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0187 - Cliente: NETOCOLOR 
+        Técnico ID: f0d6149d-d324-4579-a517-3caa26d1a4ae
+        Data de Abertura: null
+        Data de Criação: Thu Mar 26 2026 15:56:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0186 - Cliente: CASALE EQUIPAMENTOS LTDA
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: null
+        Data de Criação: Wed Mar 25 2026 21:51:10 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0176 - Cliente: Dallemole Estrutiras Metálicas
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Tue Mar 24 2026 15:58:17 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0174 - Cliente: AP EQUIPAMENTOS INDUSTRIAIS LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: Fri Mar 20 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Mon Mar 23 2026 09:13:36 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0171 - Cliente: GREENBRIER MAXION EQUIPAMENTOS E SERVI€OS FERROVIARIOS S.A
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: Thu Mar 19 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri Mar 20 2026 16:41:12 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0166 - Cliente: MOCDROL HIDRAULICA LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Thu Mar 19 2026 13:28:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0165 - Cliente: HIDROSTEC
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Thu Mar 19 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Thu Mar 19 2026 13:04:59 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0161 - Cliente: Vão Livre ( Estacio IDOMEDE Quixadá)
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: null
+        Data de Criação: Wed Mar 18 2026 20:18:35 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0153 - Cliente: Vão Livre (Estácio Idomede  Quixadá)
+        Técnico ID: 587b71e8-55c2-4e4c-bf06-163923199db2
+        Data de Abertura: Tue Mar 17 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Mar 17 2026 19:31:03 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0151 - Cliente:  BREE EFICIENCIA ENERGETICA S.A.
+        Técnico ID: f0d6149d-d324-4579-a517-3caa26d1a4ae
+        Data de Abertura: Tue Mar 17 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Mar 17 2026 16:31:06 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0149 - Cliente: SOORO RENNER NUTRICAO S/A (Cópia)
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Mon Mar 16 2026 18:35:33 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0148 - Cliente: Viva Cor Comercial de Tintas
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Mon Mar 16 2026 18:26:27 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0147 - Cliente: Roto Fermax
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Mon Mar 16 2026 18:22:18 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0142 - Cliente: FERCAR
+        Técnico ID: 6831ceed-82fc-425c-a64b-37fa0dc05396
+        Data de Abertura: Thu Mar 12 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Fri Mar 13 2026 00:26:24 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0134 - Cliente: SEMITH COMERCIO E SERVICOS LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: Tue Mar 10 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Mar 11 2026 02:52:04 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0129 - Cliente: CRPT Consórcio 
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: Tue Mar 10 2026 15:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Tue Mar 10 2026 16:34:35 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0128 - Cliente: ALDITINTAS COMERCIAL LTDA
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Tue Mar 10 2026 00:03:51 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0121 - Cliente: ARTKON
+        Técnico ID: 7244fea5-775b-4a44-9492-ed9ecaf4aee9
+        Data de Abertura: null
+        Data de Criação: Fri Mar 06 2026 13:10:44 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0115 - Cliente: CONSTRUTORA TONELLI / CONSÓRCIO RADIAL / ENEVA 
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Thu Mar 05 2026 09:29:28 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0113 - Cliente: Tromar Pre-Moldados e Estruturas Metálicas 
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: Wed Mar 04 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)
+        Data de Criação: Wed Mar 04 2026 18:49:55 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0112 - Cliente: ENGEA€O IND COM DE FERRO E A€O LTDA
+        Técnico ID: e1c1e14b-f0d6-4c7c-b513-def72fec6834
+        Data de Abertura: null
+        Data de Criação: Wed Mar 04 2026 13:42:28 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0111 - Cliente: FLEXNYL ZÍPERES 
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Wed Mar 04 2026 10:11:09 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0105 - Cliente: NORMATEL ENGENHARIA LTDA
+        Técnico ID: 68b47ba3-f0b3-4590-960f-96887bb2ac50
+        Data de Abertura: null
+        Data de Criação: Thu Feb 26 2026 21:57:14 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0099 - Cliente: Volcan service 
+        Técnico ID: b3625629-99e0-4e1a-b6fc-efdbc9161e24
+        Data de Abertura: null
+        Data de Criação: Wed Feb 25 2026 21:12:30 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0095 - Cliente: FORT 3 INDUSTRIA COMERCIO E CONTRUCOES LTDA
+        Técnico ID: 31230d8c-c0fc-408a-a098-249ff4f0c55a
+        Data de Abertura: null
+        Data de Criação: Wed Feb 25 2026 10:36:42 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+  ❌ RAT #RAT-2026-0093 - Cliente: HADES INDUSTRIA E COM. DE EQUIP. DE PETROLEO LTDA
+        Técnico ID: b3625629-99e0-4e1a-b6fc-efdbc9161e24
+        Data de Abertura: null
+        Data de Criação: Tue Feb 24 2026 21:37:10 GMT-0300 (Horário Padrão de Brasília)
+        Status: completa
+
+═══════════════════════════════════════════════════════════════
+  Próximos passos:
+  1. Verifique os arquivos em: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\downloaded_pdfs
+  2. Se houver falhas, tente rodar o script novamente
+  3. Considere integrar os PDFs ao sistema local
+═══════════════════════════════════════════════════════════════
+  

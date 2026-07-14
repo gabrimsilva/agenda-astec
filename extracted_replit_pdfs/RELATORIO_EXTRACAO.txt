@@ -1,0 +1,626 @@
+
+╔════════════════════════════════════════════════════════════╗
+║   RELATÓRIO DE EXTRAÇÃO DE PDFs DO REPLIT - ASTEC         ║
+╚════════════════════════════════════════════════════════════╝
+
+Data da Extração: 13/07/2026, 15:59:40
+
+📊 RESUMO:
+  • Total de RATs processadas: 131
+  • ✅ Extrações bem-sucedidas: 131
+  • ❌ Falhas: 0
+  • Taxa de sucesso: 100.0%
+  • Tamanho total: 109025.93 MB
+
+📁 LOCAL DE ARMAZENAMENTO:
+  C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs
+
+📋 ARQUIVOS EXTRAÍDOS (120):
+  1. RAT-2026-0371
+        Arquivo: RAT-ILM_021-26_-_ED_COLOR_-_Manchas_FFX_002.pdf.pdf
+        Tamanho: 449.53 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_021-26_-_ED_COLOR_-_Manchas_FFX_002.pdf.pdf
+
+  2. RAT-2026-0367
+        Arquivo: ECJ_0037-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_IMBEL.pdf.pdf
+        Tamanho: 210.18 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0037-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_IMBEL.pdf.pdf
+
+  3. RAT-2026-0364
+        Arquivo: RAT-ARR0046-26_Macchine_Equipamentod_e_ServiÃ§os,_Toledo,PR.pdf.pdf
+        Tamanho: 346.43 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0046-26_Macchine_Equipamentod_e_ServiÃ§os,_Toledo,PR.pdf.pdf
+
+  4. RAT-2026-0361
+        Arquivo: RAT-ARR0045-26_EngeaÃ§o_Ind_eCom_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+        Tamanho: 172.61 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0045-26_EngeaÃ§o_Ind_eCom_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+
+  5. RAT-2026-0360
+        Arquivo: ECJ_0038-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_(KAMAQ_MÃQUINAS).pdf.pdf
+        Tamanho: 182.14 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0038-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_(KAMAQ_MÃQUINAS).pdf.pdf
+
+  6. RAT-2026-0359
+        Arquivo: ECJ_0036-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_NB_MÃQUINAS_RH107_CINZA.pdf.pdf
+        Tamanho: 3626.77 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0036-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_NB_MÃQUINAS_RH107_CINZA.pdf.pdf
+
+  7. RAT-2026-0358
+        Arquivo: RAT-ARR0044-16_Hyato_Fechamentos_Cosntrutivos_Ltda,_Merigo,_Nonoai,_RS.pdf.pdf
+        Tamanho: 388.74 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0044-16_Hyato_Fechamentos_Cosntrutivos_Ltda,_Merigo,_Nonoai,_RS.pdf.pdf
+
+  8. RAT-2026-0352
+        Arquivo: RAT-ARR0043-26_Perto_S.A,_GravataÃ­,_RS.pdf.pdf
+        Tamanho: 169.69 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0043-26_Perto_S.A,_GravataÃ­,_RS.pdf.pdf
+
+  9. RAT-2026-0350
+        Arquivo: RAT-ARR0042-26_Jato_Parts_Jateamento_e_Pintura,_Lajeado,_RS.pdf.pdf
+        Tamanho: 215.58 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0042-26_Jato_Parts_Jateamento_e_Pintura,_Lajeado,_RS.pdf.pdf
+
+  10. RAT-2026-0349
+        Arquivo: ECJ_0036-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_PINHALENSE_TESTE_AZUL.pdf.pdf
+        Tamanho: 3306.30 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0036-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_PINHALENSE_TESTE_AZUL.pdf.pdf
+
+  11. RAT-2026-0348
+        Arquivo: PAS_0025-26_TP_PINTURAS.pdf.pdf
+        Tamanho: 1002.63 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0025-26_TP_PINTURAS.pdf.pdf
+
+  12. RAT-2026-0346
+        Arquivo: PAS_0024-26_TECNOPORTAS.pdf.pdf
+        Tamanho: 628.05 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0024-26_TECNOPORTAS.pdf.pdf
+
+  13. RAT-2026-0342
+        Arquivo: RAT-ARR0041-26_Hyato_Fechamentos_Construtivos_Ltda.pdf.pdf
+        Tamanho: 471.55 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0041-26_Hyato_Fechamentos_Construtivos_Ltda.pdf.pdf
+
+  14. RAT-2026-0341
+        Arquivo: RAT-ARR0040-26_EngeaÃ§o_ind_e_Com_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+        Tamanho: 213.66 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0040-26_EngeaÃ§o_ind_e_Com_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+
+  15. RAT-2026-0337
+        Arquivo: RAT-ARR0039-26_Realce_Eletrodomestico.pdf.pdf
+        Tamanho: 192.24 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0039-26_Realce_Eletrodomestico.pdf.pdf
+
+  16. RAT-2026-0336
+        Arquivo: RAT-ARR0038-26_Enertrafo_Transformadores,_Flor_do_SertÃ£o,_SC.pdf.pdf
+        Tamanho: 509.14 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0038-26_Enertrafo_Transformadores,_Flor_do_SertÃ£o,_SC.pdf.pdf
+
+  17. RAT-2026-0332
+        Arquivo: RAT-RAT_EWE_054-26_-_LD.HEINEKEN_-_Guabiraba-PE.pdf.pdf
+        Tamanho: 465.19 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_054-26_-_LD.HEINEKEN_-_Guabiraba-PE.pdf.pdf
+
+  18. RAT-2026-0328
+        Arquivo: OBF_34-26.pdf.pdf
+        Tamanho: 2018.30 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_34-26.pdf.pdf
+
+  19. RAT-2026-0326
+        Arquivo: ECJ_0035-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_FERCAR_HOMOLOGAÃÃO_HTJ054.pdf.pdf
+        Tamanho: 1856.38 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0035-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_FERCAR_HOMOLOGAÃÃO_HTJ054.pdf.pdf
+
+  20. RAT-2026-0324
+        Arquivo: RAT-ARR0037-26_Manos_Implementos_RodoviÃ¡rios_Ltda,_Videira,_SC.pdf.pdf
+        Tamanho: 168.73 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0037-26_Manos_Implementos_RodoviÃ¡rios_Ltda,_Videira,_SC.pdf.pdf
+
+  21. RAT-2026-0323
+        Arquivo: RAT-ARR0036-26_Idugel_Ind._MetalÃºrgica,_JoaÃ§aba,_SC.pdf.pdf
+        Tamanho: 169.89 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0036-26_Idugel_Ind._MetalÃºrgica,_JoaÃ§aba,_SC.pdf.pdf
+
+  22. RAT-2026-0322
+        Arquivo: RAT-ARR0035-26_Imetal.pdf.pdf
+        Tamanho: 233.34 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0035-26_Imetal.pdf.pdf
+
+  23. RAT-2026-0319
+        Arquivo: ECJ_0033-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_TECNOKOR.pdf.pdf
+        Tamanho: 350.14 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0033-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_TECNOKOR.pdf.pdf
+
+  24. RAT-2026-0318
+        Arquivo: RAT-ARR0034-26_EngeaÃ§o_Ind_e_Com_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+        Tamanho: 480.63 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0034-26_EngeaÃ§o_Ind_e_Com_de_Ferro_e_AÃ§o,_ChapecÃ³,_SC.pdf.pdf
+
+  25. RAT-2026-0316
+        Arquivo: PAS_0023-26_TECNOAR.pdf.pdf
+        Tamanho: 1142.13 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0023-26_TECNOAR.pdf.pdf
+
+  26. RAT-2026-0314
+        Arquivo: OBF_30-26.pdf.pdf
+        Tamanho: 1186.27 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_30-26.pdf.pdf
+
+  27. RAT-2026-0313
+        Arquivo: ECJ_0034-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_NB_MÃQUINAS_ITAPIRA.pdf.pdf
+        Tamanho: 489.91 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0034-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_NB_MÃQUINAS_ITAPIRA.pdf.pdf
+
+  28. RAT-2026-0312
+        Arquivo: PAS_0022-26_ZACCARIA.pdf.pdf
+        Tamanho: 1100.65 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0022-26_ZACCARIA.pdf.pdf
+
+  29. RAT-2026-0310
+        Arquivo: RAT-ARR0033-26_Metasa.pdf.pdf
+        Tamanho: 171.19 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0033-26_Metasa.pdf.pdf
+
+  30. RAT-2026-0309
+        Arquivo: RAT-ARR0032-26_Stara_NÃ£o-Me-Toqque,_RS.pdf.pdf
+        Tamanho: 377.83 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0032-26_Stara_NÃ£o-Me-Toqque,_RS.pdf.pdf
+
+  31. RAT-2026-0307
+        Arquivo: RAT-RAT_EWE_053-26_-_CEMAG_-_Fortaleza-CE.pdf.pdf
+        Tamanho: 716.79 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_053-26_-_CEMAG_-_Fortaleza-CE.pdf.pdf
+
+  32. RAT-2026-0300
+        Arquivo: PAS_0021-26_ELLAN.pdf.pdf
+        Tamanho: 904.44 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0021-26_ELLAN.pdf.pdf
+
+  33. RAT-2026-0296
+        Arquivo: RAT_ACS_028-2025_Marinha_do_Brasil_Salvador_BA.pdf.pdf
+        Tamanho: 1933.47 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ACS_028-2025_Marinha_do_Brasil_Salvador_BA.pdf.pdf
+
+  34. RAT-2026-0295
+        Arquivo: RAT-ACS_0018-26_Refinaria_REAM_Manaus.pdf.pdf
+        Tamanho: 1385.93 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ACS_0018-26_Refinaria_REAM_Manaus.pdf.pdf
+
+  35. RAT-2026-0294
+        Arquivo: RAT-ARR0030-26_Eletrocentro_Industria_e_Comercio,_Blumenau,_SC.pdf.pdf
+        Tamanho: 498.34 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0030-26_Eletrocentro_Industria_e_Comercio,_Blumenau,_SC.pdf.pdf
+
+  36. RAT-2026-0292
+        Arquivo: RATS-ACS_0016-2026_Nordeste_ServiÃ§os.pdf.pdf
+        Tamanho: 281.98 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS-ACS_0016-2026_Nordeste_ServiÃ§os.pdf.pdf
+
+  37. RAT-2026-0287
+        Arquivo: RAT-RAT_EWE_044-26_-_RAMALHO_MOREIRA_-_Jundiai-RN.pdf.pdf
+        Tamanho: 1061.11 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_044-26_-_RAMALHO_MOREIRA_-_Jundiai-RN.pdf.pdf
+
+  38. RAT-2026-0279
+        Arquivo: RATS-ACS_0015-26_NSA_FABRICAÃÃES.pdf.pdf
+        Tamanho: 364.44 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS-ACS_0015-26_NSA_FABRICAÃÃES.pdf.pdf
+
+  39. RAT-2026-0275
+        Arquivo: RAT-ARR0026-26_Marcopolo_S.A.pdf.pdf
+        Tamanho: 210.00 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0026-26_Marcopolo_S.A.pdf.pdf
+
+  40. RAT-2026-0273
+        Arquivo: ECJ_0030-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_DIPAIWA_RESERVATÃRIOS.pdf.pdf
+        Tamanho: 2749.95 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0030-26_-RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_DIPAIWA_RESERVATÃRIOS.pdf.pdf
+
+  41. RAT-2026-0263
+        Arquivo: ECJ_0028-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_GIL_CADEIRAS.pdf.pdf
+        Tamanho: 1739.09 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0028-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_GIL_CADEIRAS.pdf.pdf
+
+  42. RAT-2026-0262
+        Arquivo: ECJ_0029-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_MADSON_SUGGAR.pdf.pdf
+        Tamanho: 2483.79 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0029-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_MADSON_SUGGAR.pdf.pdf
+
+  43. RAT-2026-0260
+        Arquivo: ECJ_0027-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_STEC.pdf.pdf
+        Tamanho: 2824.73 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0027-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_STEC.pdf.pdf
+
+  44. RAT-2026-0258
+        Arquivo: OBF_24-26.pdf.pdf
+        Tamanho: 464.99 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_24-26.pdf.pdf
+
+  45. RAT-2026-0256
+        Arquivo: PAS_0019-26_B2G_INDUSTRIA.pdf.pdf
+        Tamanho: 870.10 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0019-26_B2G_INDUSTRIA.pdf.pdf
+
+  46. RAT-2026-0253
+        Arquivo: RAT_ARR0024-26_Marcopolo_S.A.pdf.pdf
+        Tamanho: 224.44 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ARR0024-26_Marcopolo_S.A.pdf.pdf
+
+  47. RAT-2026-0252
+        Arquivo: PAS_0018-26_JAC_INDUSTRIA.pdf.pdf
+        Tamanho: 837.13 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0018-26_JAC_INDUSTRIA.pdf.pdf
+
+  48. RAT-2026-0245
+        Arquivo: PAS_0017-26_B2G_INDUSTRIA.pdf.pdf
+        Tamanho: 1105.08 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0017-26_B2G_INDUSTRIA.pdf.pdf
+
+  49. RAT-2026-0241
+        Arquivo: ECJ_0026-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_TESSARO.pdf.pdf
+        Tamanho: 468.73 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0026-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_TESSARO.pdf.pdf
+
+  50. RAT-2026-0240
+        Arquivo: RAT_ARR0023-26_Claumann_FabricaÃ§Ã£o_de_Esquadrias_Ltda.pdf.pdf
+        Tamanho: 236.99 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ARR0023-26_Claumann_FabricaÃ§Ã£o_de_Esquadrias_Ltda.pdf.pdf
+
+  51. RAT-2026-0239
+        Arquivo: RATS-ACS_0014-26_PIPERCENTER.pdf.pdf
+        Tamanho: 212.86 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS-ACS_0014-26_PIPERCENTER.pdf.pdf
+
+  52. RAT-2026-0236
+        Arquivo: ECJ_0025-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_MULLER.pdf.pdf
+        Tamanho: 4729.89 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0025-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_MULLER.pdf.pdf
+
+  53. RAT-2026-0233
+        Arquivo: OBF_22-26.pdf.pdf
+        Tamanho: 767.60 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_22-26.pdf.pdf
+
+  54. RAT-2026-0232
+        Arquivo: RAT_ARR0022-26_Meraki_MetalÃºrgica,_Arapongas,_PR.pdf.pdf
+        Tamanho: 754.30 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ARR0022-26_Meraki_MetalÃºrgica,_Arapongas,_PR.pdf.pdf
+
+  55. RAT-2026-0230
+        Arquivo: OBF_21-26.pdf.pdf
+        Tamanho: 1268.85 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_21-26.pdf.pdf
+
+  56. RAT-2026-0229
+        Arquivo: OBF_20-26.pdf.pdf
+        Tamanho: 591.93 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_20-26.pdf.pdf
+
+  57. RAT-2026-0227
+        Arquivo: RAT-ARR0021-26_Roto_Fermax,_Colombo,_PR.pdf.pdf
+        Tamanho: 396.68 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0021-26_Roto_Fermax,_Colombo,_PR.pdf.pdf
+
+  58. RAT-2026-0224
+        Arquivo: RAT-RAT_EWE_032-26_-_CEMAG_-_Fortaleza_-_CE.pdf.pdf
+        Tamanho: 269.86 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_032-26_-_CEMAG_-_Fortaleza_-_CE.pdf.pdf
+
+  59. RAT-2026-0222
+        Arquivo: RAT_ARR0020-26_HÃ©rcules_Motores_ElÃ©tricos,_TimbÃ³,_SC.pdf.pdf
+        Tamanho: 326.03 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ARR0020-26_HÃ©rcules_Motores_ElÃ©tricos,_TimbÃ³,_SC.pdf.pdf
+
+  60. RAT-2026-0220
+        Arquivo: PAS_0015-26_BASFORT.pdf.pdf
+        Tamanho: 883.94 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0015-26_BASFORT.pdf.pdf
+
+  61. RAT-2026-0214
+        Arquivo: ECJ_0023-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_METALPARTS.pdf.pdf
+        Tamanho: 1775.78 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0023-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_METALPARTS.pdf.pdf
+
+  62. RAT-2026-0208
+        Arquivo: PAS_0014-26_IGUATEMI.pdf.pdf
+        Tamanho: 516.32 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0014-26_IGUATEMI.pdf.pdf
+
+  63. RAT-2026-0207
+        Arquivo: RAT-ACS_0012-26_RelatÃ³rio_de_Docagem_Castillo_de_Tebra.pdf.pdf
+        Tamanho: 3625.96 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ACS_0012-26_RelatÃ³rio_de_Docagem_Castillo_de_Tebra.pdf.pdf
+
+  64. RAT-2026-0199
+        Arquivo: RAT_ARR0019-26_Marcher_Brasil_Agroindustrial_S.A.pdf.pdf
+        Tamanho: 172.11 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ARR0019-26_Marcher_Brasil_Agroindustrial_S.A.pdf.pdf
+
+  65. RAT-2026-0197
+        Arquivo: RAT-ILM_007-26_-_TROX_-_Teste_FFA_005.pdf.pdf
+        Tamanho: 398.75 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_007-26_-_TROX_-_Teste_FFA_005.pdf.pdf
+
+  66. RAT-2026-0195
+        Arquivo: RAT-ILM_009-26_-_Netocolor_-_AnÃ¡lise_cobertura_.pdf.pdf
+        Tamanho: 314.01 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_009-26_-_Netocolor_-_AnÃ¡lise_cobertura_.pdf.pdf
+
+  67. RAT-2026-0192
+        Arquivo: PAS_0013-26_GALZERANO.pdf.pdf
+        Tamanho: 899.76 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0013-26_GALZERANO.pdf.pdf
+
+  68. RAT-2026-0190
+        Arquivo: RAT-RAT_EWE_029-26_-_CONSTRUTORA_RAMALHO_MOREIRA_-_JundiaÃ­_-_RN.pdf.pdf
+        Tamanho: 727.41 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_029-26_-_CONSTRUTORA_RAMALHO_MOREIRA_-_JundiaÃ­_-_RN.pdf.pdf
+
+  69. RAT-2026-0188
+        Arquivo: ECJ_0020-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_-_CASALE_EQUIPAMENTOS.pdf.pdf
+        Tamanho: 2637.67 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0020-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_-_CASALE_EQUIPAMENTOS.pdf.pdf
+
+  70. RAT-2026-0187
+        Arquivo: RAT-ILM_008-26_-_Netocolor_-_InÃ­cio_pintura.pdf.pdf
+        Tamanho: 418.91 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_008-26_-_Netocolor_-_InÃ­cio_pintura.pdf.pdf
+
+  71. RAT-2026-0186
+        Arquivo: ECJ_0021-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_(CASALE).pdf.pdf
+        Tamanho: 261.73 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ_0021-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_(CASALE).pdf.pdf
+
+  72. RAT-2026-0176
+        Arquivo: Dalemolle_Est._MetÃ¡licas..pdf.pdf
+        Tamanho: 265.47 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\Dalemolle_Est._MetÃ¡licas..pdf.pdf
+
+  73. RAT-2026-0174
+        Arquivo: OBF_18-26.pdf.pdf
+        Tamanho: 2153.07 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_18-26.pdf.pdf
+
+  74. RAT-2026-0171
+        Arquivo: OBF_17-26.pdf.pdf
+        Tamanho: 1716.27 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_17-26.pdf.pdf
+
+  75. RAT-2026-0166
+        Arquivo: OBF_16-26.pdf.pdf
+        Tamanho: 1412.94 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_16-26.pdf.pdf
+
+  76. RAT-2026-0165
+        Arquivo: RAT-Simplificada-EWE_021-26.pdf.pdf
+        Tamanho: 467.26 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-Simplificada-EWE_021-26.pdf.pdf
+
+  77. RAT-2026-0161
+        Arquivo: RAT-RAT_EWE_020-26-Relatorio_de_Assistencia_TÃ©cnica_Rev.05_-_VÃO_LIVRE_-_ESTACIO_IDOMED_-_CCP_ENGENHARIA_-_QuixadÃ¡_-_CE.pdf.pdf
+        Tamanho: 2658.03 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT_EWE_020-26-Relatorio_de_Assistencia_TÃ©cnica_Rev.05_-_VÃO_LIVRE_-_ESTACIO_IDOMED_-_CCP_ENGENHARIA_-_QuixadÃ¡_-_CE.pdf.pdf
+
+  78. RAT-2026-0151
+        Arquivo: RAT-ILM_006-26_-_BREE_-_Capacitores.pdf.pdf
+        Tamanho: 649.33 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_006-26_-_BREE_-_Capacitores.pdf.pdf
+
+  79. RAT-2026-0149
+        Arquivo: RAT-RAT-26.pdf.pdf
+        Tamanho: 151.34 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RAT-26.pdf.pdf
+
+  80. RAT-2026-0148
+        Arquivo: RAT0019-_25_Viva_Cor_Com_de_Tintas_(_RC_368)_SÃÂ£o_Leopoldo,_RS.pdf.pdf
+        Tamanho: 346.41 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT0019-_25_Viva_Cor_Com_de_Tintas_(_RC_368)_SÃÂ£o_Leopoldo,_RS.pdf.pdf
+
+  81. RAT-2026-0147
+        Arquivo: RAT-ARR0002-26.pdf.pdf
+        Tamanho: 164.58 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0002-26.pdf.pdf
+
+  82. RAT-2026-0142
+        Arquivo: RAT_ECJ_0015-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_FERCAR.pdf.pdf
+        Tamanho: 1373.06 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_ECJ_0015-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_Simplificado_FERCAR.pdf.pdf
+
+  83. RAT-2026-0134
+        Arquivo: OBF_15-26.pdf.pdf
+        Tamanho: 1460.42 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_15-26.pdf.pdf
+
+  84. RAT-2026-0129
+        Arquivo: RATS_0003-26_CPRT.pdf.pdf
+        Tamanho: 841.72 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS_0003-26_CPRT.pdf.pdf
+
+  85. RAT-2026-0128
+        Arquivo: RATS_0002-26_ALDITINTAS.pdf.pdf
+        Tamanho: 175.78 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS_0002-26_ALDITINTAS.pdf.pdf
+
+  86. RAT-2026-0121
+        Arquivo: PAS_0012-26_ARTKON.pdf.pdf
+        Tamanho: 571.46 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0012-26_ARTKON.pdf.pdf
+
+  87. RAT-2026-0115
+        Arquivo: OBF_12-26.pdf.pdf
+        Tamanho: 768.63 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_12-26.pdf.pdf
+
+  88. RAT-2026-0113
+        Arquivo: RAT-ARR0016-26_Tromar_PrÃ©-Moldados_e_Estruturas_MetÃ¡licas,_Pato_Branco,_PR.pdf.pdf
+        Tamanho: 386.13 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0016-26_Tromar_PrÃ©-Moldados_e_Estruturas_MetÃ¡licas,_Pato_Branco,_PR.pdf.pdf
+
+  89. RAT-2026-0112
+        Arquivo: RAT-ARR0012-26_EngeaÃ§o_Ind_e_Com_de_Ferro_e_AÃ§o_Ltda,_ChapecÃ³,_SC.pdf.pdf
+        Tamanho: 620.42 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0012-26_EngeaÃ§o_Ind_e_Com_de_Ferro_e_AÃ§o_Ltda,_ChapecÃ³,_SC.pdf.pdf
+
+  90. RAT-2026-0111
+        Arquivo: OBF_10-26.pdf.pdf
+        Tamanho: 1465.60 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_10-26.pdf.pdf
+
+  91. RAT-2026-0105
+        Arquivo: RATS_0004-26_NORMATEL.pdf.pdf
+        Tamanho: 398.94 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RATS_0004-26_NORMATEL.pdf.pdf
+
+  92. RAT-2026-0099
+        Arquivo: RAT-RPS-007-26_Volcan_-_TESTE.pdf.pdf
+        Tamanho: 362.89 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RPS-007-26_Volcan_-_TESTE.pdf.pdf
+
+  93. RAT-2026-0095
+        Arquivo: OBF_09-26.pdf.pdf
+        Tamanho: 1217.87 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_09-26.pdf.pdf
+
+  94. RAT-2026-0093
+        Arquivo: RAT-RPS-008-26_Hades_-_TESTE.pdf.pdf
+        Tamanho: 380.77 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RPS-008-26_Hades_-_TESTE.pdf.pdf
+
+  95. RAT-2026-0092
+        Arquivo: RAT-ARR0008-26_-_SteelMast_MetalÃºrgica_Ltda,_SÃ£o_Bento_do_Sul,_SC.pdf.pdf
+        Tamanho: 442.94 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ARR0008-26_-_SteelMast_MetalÃºrgica_Ltda,_SÃ£o_Bento_do_Sul,_SC.pdf.pdf
+
+  96. RAT-2026-0071
+        Arquivo: OBF_06-26.pdf.pdf
+        Tamanho: 4365.98 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_06-26.pdf.pdf
+
+  97. RAT-2026-0057
+        Arquivo: PAS_0011-26_MALTE.pdf.pdf
+        Tamanho: 567.92 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0011-26_MALTE.pdf.pdf
+
+  98. RAT-2026-0056
+        Arquivo: PAS_0010-26_ZACCARIA.pdf.pdf
+        Tamanho: 667.95 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0010-26_ZACCARIA.pdf.pdf
+
+  99. RAT-2026-0052
+        Arquivo: ECJ-0001-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_-_APLITEC.pdf.pdf
+        Tamanho: 1606.52 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ-0001-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_-_APLITEC.pdf.pdf
+
+  100. RAT-2026-0051
+        Arquivo: OBF_03-26.pdf.pdf
+        Tamanho: 1396.45 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_03-26.pdf.pdf
+
+  101. RAT-2026-0048
+        Arquivo: ECJ-0002-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_SILUHE.pdf.pdf
+        Tamanho: 2289.30 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\ECJ-0002-26_RelatÃ³rio_de_AssistÃªncia_TÃ©cnica_SILUHE.pdf.pdf
+
+  102. RAT-2026-0046
+        Arquivo: PAS_0009-26_ÃREAS.pdf.pdf
+        Tamanho: 639.62 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0009-26_ÃREAS.pdf.pdf
+
+  103. RAT-2026-0045
+        Arquivo: PAS_0008-26_SAO_JOSE.pdf.pdf
+        Tamanho: 624.57 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0008-26_SAO_JOSE.pdf.pdf
+
+  104. RAT-2026-0041
+        Arquivo: PAS_0007-26_AURORA_ERIEL.pdf.pdf
+        Tamanho: 703.58 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0007-26_AURORA_ERIEL.pdf.pdf
+
+  105. RAT-2026-0040
+        Arquivo: OBF_02-26.pdf.pdf
+        Tamanho: 822.50 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_02-26.pdf.pdf
+
+  106. RAT-2026-0037
+        Arquivo: RAT-ILM_003-26.pdf.pdf
+        Tamanho: 402.39 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_003-26.pdf.pdf
+
+  107. RAT-2026-0035
+        Arquivo: PAS_0006-26_MEGACOLORS.pdf.pdf
+        Tamanho: 626.65 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0006-26_MEGACOLORS.pdf.pdf
+
+  108. RAT-2026-0032
+        Arquivo: RAT-ILM_002-26.pdf.pdf
+        Tamanho: 149.30 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-ILM_002-26.pdf.pdf
+
+  109. RAT-2026-0025
+        Arquivo: PAS_0005-26_FIDEL_FERRO.pdf.pdf
+        Tamanho: 887.59 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0005-26_FIDEL_FERRO.pdf.pdf
+
+  110. RAT-2026-0019
+        Arquivo: OBF_01-26.pdf.pdf
+        Tamanho: 585.69 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\OBF_01-26.pdf.pdf
+
+  111. RAT-2026-0017
+        Arquivo: PAS_0004-26_AL_INDUSTRIAS.pdf.pdf
+        Tamanho: 597.87 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0004-26_AL_INDUSTRIAS.pdf.pdf
+
+  112. RAT-2026-0014
+        Arquivo: PAS_0003-26_6F_METAIS.pdf.pdf
+        Tamanho: 678.27 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0003-26_6F_METAIS.pdf.pdf
+
+  113. RAT-2026-0013
+        Arquivo: RAT_EWE_001-26-Relatorio_de_Assistencia_TÃ©cnica_Rev.05_-_CABANA_ECO_RESORT_-_Passo_de_Camaragibe_-_AL.pdf.pdf
+        Tamanho: 714.20 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT_EWE_001-26-Relatorio_de_Assistencia_TÃ©cnica_Rev.05_-_CABANA_ECO_RESORT_-_Passo_de_Camaragibe_-_AL.pdf.pdf
+
+  114. RAT-2026-0011
+        Arquivo: PAS_0002-26_AL_INDUSTRIAS.pdf.pdf
+        Tamanho: 602.73 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0002-26_AL_INDUSTRIAS.pdf.pdf
+
+  115. RAT-2026-0010
+        Arquivo: RAT-RPS-001-26_PROINSP_-_TESTE.pdf.pdf
+        Tamanho: 575.51 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RPS-001-26_PROINSP_-_TESTE.pdf.pdf
+
+  116. RAT-2026-0007
+        Arquivo: PAS_0001-26_ETEP.pdf.pdf
+        Tamanho: 706.88 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0001-26_ETEP.pdf.pdf
+
+  117. RAT-2025-0023
+        Arquivo: PAS_0017-25_ST_PINTURAS.pdf.pdf
+        Tamanho: 1108.46 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0017-25_ST_PINTURAS.pdf.pdf
+
+  118. RAT-2025-0011
+        Arquivo: PAS_0016-25_COUSELO.pdf.pdf
+        Tamanho: 585.24 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\PAS_0016-25_COUSELO.pdf.pdf
+
+  119. RAT-2025-0005
+        Arquivo: RAT-RPS-026-25_ELETRONUCLEAR_-_TESTE_DE_PRODUTOS_PARA_OTMIZAR_TEMPO_DE_MANUTENÃÃO.pdf.pdf
+        Tamanho: 715.33 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT-RPS-026-25_ELETRONUCLEAR_-_TESTE_DE_PRODUTOS_PARA_OTMIZAR_TEMPO_DE_MANUTENÃÃO.pdf.pdf
+
+  120. RAT-2025-0003
+        Arquivo: RAT0019-_25_Viva_Cor_Com_de_Tintas_(_RC_368)_SÃ£o_Leopoldo,_RS.pdf.pdf
+        Tamanho: 346.41 KB
+        Caminho: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs\RAT0019-_25_Viva_Cor_Com_de_Tintas_(_RC_368)_SÃ£o_Leopoldo,_RS.pdf.pdf
+
+═══════════════════════════════════════════════════════════════
+  Próximos passos:
+  1. Verifique os arquivos em: C:\Users\gmsilva\Desktop\SISTEMAS\_RODANDO\astec-project\extracted_replit_pdfs
+  2. Os caminhos foram salvos no banco de dados
+  3. Integre os PDFs ao sistema local conforme necessário
+  4. Para falhas, verifique o formato dos dados no Replit
+═══════════════════════════════════════════════════════════════
+  

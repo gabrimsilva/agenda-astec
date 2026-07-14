@@ -53,7 +53,15 @@ export const users = pgTable("users", {
   datasulUsername: text("datasul_username"), // login do Datasul associado (perfil Datasul)
   avatarUrl: text("avatar_url"),
   isActive: boolean("is_active").default(true).notNull(),
+  
+  // MFA Fields
+  mfaEnabled: boolean("mfa_enabled").default(false).notNull(),
+  mfaSecret: text("mfa_secret"), // TOTP secret (base32)
+  mfaBackupCodes: text("mfa_backup_codes"), // JSON array de códigos de backup
+  microsoftAzureId: text("microsoft_azure_id"), // ID do usuário no Azure AD
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Technicians table

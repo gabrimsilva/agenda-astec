@@ -1,0 +1,282 @@
+{
+  "info": {
+    "name": "ASTEC - MFA & OAuth Testing",
+    "description": "Collection para testar autenticação com MFA e Microsoft Authenticator",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth Tests",
+      "item": [
+        {
+          "name": "1. Criar Usuário Teste",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/test",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "test"]
+            },
+            "description": "Cria usuário de teste se não existir"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login Sem MFA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@astec.com\",\n  \"password\": \"teste123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login com credenciais (sem MFA ainda)"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Gerar Setup MFA (QR Code)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/mfa/setup",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "mfa", "setup"]
+            },
+            "description": "Gera QR code, secret TOTP e backup codes"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Confirmar MFA (após escanear QR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totpCode\": \"INSIRA_CODIGO_DO_AUTHENTICATOR\",\n  \"secret\": \"INSIRA_SECRET_RECEBIDO_NO_PASSO_3\",\n  \"backupCodes\": [\"ABC12345\", \"XYZ98765\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/mfa/confirm",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "mfa", "confirm"]
+            },
+            "description": "Confirma MFA após validar o código do Authenticator"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Verificar Status MFA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/mfa/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "mfa", "status"]
+            },
+            "description": "Verifica se MFA está ativado e quantos backup codes restam"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Login COM MFA (Etapa 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@astec.com\",\n  \"password\": \"teste123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Faz login - MFA será necessário"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Validar TOTP (Etapa 2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"INSIRA_USER_ID_DO_PASSO_6\",\n  \"totpCode\": \"INSIRA_CODIGO_ATUAL_DO_AUTHENTICATOR\",\n  \"useBackupCode\": false\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/verify-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "verify-mfa"]
+            },
+            "description": "Valida o código TOTP do Authenticator"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Usar Backup Code (se necessário)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"INSIRA_USER_ID\",\n  \"totpCode\": \"INSIRA_UM_DOS_BACKUP_CODES\",\n  \"useBackupCode\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/verify-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "verify-mfa"]
+            },
+            "description": "Usa um backup code se perder acesso ao Authenticator (descartável)"
+          },
+          "response": []
+        },
+        {
+          "name": "9. Desabilitar MFA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"teste123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/mfa/disable",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "mfa", "disable"]
+            },
+            "description": "Desabilita MFA para este usuário"
+          },
+          "response": []
+        },
+        {
+          "name": "10. Login Microsoft OAuth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/microsoft",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "microsoft"]
+            },
+            "description": "Inicia fluxo de autenticação Microsoft (será redirecionado)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Protected Routes (Teste com JWT)",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user"]
+            },
+            "description": "Retorna dados do usuário autenticado"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "JWT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "USER_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "MFA_SECRET",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BACKUP_CODES",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

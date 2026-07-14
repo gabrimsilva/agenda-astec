@@ -12,6 +12,7 @@ import { db } from "./db";
 import { eq, and, gte, lte, lt, not, ne, sql, desc, inArray, or } from "drizzle-orm";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth";
 import { authMiddleware, roleMiddleware, agendaScopeMiddleware, reportsScopeMiddleware, type AuthRequest } from "./middleware";
+import { authRouter } from "./auth-routes";
 import { insertUserSchema, insertTechnicianSchema, insertClientSchema, insertClientSiteSchema, insertActivityTypeSchema, insertSegmentSchema, insertRegionSchema, insertActivitySchema, insertApprovalSchema, insertDayMarkerSchema, insertAgendaBlockSchema, loginSchema, updateUserSchema, updateTechnicianSchema, updateUserAndTechnicianSchema, updateClientSchema, updateClientSiteSchema, updateActivityTypeSchema, updateSegmentSchema, updateRegionSchema, updateActivitySchema, updateApprovalSchema, createUserAndTechnicianSchema, insertTechnicianLocationSchema, insertTimeEntrySchema, insertNotificationSchema, insertUserPushSubscriptionSchema, insertRatSchema, createRatSchema, updateRatSchema, technicians, timeEntries, activityTypes, auditLogs, rats, activityTravelTimes, activityTimeRecords, activityReschedules, activityDayStatus, activities, users, travelSegments, approvals, activityAttachments, type InsertUser, type InsertTechnician } from "@shared/schema";
 import { seedActivityTypes, seedDefaultAdmin } from "./seed";
 import { parseGoogleMapsUrl, isValidCoordinates } from "./utils/geo";
@@ -214,6 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Auth routes - Registration is restricted to admin users only
+  app.use("/api", authRouter);
   app.post("/api/auth/register", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       const { email, password, role, name } = insertUserSchema.parse(req.body);
