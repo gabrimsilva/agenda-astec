@@ -108,8 +108,6 @@ export default function MyAgenda() {
   // Estados para edição de atividade
   const [editActivityDialogOpen, setEditActivityDialogOpen] = useState(false);
   const [activityBeingEdited, setActivityBeingEdited] = useState<string | null>(null);
-  const [editCepValue, setEditCepValue] = useState("");
-  const [isLoadingEditCep, setIsLoadingEditCep] = useState(false);
   const [editClientSearchOpen, setEditClientSearchOpen] = useState(false);
   
   // Estados para RAT (Relatório de Assistência Técnica)
@@ -1124,6 +1122,26 @@ export default function MyAgenda() {
     form.setValue("longitude", longitude !== null && !isNaN(longitude) ? longitude : null);
     setClientSearchOpen(false);
     setClientSearchQuery("");
+  };
+
+  // Handler para selecionar base do técnico no formulário de edição
+  const handleEditBaseSelect = () => {
+    if (!myTechnician) return;
+    
+    // Converter coordenadas com validação de NaN
+    const latitude = myTechnician.baseLatitude ? parseFloat(myTechnician.baseLatitude) : null;
+    const longitude = myTechnician.baseLongitude ? parseFloat(myTechnician.baseLongitude) : null;
+    
+    editForm.setValue("clientId", undefined); // Não tem clientId quando é base
+    editForm.setValue("clientName", "Base do técnico (Home office)");
+    editForm.setValue("address", myTechnician.baseAddress || "");
+    editForm.setValue("numero", myTechnician.baseNumero || "");
+    editForm.setValue("bairro", myTechnician.baseBairro || "");
+    editForm.setValue("city", myTechnician.baseCity || "");
+    editForm.setValue("state", myTechnician.baseState || "");
+    editForm.setValue("latitude", latitude !== null && !isNaN(latitude) ? latitude : null);
+    editForm.setValue("longitude", longitude !== null && !isNaN(longitude) ? longitude : null);
+    setEditClientSearchOpen(false);
   };
 
   // Handler para criar atividade
@@ -2210,7 +2228,6 @@ export default function MyAgenda() {
       <Dialog open={editActivityDialogOpen} onOpenChange={(open) => {
         setEditActivityDialogOpen(open);
         if (!open) {
-          setEditCepValue("");
           setActivityBeingEdited(null);
           editForm.reset();
         }
@@ -2310,48 +2327,7 @@ export default function MyAgenda() {
                 }}
               />
 
-              {/* CEP com busca automática */}
-              <div className="space-y-2">
-                <FormLabel>CEP</FormLabel>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="00000-000"
-                    value={editCepValue}
-                    onChange={(e) => {
-                      let value = e.target.value.replace(/\D/g, "");
-                      if (value.length > 8) value = value.slice(0, 8);
-                      if (value.length > 5) {
-                        value = value.slice(0, 5) + "-" + value.slice(5);
-                      }
-                      setEditCepValue(value);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleEditCepSearch(editCepValue);
-                      }
-                    }}
-                    className="flex-1"
-                    data-testid="edit-input-cep"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleEditCepSearch(editCepValue)}
-                    disabled={isLoadingEditCep || editCepValue.replace(/\D/g, "").length !== 8}
-                    data-testid="edit-button-search-cep"
-                  >
-                    {isLoadingEditCep ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Digite o CEP e clique na lupa para preencher o endereço automaticamente
-                </p>
-              </div>
+
 
               {/* Endereço */}
               <div className="grid grid-cols-2 gap-4">
