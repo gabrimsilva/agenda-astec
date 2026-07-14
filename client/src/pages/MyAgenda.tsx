@@ -1664,52 +1664,6 @@ export default function MyAgenda() {
     setEditActivityDialogOpen(true);
   };
 
-  // Handler para buscar CEP no formulário de edição
-  const handleEditCepSearch = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length !== 8) {
-      toast({
-        title: "CEP inválido",
-        description: "O CEP deve ter 8 dígitos",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoadingEditCep(true);
-    try {
-      const response = await fetch(`/api/cep/${cleanCep}`);
-      const data = await response.json();
-      
-      if (data.erro) {
-        toast({
-          title: "CEP não encontrado",
-          description: "Verifique o CEP informado",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      editForm.setValue("address", data.logradouro || "");
-      editForm.setValue("bairro", data.bairro || "");
-      editForm.setValue("city", data.localidade || "");
-      editForm.setValue("state", data.uf || "");
-      
-      toast({
-        title: "Endereço encontrado!",
-        description: `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao buscar CEP",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingEditCep(false);
-    }
-  };
-
   // Handler para selecionar cliente no formulário de edição
   const handleEditClientSelect = (client: Client) => {
     const latitude = client.latitude ? parseFloat(client.latitude) : null;
@@ -1722,25 +1676,6 @@ export default function MyAgenda() {
     editForm.setValue("bairro", client.bairro || "");
     editForm.setValue("city", client.city || "");
     editForm.setValue("state", client.state || "");
-    editForm.setValue("latitude", latitude !== null && !isNaN(latitude) ? latitude : null);
-    editForm.setValue("longitude", longitude !== null && !isNaN(longitude) ? longitude : null);
-    setEditClientSearchOpen(false);
-  };
-
-  // Handler para selecionar base do técnico no formulário de edição
-  const handleEditBaseSelect = () => {
-    if (!myTechnician) return;
-    
-    const latitude = myTechnician.baseLatitude ? parseFloat(myTechnician.baseLatitude) : null;
-    const longitude = myTechnician.baseLongitude ? parseFloat(myTechnician.baseLongitude) : null;
-    
-    editForm.setValue("clientId", undefined);
-    editForm.setValue("clientName", "Base do técnico (Home office)");
-    editForm.setValue("address", myTechnician.baseAddress || "");
-    editForm.setValue("numero", myTechnician.baseNumero || "");
-    editForm.setValue("bairro", myTechnician.baseBairro || "");
-    editForm.setValue("city", myTechnician.baseCity || "");
-    editForm.setValue("state", myTechnician.baseState || "");
     editForm.setValue("latitude", latitude !== null && !isNaN(latitude) ? latitude : null);
     editForm.setValue("longitude", longitude !== null && !isNaN(longitude) ? longitude : null);
     setEditClientSearchOpen(false);
