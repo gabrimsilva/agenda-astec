@@ -2236,9 +2236,6 @@ export default function MyAgenda() {
                           onSelectClient={(c) => {
                             field.onChange(c.nome);
                             editForm.setValue("clientId", undefined);
-                            editForm.setValue("address", "");
-                            editForm.setValue("numero", "");
-                            editForm.setValue("bairro", "");
                             editForm.setValue("city", c.cidade || "");
                             editForm.setValue("state", c.estado || "");
                             editForm.setValue("latitude", null);
@@ -2264,67 +2261,8 @@ export default function MyAgenda() {
 
 
 
-              {/* Endereço */}
+              {/* Cidade e Estado */}
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Endereço</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Logradouro"
-                          {...field}
-                          value={field.value || ""}
-                          data-testid="edit-input-address"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="numero"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="123"
-                          {...field}
-                          value={field.value || ""}
-                          data-testid="edit-input-numero"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="bairro"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bairro</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Centro"
-                          {...field}
-                          value={field.value || ""}
-                          data-testid="edit-input-bairro"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={editForm.control}
                   name="city"
