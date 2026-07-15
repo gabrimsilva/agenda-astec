@@ -1700,26 +1700,12 @@ export default function MyAgenda() {
       
       // Para multi-dia: salvar horários por dia via day-status, mas manter os dados base iguais
       if (isMultiDay) {
-        // Salvar horários do dia selecionado via day-status endpoint
+        // Salvar horários do dia selecionado via day-status endpoint (usando apiRequest para bypass WAF)
         try {
-          const token = localStorage.getItem('astec_token');
-          const dayRes = await fetch(`/api/activities/${activityBeingEdited}/day-status/${selectedDateStr}`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              startTime: data.startTime,
-              endTime: data.endTime,
-            }),
+          await apiRequest("POST", `/api/activities/${activityBeingEdited}/day-status/${selectedDateStr}`, {
+            startTime: data.startTime,
+            endTime: data.endTime,
           });
-          if (!dayRes.ok) {
-            const errorData = await dayRes.json();
-            throw new Error(errorData.error || 'Erro ao salvar horário do dia');
-          }
         } catch (error: any) {
           if (error.message?.includes('Conflito')) {
             toast({
