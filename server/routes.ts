@@ -2573,6 +2573,131 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
   // POST alias para evitar bloqueio de WAF
   app.post("/api/activities/:id/update", authMiddleware, updateActivityHandler);
 
+  // Update day-specific times for multi-day activities
+  app.put("/api/activities/:id/day-status/:date", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id: activityId, date: dateStr } = req.params;
+      const { startTime, endTime } = req.body;
+
+      // Validate inputs
+      if (!startTime || !endTime) {
+        return res.status(400).json({ error: "startTime and endTime are required" });
+      }
+
+      // Verify activity exists
+      const activity = await storage.getActivity(activityId);
+      if (!activity) {
+        return res.status(404).json({ error: "Atividade não encontrada" });
+      }
+
+      // RBAC: Only admin or activity owner can edit
+      const user = await storage.getUser(req.user!.userId);
+      if (!user) {
+        return res.status(403).json({ error: "Usuário não autorizado" });
+      }
+
+      const isAdmin = user.role === "admin";
+      const userTechnician = await storage.getTechnicianByUserId(user.id);
+      const isOwner = activity.technicianId && userTechnician?.id === activity.technicianId;
+
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: "Você não tem permissão para editar esta atividade" });
+      }
+
+      // Parse the date
+      const activityDate = new Date(dateStr + "T00:00:00Z");
+      if (isNaN(activityDate.getTime())) {
+        return res.status(400).json({ error: "Data inválida" });
+      }
+
+      // Validate that end time is after start time
+      if (endTime <= startTime) {
+        return res.status(400).json({
+          error: `Horário inválido: o horário de término (${endTime}) deve ser posterior ao horário de início (${startTime})`
+        });
+      }
+
+      // Check for conflicts with other activities on the same day for this technician
+      const technician = await storage.getTechnicianByUserId(req.user!.userId);
+      if (!technician && !isAdmin) {
+        return res.status(403).json({ error: "Técnico não encontrado" });
+      }
+
+      const technicianId = activity.technicianId;
+      const rangeStart = new Date(dateStr + "T00:00:00Z");
+      const rangeEnd = new Date(dateStr + "T23:59:59Z");
+
+      const existingActivities = await storage.getActivitiesByDateRange(rangeStart, rangeEnd);
+      const conflictingActivities = existingActivities.filter(
+        a => a.technicianId === technicianId && 
+             a.status !== "cancelado" &&
+             a.id !== activityId
+      );
+
+      for (const existing of conflictingActivities) {
+        const existingStart = existing.startTime;
+        const existingEnd = existing.endTime || existing.startTime;
+        
+        // Check for time overlap
+        const hasTimeOverlap = (startTime < existingEnd && endTime > existingStart) ||
+                              (startTime === existingStart);
+        
+        if (hasTimeOverlap) {
+          const [cy, cm, cd] = dateStr.split('-');
+          const formattedDate = `${cd}/${cm}/${cy}`;
+          return res.status(409).json({ 
+            error: `Conflito de horário: já existe uma atividade agendada para este técnico em ${formattedDate} das ${existingStart} às ${existingEnd} (${existing.clientName || existing.description || 'Atividade existente'})` 
+          });
+        }
+      }
+
+      // Find or create day-status record
+      const [existingDayStatus] = await db
+        .select()
+        .from(activityDayStatus)
+        .where(
+          and(
+            eq(activityDayStatus.activityId, activityId),
+            eq(activityDayStatus.date, activityDate)
+          )
+        )
+        .limit(1);
+
+      let dayStatus;
+      if (existingDayStatus) {
+        // Update existing
+        const [updated] = await db
+          .update(activityDayStatus)
+          .set({
+            startTime,
+            endTime,
+            updatedAt: new Date(),
+          })
+          .where(eq(activityDayStatus.id, existingDayStatus.id))
+          .returning();
+        dayStatus = updated;
+      } else {
+        // Create new
+        const [created] = await db
+          .insert(activityDayStatus)
+          .values({
+            activityId,
+            date: activityDate,
+            status: "planejado",
+            startTime,
+            endTime,
+          })
+          .returning();
+        dayStatus = created;
+      }
+
+      invalidateActivitiesCache();
+      res.json(dayStatus);
+    } catch (error: any) {
+      console.error("[PUT /api/activities/:id/day-status/:date] Error:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
 
   app.delete("/api/activities/:id", authMiddleware, async (req: AuthRequest, res) => {
     try {
