@@ -1704,9 +1704,11 @@ export default function MyAgenda() {
         try {
           const token = localStorage.getItem('astec_token');
           const dayRes = await fetch(`/api/activities/${activityBeingEdited}/day-status/${selectedDateStr}`, {
-            method: 'PUT',
+            method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({

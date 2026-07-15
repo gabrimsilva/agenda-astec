@@ -2573,13 +2573,14 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
   // POST alias para evitar bloqueio de WAF
   app.post("/api/activities/:id/update", authMiddleware, updateActivityHandler);
 
-  // Update day-specific times for multi-day activities
-  app.put("/api/activities/:id/day-status/:date", authMiddleware, async (req: AuthRequest, res) => {
+  // Handler para atualizar/criar day-status (suporta PUT e POST para bypass WAF)
+  const dayStatusUpdateHandler = async (req: AuthRequest, res: any) => {
     try {
       const { id: activityId, date: dateStr } = req.params;
       const { startTime, endTime } = req.body;
+      const method = req.method;
 
-      console.log(`[PUT /api/activities/:id/day-status/:date] activityId=${activityId}, date=${dateStr}, startTime=${startTime}, endTime=${endTime}`);
+      console.log(`[${method} /api/activities/:id/day-status/:date] activityId=${activityId}, date=${dateStr}, startTime=${startTime}, endTime=${endTime}`);
 
       // Validate inputs
       if (!startTime || !endTime) {
@@ -2646,13 +2647,17 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
 
       invalidateActivitiesCache();
-      console.log(`[PUT /api/activities/:id/day-status/:date] Success: ${JSON.stringify(dayStatus)}`);
+      console.log(`[${method} /api/activities/:id/day-status/:date] Success: ${JSON.stringify(dayStatus)}`);
       res.json(dayStatus);
     } catch (error: any) {
-      console.error("[PUT /api/activities/:id/day-status/:date] Error:", error);
+      console.error(`[day-status] Error:`, error);
       res.status(400).json({ error: error.message });
     }
-  });
+  };
+
+  // Update day-specific times for multi-day activities - suportar PUT e POST para bypass WAF
+  app.put("/api/activities/:id/day-status/:date", authMiddleware, dayStatusUpdateHandler);
+  app.post("/api/activities/:id/day-status/:date", authMiddleware, dayStatusUpdateHandler);
 
   app.delete("/api/activities/:id", authMiddleware, async (req: AuthRequest, res) => {
     try {
