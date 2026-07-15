@@ -91,6 +91,15 @@ function invalidateRatsCache(technicianId?: string | null) {
   console.log(`[RATs cache] full-invalidated (technicianId=${technicianId ?? "all"})`);
 }
 
+// ── Activities cache invalidation ──────────────────────────────────────────────
+// Invalidates activities cache when activities are created, updated, or deleted.
+// Called after any mutation to ensure fresh data on next fetch.
+function invalidateActivitiesCache() {
+  _activitiesCache.clear();
+  _activitiesRefreshing.clear();
+  console.log(`[Activities cache] full-invalidated (all entries cleared)`);
+}
+
 // Surgical patch — updates one RAT's light fields in every cache entry without clearing.
 // Call this after any PUT/PATCH/send/pdf-upload/pdf-delete so admin stays warm.
 function patchRatInCache(ratId: string, fields: Record<string, any>) {
