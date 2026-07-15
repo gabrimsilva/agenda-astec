@@ -26,6 +26,7 @@ export function useActivityRealtime() {
       console.log("[ActivityRealtime] Received activity update:", data.action, data.activity?.id);
       
       // Invalidate and immediately refetch to ensure fresh data
+      // Note: Pass empty queryKey to invalidate all /api/activities variants
       queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
       queryClient.refetchQueries({ queryKey: ["/api/activities"] });
     });
