@@ -176,11 +176,6 @@ async function _bgRefreshActivitiesCache(cacheKey: string, queryFn: () => Promis
   }
 }
 
-// Invalidate activities cache
-function invalidateActivitiesCache() {
-  _activitiesCache.clear();
-  console.log("[Activities cache] cleared");
-}
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function registerRoutes(app: Express): Promise<Server> {
