@@ -746,8 +746,9 @@ export default function MyAgenda() {
       const response = await apiRequest("POST", "/api/activities", activityData);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
       setNewActivityDialogOpen(false);
       form.reset();
       setCepValue("");
@@ -867,8 +868,9 @@ export default function MyAgenda() {
       const res = await apiRequest("POST", `/api/activities/${id}/reschedule`, data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
       setRescheduleModalOpen(false);
       setActivityToReschedule(null);
       toast({
@@ -1739,10 +1741,19 @@ export default function MyAgenda() {
         try {
           // Para multi-dia, usar POST em vez de PUT para bypass WAF
           await apiRequest("POST", `/api/activities/${activityBeingEdited}/update`, { ...activityData, ignoreBlock: true });
-          queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
-          queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
-          queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
-          queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" });
+          
+          // Invalidar e refetch IMEDIATO de todas as queries relacionadas
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+            queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
+          ]);
+          
+          // Forçar refetch imediato
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+            queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
+          ]);
+          
           setEditActivityDialogOpen(false);
           setActivityBeingEdited(null);
           editForm.reset();
