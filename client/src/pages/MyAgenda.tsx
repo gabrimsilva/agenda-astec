@@ -946,7 +946,6 @@ export default function MyAgenda() {
       setEditActivityDialogOpen(false);
       setActivityBeingEdited(null);
       editForm.reset();
-      setEditCepValue("");
       toast({
         title: "Atividade atualizada",
         description: "A atividade foi atualizada com sucesso",
@@ -1753,7 +1752,6 @@ export default function MyAgenda() {
           setEditActivityDialogOpen(false);
           setActivityBeingEdited(null);
           editForm.reset();
-          setEditCepValue("");
           toast({
             title: "Atividade atualizada",
             description: "O horário deste dia e dados da atividade foram atualizados",
