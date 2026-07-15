@@ -142,7 +142,6 @@ export default function MyAgenda() {
   const { data: allActivities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activities", user?.id],
     queryFn: async () => {
-      console.log('[MyAgenda] Fetching /api/activities for userId:', user?.id);
       const response = await fetch(`/api/activities?userId=${user?.id}&_t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('astec_token')}`,
@@ -151,7 +150,6 @@ export default function MyAgenda() {
         },
       });
       const result = await response.json();
-      console.log(`[MyAgenda] Received ${result.length} activities from backend`);
       return result;
     },
     enabled: !!user?.id,
@@ -263,7 +261,7 @@ export default function MyAgenda() {
     const set = new Set<string>();
     allDayStatuses.forEach(d => {
       if (d.status === "cancelado") {
-        const dateStr = moment.utc(d.date).format("YYYY-MM-DD");
+        const dateStr = moment(d.date).format("YYYY-MM-DD"); // Remove .utc() para usar timezone local
         set.add(`${d.activityId}_${dateStr}`);
       }
     });
@@ -284,13 +282,15 @@ export default function MyAgenda() {
     };
     const map = new Map<string, typeof allDayStatuses[0]>();
     allDayStatuses.forEach(d => {
-      const dateStr = moment.utc(d.date).format("YYYY-MM-DD");
+      // Normalizar data: converter timestamp UTC para data local YYYY-MM-DD
+      const dateStr = moment(d.date).format("YYYY-MM-DD"); // Remove .utc() para usar timezone local
       const key = `${d.activityId}_${dateStr}`;
       const existing = map.get(key);
       if (!existing || rank(d) >= rank(existing)) {
         map.set(key, d);
       }
     });
+    console.log('[dayStatusMap] Mapa criado:', Array.from(map.entries()).map(([k, v]) => ({ key: k, status: v.status })));
     return map;
   }, [allDayStatuses]);
   
@@ -426,18 +426,8 @@ export default function MyAgenda() {
 
   // Filtrar apenas atividades do técnico logado
   const activities = useMemo(() => {
-    if (!myTechnician) {
-      console.log('[MyAgenda] myTechnician not found');
-      return [];
-    }
-    const filtered = allActivities.filter(activity => activity.technicianId === myTechnician.id);
-    console.log(`[MyAgenda] allActivities count: ${allActivities.length}, myTechnician.id: ${myTechnician.id}, filtered: ${filtered.length}`);
-    filtered.forEach((a, i) => {
-      const actStart = moment(a.scheduledDate).format("YYYY-MM-DD");
-      const actEnd = (a as any).endDate ? moment((a as any).endDate).format("YYYY-MM-DD") : actStart;
-      console.log(`  [${i}] Activity: ${a.id} - ${a.title} - status: ${a.status} - techId: ${a.technicianId} - dates: ${actStart} to ${actEnd}`);
-    });
-    return filtered;
+    if (!myTechnician) return [];
+    return allActivities.filter(activity => activity.technicianId === myTechnician.id);
   }, [allActivities, myTechnician]);
 
   // Calcular início e fim da semana selecionada
@@ -987,7 +977,6 @@ export default function MyAgenda() {
   // V3: Mutation para iniciar navegação
   const startNavigationMutation = useMutation({
     mutationFn: async ({ activityId, gpsEtaMinutes }: { activityId: string; gpsEtaMinutes?: number }) => {
-      console.log('[START NAV] Iniciando para activityId:', activityId, 'data:', selectedDate.format("YYYY-MM-DD"));
       const response = await apiRequest("POST", `/api/activities/${activityId}/navigation/start`, {
         gpsEtaMinutes,
         date: selectedDate.format("YYYY-MM-DD"), // Enviar data selecionada para multi-dia
@@ -996,48 +985,23 @@ export default function MyAgenda() {
         const error = await response.json();
         throw new Error(error.error || "Erro ao iniciar navegação");
       }
-      const result = await response.json();
-      console.log('[START NAV] Resposta do backend:', result);
-      return result;
+      return response.json();
     },
-    onSuccess: async (data, variables) => {
-      console.log('[START NAV] Success! ActivityId:', variables.activityId);
-      
+    onSuccess: async () => {
       toast({
         title: "Deslocamento iniciado",
         description: "Você iniciou o deslocamento com sucesso.",
       });
-      
-      console.log('[START NAV] Invalidando queries...');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
       ]);
-      
-      console.log('[START NAV] Refetching queries...');
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
       ]);
-      
-      console.log('[START NAV] Verificando dados atualizados...');
-      const updatedDayStatuses = queryClient.getQueryData(["/api/activity-day-statuses/all", multiDayActivityIds.join(",")]);
-      console.log('[START NAV] Day statuses após refetch:', updatedDayStatuses);
-      
-      const dayKey = `${variables.activityId}_${selectedDate.format("YYYY-MM-DD")}`;
-      console.log('[START NAV] Procurando dayKey:', dayKey);
-      
-      setTimeout(() => {
-        const finalDayStatuses = queryClient.getQueryData(["/api/activity-day-statuses/all", multiDayActivityIds.join(",")]) as any[];
-        const targetDayStatus = finalDayStatuses?.find((d: any) => {
-          const dateStr = moment.utc(d.date).format("YYYY-MM-DD");
-          return d.activityId === variables.activityId && dateStr === selectedDate.format("YYYY-MM-DD");
-        });
-        console.log('[START NAV] Day status encontrado:', targetDayStatus);
-      }, 500);
     },
     onError: (error: any) => {
-      console.error('[START NAV] Erro:', error);
       toast({
         title: "Erro ao iniciar deslocamento",
         description: error.message,
