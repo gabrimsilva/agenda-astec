@@ -25,7 +25,9 @@ export function useActivityRealtime() {
     socket.on("activity_update", (data: { activity: any; action: "created" | "updated" | "deleted" }) => {
       console.log("[ActivityRealtime] Received activity update:", data.action, data.activity?.id);
       
+      // Invalidate and immediately refetch to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.refetchQueries({ queryKey: ["/api/activities"] });
     });
 
     socket.on("disconnect", (reason) => {

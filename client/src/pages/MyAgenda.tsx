@@ -943,6 +943,8 @@ export default function MyAgenda() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      // Force immediate refetch after activity update
+      queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
       setEditActivityDialogOpen(false);
       setActivityBeingEdited(null);
       editForm.reset();
@@ -1748,7 +1750,9 @@ export default function MyAgenda() {
         try {
           await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
           queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+          queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
           queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+          queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" });
           setEditActivityDialogOpen(false);
           setActivityBeingEdited(null);
           editForm.reset();
