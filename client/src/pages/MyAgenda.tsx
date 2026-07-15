@@ -787,8 +787,9 @@ export default function MyAgenda() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
     },
   });
 
@@ -835,8 +836,9 @@ export default function MyAgenda() {
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
     },
   });
 
@@ -846,8 +848,9 @@ export default function MyAgenda() {
       const response = await apiRequest("POST", `/api/activities/${activityId}/delete`);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
       toast({
         title: "Atividade excluída",
         description: "A atividade foi excluída com sucesso",
@@ -978,13 +981,19 @@ export default function MyAgenda() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Deslocamento iniciado",
         description: "Você iniciou o deslocamento com sucesso.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
+      ]);
     },
     onError: (error: any) => {
       toast({
@@ -1010,10 +1019,17 @@ export default function MyAgenda() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
+      ]);
     },
   });
 
@@ -1032,9 +1048,15 @@ export default function MyAgenda() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
+      ]);
     },
   });
 
@@ -1051,9 +1073,15 @@ export default function MyAgenda() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
+      ]);
       toast({
         title: "Atividade concluída",
         description: "Próximo passo registrado com sucesso.",
