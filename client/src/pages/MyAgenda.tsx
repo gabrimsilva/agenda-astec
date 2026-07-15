@@ -143,12 +143,20 @@ export default function MyAgenda() {
     queryKey: ["/api/activities", user?.id],
     queryFn: async () => {
       console.log('[MyAgenda] Fetching /api/activities for userId:', user?.id);
-      const result = await apiRequest("GET", `/api/activities?userId=${user?.id}`).then(r => r.json());
+      const response = await fetch(`/api/activities?userId=${user?.id}&_t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('astec_token')}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      });
+      const result = await response.json();
       console.log(`[MyAgenda] Received ${result.length} activities from backend`);
       return result;
     },
     enabled: !!user?.id,
-    staleTime: 0, // Always consider data stale
+    staleTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -191,8 +199,12 @@ export default function MyAgenda() {
       const results: any[] = [];
       for (const actId of multiDayActivityIds) {
         try {
-          const res = await fetch(`/api/activities/${actId}/day-status`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('astec_token')}` },
+          const res = await fetch(`/api/activities/${actId}/day-status?_t=${Date.now()}`, {
+            headers: { 
+              'Authorization': `Bearer ${localStorage.getItem('astec_token')}`,
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+            },
           });
           if (res.ok) {
             const statuses = await res.json();
@@ -215,7 +227,8 @@ export default function MyAgenda() {
       return results;
     },
     enabled: multiDayActivityIds.length > 0,
-    staleTime: 5000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: allTimeRecords = [] } = useQuery<{ activityId: string; recordType: string; minutesReported: number; finishedAt: string }[]>({
@@ -420,7 +433,9 @@ export default function MyAgenda() {
     const filtered = allActivities.filter(activity => activity.technicianId === myTechnician.id);
     console.log(`[MyAgenda] allActivities count: ${allActivities.length}, myTechnician.id: ${myTechnician.id}, filtered: ${filtered.length}`);
     filtered.forEach((a, i) => {
-      console.log(`  [${i}] Activity: ${a.id} - ${a.title} - status: ${a.status}`);
+      const actStart = moment(a.scheduledDate).format("YYYY-MM-DD");
+      const actEnd = (a as any).endDate ? moment((a as any).endDate).format("YYYY-MM-DD") : actStart;
+      console.log(`  [${i}] Activity: ${a.id} - ${a.title} - status: ${a.status} - techId: ${a.technicianId} - dates: ${actStart} to ${actEnd}`);
     });
     return filtered;
   }, [allActivities, myTechnician]);
@@ -972,6 +987,7 @@ export default function MyAgenda() {
   // V3: Mutation para iniciar navegação
   const startNavigationMutation = useMutation({
     mutationFn: async ({ activityId, gpsEtaMinutes }: { activityId: string; gpsEtaMinutes?: number }) => {
+      console.log('[startNavigationMutation] Calling backend:', activityId);
       const response = await apiRequest("POST", `/api/activities/${activityId}/navigation/start`, {
         gpsEtaMinutes,
       });
@@ -979,23 +995,41 @@ export default function MyAgenda() {
         const error = await response.json();
         throw new Error(error.error || "Erro ao iniciar navegação");
       }
-      return response.json();
+      const result = await response.json();
+      console.log('[startNavigationMutation] Backend response:', result);
+      return result;
     },
     onSuccess: async () => {
+      console.log('[startNavigationMutation] Success! Invalidating and refetching...');
       toast({
         title: "Deslocamento iniciado",
         description: "Você iniciou o deslocamento com sucesso.",
       });
+      
+      // Invalidar queries
+      console.log('[startNavigationMutation] Step 1: Invalidating queries');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
       ]);
+      
+      console.log('[startNavigationMutation] Step 2: Refetching queries');
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
       ]);
+      
+      console.log('[startNavigationMutation] Step 3: Complete! Checking new data...');
+      const currentData = queryClient.getQueryData(["/api/activities", user?.id]) as Activity[];
+      console.log('[startNavigationMutation] Total activities in cache:', currentData?.length);
+      
+      // Procurar a atividade específica que foi atualizada
+      const updatedActivity = currentData?.find((a: Activity) => a.id === result.activity?.id);
+      console.log('[startNavigationMutation] Atividade atualizada no cache:', JSON.stringify(updatedActivity, null, 2));
+      console.log('[startNavigationMutation] Status esperado: aCaminho, Status real:', updatedActivity?.status);
     },
     onError: (error: any) => {
+      console.error('[startNavigationMutation] Error:', error);
       toast({
         title: "Erro ao iniciar deslocamento",
         description: error.message,
@@ -1630,6 +1664,12 @@ export default function MyAgenda() {
 
   // Iniciar deslocamento (substitui navegação - apenas registra tempo e pula para cheguei)
   const handleStartSingleNavigation = (activityId: string) => {
+    console.log('[handleStartSingleNavigation] ====== INICIANDO NAVEGAÇÃO ======');
+    console.log('[handleStartSingleNavigation] ActivityId:', activityId);
+    console.log('[handleStartSingleNavigation] Estado ANTES da mutation:');
+    const currentActivity = allActivities.find(a => a.id === activityId);
+    console.log('[handleStartSingleNavigation] Atividade atual:', JSON.stringify(currentActivity, null, 2));
+    console.log('[handleStartSingleNavigation] Chamando mutation...');
     startNavigationMutation.mutate({ activityId });
   };
 
@@ -1815,6 +1855,24 @@ export default function MyAgenda() {
     <div className="space-y-4 pb-20 md:pb-6" data-testid="page-my-agenda">
       {/* Header */}
       <div className="flex items-center justify-end gap-2">
+        <Button
+          size="default"
+          variant="outline"
+          className="gap-2"
+          onClick={async () => {
+            console.log('[FORCE REFRESH] Clearing all caches and refetching...');
+            queryClient.clear();
+            await Promise.all([
+              queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+              queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
+              queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
+            ]);
+            toast({ title: "Dados atualizados", description: "Cache limpo e dados recarregados" });
+          }}
+          data-testid="button-force-refresh"
+        >
+          🔄 Atualizar Tudo
+        </Button>
         <Button
           size="default"
           variant="outline"
