@@ -1737,7 +1737,8 @@ export default function MyAgenda() {
         if (data.notes) activityData.notes = data.notes;
         
         try {
-          await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
+          // Para multi-dia, usar POST em vez de PUT para bypass WAF
+          await apiRequest("POST", `/api/activities/${activityBeingEdited}/update`, { ...activityData, ignoreBlock: true });
           queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
           queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
           queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
