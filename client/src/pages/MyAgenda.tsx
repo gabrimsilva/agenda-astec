@@ -1686,88 +1686,98 @@ export default function MyAgenda() {
   const onSubmitEditActivity = async (data: z.infer<typeof formSchema>) => {
     if (!activityBeingEdited) return;
 
-    const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
-    if (locs.length > 0 && !(data.location && data.location.trim())) {
-      editForm.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
-      return;
-    }
+    try {
+      const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
+      if (locs.length > 0 && !(data.location && data.location.trim())) {
+        editForm.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
+        return;
+      }
 
-    const activity = allActivities.find(a => a.id === activityBeingEdited);
-    const isMultiDay = activity && !!(activity as any).endDate;
-    
-    // Para multi-dia: salvar horários por dia via day-status, mas manter os dados base iguais
-    if (isMultiDay) {
-      // Salvar horários do dia selecionado via day-status endpoint
-      try {
-        const token = localStorage.getItem('astec_token');
-        const dayRes = await fetch(`/api/activities/${activityBeingEdited}/day-status/${selectedDateStr}`, {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            startTime: data.startTime,
-            endTime: data.endTime,
-          }),
-        });
-        if (!dayRes.ok) {
-          const errorData = await dayRes.json();
-          throw new Error(errorData.error || 'Erro ao salvar horário do dia');
+      const activity = allActivities.find(a => a.id === activityBeingEdited);
+      const isMultiDay = activity && !!(activity as any).endDate;
+      
+      // Para multi-dia: salvar horários por dia via day-status, mas manter os dados base iguais
+      if (isMultiDay) {
+        // Salvar horários do dia selecionado via day-status endpoint
+        try {
+          const token = localStorage.getItem('astec_token');
+          const dayRes = await fetch(`/api/activities/${activityBeingEdited}/day-status/${selectedDateStr}`, {
+            method: 'PUT',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              startTime: data.startTime,
+              endTime: data.endTime,
+            }),
+          });
+          if (!dayRes.ok) {
+            const errorData = await dayRes.json();
+            throw new Error(errorData.error || 'Erro ao salvar horário do dia');
+          }
+        } catch (error: any) {
+          if (error.message?.includes('Conflito')) {
+            toast({
+              title: "Conflito de horário",
+              description: error.message,
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
         }
-      } catch (error: any) {
-        if (error.message?.includes('Conflito')) {
+        
+        // Salvar demais dados da atividade (sem alterar startTime/endTime base)
+        const activityData: any = {
+          clientId: data.clientId,
+          clientName: data.clientName,
+          activityTypeId: data.activityTypeId,
+          title: data.title,
+          description: data.description || "",
+          city: data.city,
+          state: data.state,
+          transportMode: data.transportMode || "carro",
+        };
+        
+        // Only include optional fields if they have values
+        if (data.location) activityData.location = data.location;
+        if (data.latitude) activityData.latitude = data.latitude;
+        if (data.longitude) activityData.longitude = data.longitude;
+        if (data.notes) activityData.notes = data.notes;
+        
+        try {
+          await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
+          queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+          queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
+          setEditActivityDialogOpen(false);
+          setActivityBeingEdited(null);
+          editForm.reset();
+          setEditCepValue("");
           toast({
-            title: "Conflito de horário",
+            title: "Atividade atualizada",
+            description: "O horário deste dia e dados da atividade foram atualizados",
+          });
+        } catch (error: any) {
+          toast({
+            title: "Erro ao atualizar atividade",
             description: error.message,
             variant: "destructive",
           });
-          return;
         }
-        throw error;
+        return;
       }
       
-      // Salvar demais dados da atividade (sem alterar startTime/endTime base)
-      const activityData: any = {
-        clientId: data.clientId,
-        clientName: data.clientName,
-        activityTypeId: data.activityTypeId,
-        title: data.title,
-        description: data.description || "",
-        city: data.city,
-        state: data.state,
-        transportMode: data.transportMode || "carro",
-      };
-      
-      // Only include optional fields if they have values
-      if (data.location) activityData.location = data.location;
-      if (data.latitude) activityData.latitude = data.latitude;
-      if (data.longitude) activityData.longitude = data.longitude;
-      if (data.notes) activityData.notes = data.notes;
-      
-      try {
-        await apiRequest("PUT", `/api/activities/${activityBeingEdited}`, { ...activityData, ignoreBlock: true });
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" });
-        setEditActivityDialogOpen(false);
-        setActivityBeingEdited(null);
-        editForm.reset();
-        setEditCepValue("");
-        toast({
-          title: "Atividade atualizada",
-          description: "O horário deste dia e dados da atividade foram atualizados",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar atividade",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-      return;
+      // Para atividade single-day, usar mutation
+      await updateActivityMutation.mutateAsync({ activityId: activityBeingEdited, data });
+    } catch (error: any) {
+      console.error("[onSubmitEditActivity] Erro:", error);
+      toast({
+        title: "Erro ao processar edição",
+        description: error?.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
     }
-    
-    await updateActivityMutation.mutateAsync({ activityId: activityBeingEdited, data });
   };
 
   return (
