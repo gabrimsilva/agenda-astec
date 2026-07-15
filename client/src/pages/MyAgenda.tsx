@@ -987,30 +987,57 @@ export default function MyAgenda() {
   // V3: Mutation para iniciar navegação
   const startNavigationMutation = useMutation({
     mutationFn: async ({ activityId, gpsEtaMinutes }: { activityId: string; gpsEtaMinutes?: number }) => {
+      console.log('[START NAV] Iniciando para activityId:', activityId, 'data:', selectedDate.format("YYYY-MM-DD"));
       const response = await apiRequest("POST", `/api/activities/${activityId}/navigation/start`, {
         gpsEtaMinutes,
+        date: selectedDate.format("YYYY-MM-DD"), // Enviar data selecionada para multi-dia
       });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Erro ao iniciar navegação");
       }
-      return response.json();
+      const result = await response.json();
+      console.log('[START NAV] Resposta do backend:', result);
+      return result;
     },
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
+      console.log('[START NAV] Success! ActivityId:', variables.activityId);
+      
       toast({
         title: "Deslocamento iniciado",
         description: "Você iniciou o deslocamento com sucesso.",
       });
+      
+      console.log('[START NAV] Invalidando queries...');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
       ]);
+      
+      console.log('[START NAV] Refetching queries...');
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
       ]);
+      
+      console.log('[START NAV] Verificando dados atualizados...');
+      const updatedDayStatuses = queryClient.getQueryData(["/api/activity-day-statuses/all", multiDayActivityIds.join(",")]);
+      console.log('[START NAV] Day statuses após refetch:', updatedDayStatuses);
+      
+      const dayKey = `${variables.activityId}_${selectedDate.format("YYYY-MM-DD")}`;
+      console.log('[START NAV] Procurando dayKey:', dayKey);
+      
+      setTimeout(() => {
+        const finalDayStatuses = queryClient.getQueryData(["/api/activity-day-statuses/all", multiDayActivityIds.join(",")]) as any[];
+        const targetDayStatus = finalDayStatuses?.find((d: any) => {
+          const dateStr = moment.utc(d.date).format("YYYY-MM-DD");
+          return d.activityId === variables.activityId && dateStr === selectedDate.format("YYYY-MM-DD");
+        });
+        console.log('[START NAV] Day status encontrado:', targetDayStatus);
+      }, 500);
     },
     onError: (error: any) => {
+      console.error('[START NAV] Erro:', error);
       toast({
         title: "Erro ao iniciar deslocamento",
         description: error.message,
