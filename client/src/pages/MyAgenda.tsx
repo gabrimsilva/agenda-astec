@@ -48,7 +48,6 @@ const formSchema = z.object({
   clientName: z.string().min(1, "Cliente é obrigatório"),
   activityTypeId: z.string().min(1, "Tipo de atividade é obrigatório"),
   location: z.string().optional().nullable(),
-  title: z.string().min(1, "Título é obrigatório"),
   description: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
@@ -723,13 +722,17 @@ export default function MyAgenda() {
         ? `${data.endDate}T${data.endTime}:00` 
         : null;
       
+      // Usar o nome do tipo de atividade como título
+      const activityType = activityTypes.find(at => at.id === data.activityTypeId);
+      const title = activityType?.name || "Atividade";
+      
       const activityData = {
         technicianId: myTechnician.id,
         clientId: data.clientId,
         clientName: data.clientName,
         activityTypeId: data.activityTypeId,
         location: data.location || null,
-        title: data.title,
+        title: title,
         description: data.description || "",
         address: data.address,
         numero: data.numero || "",
@@ -906,11 +909,15 @@ export default function MyAgenda() {
         ? `${data.endDate}T${data.endTime}:00` 
         : null;
       
+      // Usar o nome do tipo de atividade como título
+      const activityType = activityTypes.find(at => at.id === data.activityTypeId);
+      const title = activityType?.name || "Atividade";
+      
       const activityData: any = {
         clientId: data.clientId,
         clientName: data.clientName,
         activityTypeId: data.activityTypeId,
-        title: data.title,
+        title: title,
         description: data.description || "",
         city: data.city,
         state: data.state,
@@ -1105,7 +1112,6 @@ export default function MyAgenda() {
   // Handler para abrir modal de nova atividade
   const handleOpenNewActivityModal = () => {
     form.reset({
-      title: "",
       clientName: "",
       activityTypeId: "",
       description: "",
@@ -2010,25 +2016,6 @@ export default function MyAgenda() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmitActivity)} className="space-y-4">
-              {/* Título */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título da atividade"
-                        {...field}
-                        data-testid="input-activity-title"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Técnico (somente leitura) */}
               <div className="space-y-2">
                 <FormLabel>Técnico</FormLabel>
