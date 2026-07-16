@@ -755,8 +755,8 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
       setNewActivityDialogOpen(false);
       form.reset();
       setCepValue("");
@@ -796,8 +796,8 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
     },
   });
 
@@ -845,8 +845,8 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
     },
   });
 
@@ -857,8 +857,8 @@ export default function MyAgenda() {
       return response;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
       toast({
         title: "Atividade excluída",
         description: "A atividade foi excluída com sucesso",
@@ -880,8 +880,8 @@ export default function MyAgenda() {
       return res.json();
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
       setRescheduleModalOpen(false);
       setActivityToReschedule(null);
       toast({
@@ -1000,11 +1000,11 @@ export default function MyAgenda() {
         description: "Você iniciou o deslocamento com sucesso.",
       });
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
       ]);
       await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
       ]);
     },
@@ -1034,12 +1034,12 @@ export default function MyAgenda() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" }),
       ]);
       await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
       ]);
@@ -1063,11 +1063,11 @@ export default function MyAgenda() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" }),
       ]);
       await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
       ]);
     },
@@ -1088,11 +1088,11 @@ export default function MyAgenda() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" }),
         queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"], refetchType: "all" }),
       ]);
       await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["/api/activities"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["/api/activity-day-statuses/all"], type: "all" }),
       ]);
       toast({
