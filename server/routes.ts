@@ -4809,6 +4809,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         checkInLongitude: longitude?.toString(),
       });
       
+      // Invalidate cache and broadcast update
+      invalidateActivitiesCache();
+      broadcastActivityUpdate(activity, "updated");
+      
       console.log(`✅ CHECK-IN atualizado:`, { 
         id: activity.id, 
         status: activity.status, 
@@ -5341,6 +5345,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         }
       }
       
+      // Invalidate cache and broadcast update
+      invalidateActivitiesCache();
+      broadcastActivityUpdate(updatedActivity, "updated");
+      
       res.json(updatedActivity);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -5448,9 +5456,16 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         });
       }
       
+      // Invalidate cache and broadcast update
+      invalidateActivitiesCache();
+      
       console.log(`✅ Navegação iniciada para atividade ${req.params.id}, ETA: ${gpsEtaMinutes || 'não disponível'}min`);
       
       const refreshedActivity = await storage.getActivity(req.params.id);
+      
+      // Broadcast the updated activity
+      broadcastActivityUpdate(refreshedActivity, "updated");
+      
       res.json({
         ...refreshedActivity,
         message: "Navegação iniciada com sucesso"
@@ -5613,6 +5628,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       console.log(`✅ Tempo de IDA registrado: ${minutesReported}min (ETA GPS: ${gpsEtaMinutes || 'N/A'}min)`);
+      
+      // Invalidate cache and broadcast update
+      invalidateActivitiesCache();
       
       res.json({
         activityStatus: "emExecucao",
