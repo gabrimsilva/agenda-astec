@@ -169,7 +169,8 @@ export default function RATs() {
   
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: [activitiesQueryUrl],
-    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
+    staleTime: 5 * 60 * 1000, // 5 minutos - cache reduzido para evitar dados obsoletos
+    gcTime: 10 * 60 * 1000, // 10 minutos - garbage collection
     retry: (failureCount, error: any) => {
       if (error?.status === 503 && failureCount < 5) return true;
       return failureCount < 1;
@@ -281,7 +282,11 @@ export default function RATs() {
 
     // Filter by technician (admin only)
     if (isAdmin && technicianFilter !== "all") {
+      console.log('[RATs Filter] Filtering by technician:', technicianFilter);
+      console.log('[RATs Filter] Total RATs before filter:', filtered.length);
+      console.log('[RATs Filter] Sample RAT technicianIds:', filtered.slice(0, 5).map(r => ({ id: r.id, technicianId: r.technicianId })));
       filtered = filtered.filter((rat) => rat.technicianId === technicianFilter);
+      console.log('[RATs Filter] RATs after technician filter:', filtered.length);
     }
 
     // Filter by sent status
@@ -372,10 +377,26 @@ export default function RATs() {
   const activitiesWithoutRat = useMemo(() => {
     const ratActivityIds = new Set(rats.map(r => r.activityId));
     
-    return activities
+    // Cut-off date: only show activities after 2026-02-23
+    // This applies REGARDLESS of the user's date range filter
+    const cutoffDate = new Date("2026-02-24"); // Changed to 24th to exclude activities on 23rd
+    cutoffDate.setHours(0, 0, 0, 0);
+    
+    console.log('[RATs] Cut-off date:', cutoffDate.toISOString());
+    console.log('[RATs] Total activities:', activities.length);
+    console.log('[RATs] Total rats:', rats.length);
+    console.log('[RATs] RAT activity IDs:', Array.from(ratActivityIds));
+    
+    const filtered = activities
       .filter((activity) => {
         // Only completed activities with work completed
         if (activity.status !== "concluido" || activity.workCompleted !== true) {
+          return false;
+        }
+        // Filter out activities older than or equal to cut-off date
+        const activityDate = new Date(activity.scheduledDate);
+        if (activityDate < cutoffDate) {
+          console.log(`[RATs] Filtering out old activity: ${activity.clientName} (${activityDate.toISOString()})`);
           return false;
         }
         // Only activities from this technician
@@ -388,9 +409,21 @@ export default function RATs() {
           return false;
         }
         // Exclude activities that already have a RAT
-        return !ratActivityIds.has(activity.id);
+        const hasRat = ratActivityIds.has(activity.id);
+        if (!hasRat) {
+          console.log(`[RATs] Activity WITHOUT RAT: ${activity.clientName} (${activity.id}) on ${activityDate.toISOString()}`);
+        }
+        return !hasRat;
       })
       .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+    
+    console.log(`[RATs] Activities without RAT after filter: ${filtered.length}`, filtered.map(a => ({
+      id: a.id,
+      client: a.clientName,
+      date: a.scheduledDate
+    })));
+    
+    return filtered;
   }, [activities, rats, myTechnician, user?.role, activityTypes]);
 
   const filteredActivitiesWithoutRat = useMemo(() => {
@@ -1315,8 +1348,8 @@ export default function RATs() {
                     
                     {/* Row 4: RAT enviada checkbox */}
                     {/* For imported PDFs: always show, marks as completa + sent */}
-                    {/* For manual RATs: only show when status is completa */}
-                    {(hasImportedPdf || rat.status === "completa") && (
+                    {/* For manual RATs: show when status is completa or rascunho */}
+                    {(hasImportedPdf || rat.status === "completa" || rat.status === "rascunho") && (
                       <div 
                         className="flex items-center gap-2 mt-3 pt-3 border-t"
                         onClick={(e) => e.stopPropagation()}
@@ -1324,22 +1357,39 @@ export default function RATs() {
                         <Checkbox
                           id={`sent-${rat.id}`}
                           checked={isSent}
-                          onCheckedChange={(checked) => {
-                            if (hasImportedPdf) {
-                              // For imported PDFs: set status to completa when marking as sent, keep completa when unmarking
-                              if (checked) {
-                                apiRequest("PUT", `/api/rats/${rat.id}`, { 
-                                  status: "completa", 
-                                  sentAt: new Date().toISOString() 
-                                }).then(() => queryClient.invalidateQueries({ queryKey: ["/api/rats"] }));
+                          onCheckedChange={async (checked) => {
+                            try {
+                              if (hasImportedPdf) {
+                                // For imported PDFs: use toggle-sent endpoint
+                                await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
+                                  isSent: !!checked,
+                                  changeStatus: !!checked // Change to completa when marking as sent
+                                });
                               } else {
-                                // Keep status as completa, just remove sentAt
-                                apiRequest("PUT", `/api/rats/${rat.id}`, { 
-                                  sentAt: null 
-                                }).then(() => queryClient.invalidateQueries({ queryKey: ["/api/rats"] }));
+                                // For manual RATs: use toggle-sent endpoint
+                                await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
+                                  isSent: !!checked,
+                                  changeStatus: !!checked // Change to completa when marking as sent
+                                });
+                                
+                                if (checked) {
+                                  toast({ 
+                                    title: "RAT marcada como enviada",
+                                    description: "Status alterado para completa" 
+                                  });
+                                } else {
+                                  toast({ 
+                                    title: "RAT desmarcada como enviada" 
+                                  });
+                                }
                               }
-                            } else {
-                              toggleSentMutation.mutate({ id: rat.id, isSent: !!checked });
+                              queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
+                            } catch (error: any) {
+                              toast({
+                                title: "Erro ao atualizar RAT",
+                                description: error.message,
+                                variant: "destructive"
+                              });
                             }
                           }}
                           data-testid={`checkbox-sent-${rat.id}`}
