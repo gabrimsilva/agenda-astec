@@ -69,6 +69,9 @@ function getRatsMinimalSelect() {
     status: rats.status,
     sentAt: rats.sentAt,
     createdAt: rats.createdAt,
+    openDate: rats.openDate, // Data da atividade (checkout)
+    technicianId: rats.technicianId, // Necessário para filtro no frontend
+    activityId: rats.activityId, // CRÍTICO: necessário para matching com activities
   };
 }
 
@@ -1951,6 +1954,20 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       const type = await storage.updateActivityType(req.params.id, { requiresTravel });
       res.json(type);
     } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Alternative POST endpoint for full activity type update (WAF blocks PUT/PATCH)
+  app.post("/api/activity-types/:id/update", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      console.log(`[Activity Type Update POST] ID: ${req.params.id}, Body:`, req.body);
+      const data = updateActivityTypeSchema.parse(req.body);
+      const type = await storage.updateActivityType(req.params.id, data);
+      console.log(`[Activity Type Update POST] Success:`, type);
+      res.json(type);
+    } catch (error: any) {
+      console.error(`[Activity Type Update POST] Error:`, error);
       res.status(400).json({ error: error.message });
     }
   });
@@ -4761,6 +4778,29 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
+  // POST alternatives for PATCH endpoints (WAF blocks PATCH)
+  app.post("/api/notifications/:id/mark-read", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const notificationId = req.params.id;
+      
+      await storage.markNotificationAsRead(notificationId, req.user!.userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Mark notification read error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/notifications/mark-all-read", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.user!.userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Mark all notifications read error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/notifications/send", authMiddleware, roleMiddleware(["admin"]), async (req: AuthRequest, res) => {
     try {
       const notificationData = insertNotificationSchema.omit({ isRead: true, sentToPush: true }).parse(req.body);
@@ -5364,12 +5404,15 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     try {
       const { originLatLng, destLatLng, gpsEtaMinutes, date } = req.body;
       
+      console.log(`🔍 [navigation/start] Recebido: activityId=${req.params.id}, date=${date}, gpsEtaMinutes=${gpsEtaMinutes}`);
+      
       const activity = await storage.getActivity(req.params.id);
       if (!activity) {
         return res.status(404).json({ error: "Activity not found" });
       }
       
       const isMultiDay = !!(activity.endDate);
+      console.log(`🔍 [navigation/start] isMultiDay=${isMultiDay}, activity.startDate=${activity.startDate}, activity.endDate=${activity.endDate}`);
       
       const technician = await storage.getTechnicianByUserId(req.user!.userId);
       if (!technician || (req.user!.role !== "admin" && activity.technicianId !== technician.id)) {
@@ -5381,6 +5424,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       if (isMultiDay) {
         const targetDate = date ? new Date(date + 'T00:00:00.000Z') : new Date();
         targetDate.setUTCHours(0, 0, 0, 0);
+        console.log(`🔍 [navigation/start] targetDate calculada: ${targetDate.toISOString()}`);
         const nextDay = new Date(targetDate);
         nextDay.setDate(nextDay.getDate() + 1);
         
@@ -5396,6 +5440,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           )
           .limit(1);
         
+        console.log(`🔍 [navigation/start] existingDayStatus encontrado:`, existingDayStatus ? `id=${existingDayStatus.id}, date=${existingDayStatus.date}, status=${existingDayStatus.status}` : 'nenhum');
+        
         if (existingDayStatus && (existingDayStatus.status === 'concluido' || existingDayStatus.status === 'emExecucao')) {
           return res.status(400).json({ 
             error: `Não é possível iniciar navegação. Status do dia: ${existingDayStatus.status}` 
@@ -5403,11 +5449,13 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         }
         
         if (existingDayStatus) {
+          console.log(`🔍 [navigation/start] Atualizando dayStatus ${existingDayStatus.id} para aCaminho`);
           await db
             .update(activityDayStatus)
             .set({ status: 'aCaminho', updatedAt: now })
             .where(eq(activityDayStatus.id, existingDayStatus.id));
         } else {
+          console.log(`🔍 [navigation/start] Criando novo dayStatus para date=${targetDate.toISOString()}`);
           await db
             .insert(activityDayStatus)
             .values({
@@ -7062,31 +7110,186 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
     }
   });
 
-  // Update RAT
-  app.put("/api/rats/:id", authMiddleware, async (req: AuthRequest, res) => {
+  // Mark RAT as sent/unsent (workaround for mod_security blocking PUT/PATCH)
+  app.post("/api/rats/:id/toggle-sent", authMiddleware, async (req: AuthRequest, res) => {
     try {
+      console.log(`[RAT Toggle Sent] User: ${req.user?.userId}, Role: ${req.user?.role}, RAT ID: ${req.params.id}`);
+      console.log(`[RAT Toggle Sent] Body:`, req.body);
+      
       const existingRat = await storage.getRat(req.params.id);
       
       if (!existingRat) {
+        console.log(`[RAT Toggle Sent] RAT not found: ${req.params.id}`);
         return res.status(404).json({ error: "RAT not found" });
       }
+      
+      console.log(`[RAT Toggle Sent] Existing RAT technicianId: ${existingRat.technicianId}, sentAt: ${existingRat.sentAt}, status: ${existingRat.status}`);
       
       // Check authorization
       if (req.user!.role !== "admin") {
         const technician = await storage.getTechnicianByUserId(req.user!.userId);
+        console.log(`[RAT Toggle Sent] Technician found:`, technician?.id);
         if (!technician || existingRat.technicianId !== technician.id) {
+          console.log(`[RAT Toggle Sent] Access denied - technician mismatch`);
           return res.status(403).json({ error: "Access denied" });
         }
+      } else {
+        console.log(`[RAT Toggle Sent] Admin access - bypassing technician check`);
+      }
+      
+      const { isSent, changeStatus } = req.body;
+      
+      const updateData: any = {};
+      
+      if (isSent) {
+        // Marking as sent
+        updateData.sentAt = new Date(); // Use Date object, not ISO string
+        if (changeStatus) {
+          updateData.status = "completa";
+        }
+      } else {
+        // Unmarking as sent
+        updateData.sentAt = null;
+      }
+      
+      console.log(`[RAT Toggle Sent] Update data:`, updateData);
+      
+      const rat = await storage.updateRat(req.params.id, updateData);
+      
+      console.log(`[RAT Toggle Sent] Updated RAT - status: ${rat.status}, sentAt: ${rat.sentAt}`);
+      
+      // Surgical patch — keeps admin cache alive through frequent auto-saves
+      patchRatInCache(rat.id, {
+        status: rat.status,
+        sentAt: rat.sentAt,
+        reportNumberManual: rat.reportNumberManual,
+        clientName: rat.clientName,
+        isSimplified: rat.isSimplified,
+        importedPdfUrl: rat.importedPdfUrl,
+        importedPdfFilename: rat.importedPdfFilename,
+        hasFormData: !!rat.formData,
+        hasSignature: !!rat.technicianSignature,
+        hasPhotos: !!(rat.photoSections || rat.photos),
+      });
+      res.json(rat);
+    } catch (error: any) {
+      console.error(`[RAT Toggle Sent] Error:`, error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Update RAT (PATCH method - works around mod_security blocking PUT)
+  app.patch("/api/rats/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      console.log(`[RAT Update PATCH] User: ${req.user?.userId}, Role: ${req.user?.role}, RAT ID: ${req.params.id}`);
+      console.log(`[RAT Update PATCH] Body:`, req.body);
+      
+      const existingRat = await storage.getRat(req.params.id);
+      
+      if (!existingRat) {
+        console.log(`[RAT Update PATCH] RAT not found: ${req.params.id}`);
+        return res.status(404).json({ error: "RAT not found" });
+      }
+      
+      console.log(`[RAT Update PATCH] Existing RAT technicianId: ${existingRat.technicianId}, sentAt: ${existingRat.sentAt}`);
+      
+      // Check authorization
+      if (req.user!.role !== "admin") {
+        const technician = await storage.getTechnicianByUserId(req.user!.userId);
+        console.log(`[RAT Update PATCH] Technician found:`, technician?.id);
+        if (!technician || existingRat.technicianId !== technician.id) {
+          console.log(`[RAT Update PATCH] Access denied - technician mismatch`);
+          return res.status(403).json({ error: "Access denied" });
+        }
+      } else {
+        console.log(`[RAT Update PATCH] Admin access - bypassing technician check`);
       }
       
       const data = updateRatSchema.parse(req.body);
       
       // Don't allow updating already sent RATs (unless admin)
-      // Exception: technicians CAN toggle sentAt (mark as sent/unsent)
+      // Exception: technicians CAN toggle sentAt (mark as sent/unsent) and update status when marking as sent
       if (existingRat.sentAt && req.user!.role !== "admin") {
-        // Check if the only change is to sentAt
-        const isOnlySentAtChange = Object.keys(data).length === 1 && 'sentAt' in data;
-        if (!isOnlySentAtChange) {
+        // Check if the only changes are to sentAt and/or status (when marking as sent)
+        const allowedKeys = ['sentAt', 'status'];
+        const isAllowedChange = Object.keys(data).every(key => allowedKeys.includes(key));
+        
+        // If trying to change sentAt to a value (marking as sent), allow status change too
+        const isMarkingAsSent = data.sentAt !== null && data.sentAt !== undefined;
+        
+        if (!isAllowedChange || (!isMarkingAsSent && Object.keys(data).length > 1)) {
+          console.log(`[RAT Update PATCH] Cannot modify sent RAT`);
+          return res.status(400).json({ error: "Cannot modify a sent RAT" });
+        }
+      }
+      
+      // Log for debugging status update
+      console.log(`[RAT Update PATCH] ID: ${req.params.id}, Status being set: ${data.status}, Current status: ${existingRat.status}`);
+      
+      const rat = await storage.updateRat(req.params.id, data);
+      
+      console.log(`[RAT Update PATCH] Updated RAT status: ${rat.status}`);
+      
+      // Surgical patch — keeps admin cache alive through frequent auto-saves
+      patchRatInCache(rat.id, {
+        status: rat.status,
+        sentAt: rat.sentAt,
+        reportNumberManual: rat.reportNumberManual,
+        clientName: rat.clientName,
+        isSimplified: rat.isSimplified,
+        importedPdfUrl: rat.importedPdfUrl,
+        importedPdfFilename: rat.importedPdfFilename,
+        hasFormData: !!rat.formData,
+        hasSignature: !!rat.technicianSignature,
+        hasPhotos: !!(rat.photoSections || rat.photos),
+      });
+      res.json(rat);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Update RAT
+  app.put("/api/rats/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      console.log(`[RAT Update] User: ${req.user?.userId}, Role: ${req.user?.role}, RAT ID: ${req.params.id}`);
+      console.log(`[RAT Update] Body:`, req.body);
+      
+      const existingRat = await storage.getRat(req.params.id);
+      
+      if (!existingRat) {
+        console.log(`[RAT Update] RAT not found: ${req.params.id}`);
+        return res.status(404).json({ error: "RAT not found" });
+      }
+      
+      console.log(`[RAT Update] Existing RAT technicianId: ${existingRat.technicianId}, sentAt: ${existingRat.sentAt}`);
+      
+      // Check authorization
+      if (req.user!.role !== "admin") {
+        const technician = await storage.getTechnicianByUserId(req.user!.userId);
+        console.log(`[RAT Update] Technician found:`, technician?.id);
+        if (!technician || existingRat.technicianId !== technician.id) {
+          console.log(`[RAT Update] Access denied - technician mismatch`);
+          return res.status(403).json({ error: "Access denied" });
+        }
+      } else {
+        console.log(`[RAT Update] Admin access - bypassing technician check`);
+      }
+      
+      const data = updateRatSchema.parse(req.body);
+      
+      // Don't allow updating already sent RATs (unless admin)
+      // Exception: technicians CAN toggle sentAt (mark as sent/unsent) and update status when marking as sent
+      if (existingRat.sentAt && req.user!.role !== "admin") {
+        // Check if the only changes are to sentAt and/or status (when marking as sent)
+        const allowedKeys = ['sentAt', 'status'];
+        const isAllowedChange = Object.keys(data).every(key => allowedKeys.includes(key));
+        
+        // If trying to change sentAt to a value (marking as sent), allow status change too
+        const isMarkingAsSent = data.sentAt !== null && data.sentAt !== undefined;
+        
+        if (!isAllowedChange || (!isMarkingAsSent && Object.keys(data).length > 1)) {
+          console.log(`[RAT Update] Cannot modify sent RAT`);
           return res.status(400).json({ error: "Cannot modify a sent RAT" });
         }
       }
