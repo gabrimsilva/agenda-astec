@@ -1151,25 +1151,28 @@ export default function Calendar() {
         </>
       )}
 
-      <Card className="p-4">
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Categorias:</span>
+      {/* Categorias - Oculto para assistente e admin */}
+      {user?.role !== "assistente" && user?.role !== "admin" && (
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Categorias:</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                Efetivo
+              </Badge>
+              <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                Adicional
+              </Badge>
+              <Badge className="bg-red-500 hover:bg-red-600">
+                Perda
+              </Badge>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Badge className="bg-emerald-500 hover:bg-emerald-600">
-              Efetivo
-            </Badge>
-            <Badge className="bg-yellow-500 hover:bg-yellow-600">
-              Adicional
-            </Badge>
-            <Badge className="bg-red-500 hover:bg-red-600">
-              Perda
-            </Badge>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

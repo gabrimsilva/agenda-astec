@@ -393,13 +393,19 @@ export default function Calendar() {
   const { start: monthStart, end: monthEnd } = getMonthRange(date);
 
   const { data: activities = [] } = useQuery<Activity[]>({
-    queryKey: ["/api/activities", selectedUser],
+    queryKey: ["/api/activities", selectedUser, monthStart.toISOString(), monthEnd.toISOString()],
     queryFn: async () => {
-      // Build URL with query params for filtered technician views
-      let url = `/api/activities`;
+      // Build URL with query params for date range and filtered technician views
+      const params = new URLSearchParams({
+        startDate: monthStart.toISOString(),
+        endDate: monthEnd.toISOString(),
+      });
+      
       if (selectedUser && selectedUser !== "all" && selectedUser !== "my-calendar") {
-        url += `?technicianId=${encodeURIComponent(selectedUser)}`;
+        params.append("technicianId", selectedUser);
       }
+      
+      const url = `/api/activities?${params.toString()}`;
       
       const response = await fetch(url, {
         headers: {
@@ -2457,25 +2463,28 @@ export default function Calendar() {
 
       {/* Legenda e Atalhos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-4">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Palette className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Categorias:</span>
+        {/* Categorias - Oculto para assistente e admin */}
+        {user?.role !== "assistente" && user?.role !== "admin" && (
+          <Card className="p-4">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Categorias:</span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                  Efetivo
+                </Badge>
+                <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                  Adicional
+                </Badge>
+                <Badge className="bg-red-500 hover:bg-red-600">
+                  Perda
+                </Badge>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Badge className="bg-emerald-500 hover:bg-emerald-600">
-                Efetivo
-              </Badge>
-              <Badge className="bg-yellow-500 hover:bg-yellow-600">
-                Adicional
-              </Badge>
-              <Badge className="bg-red-500 hover:bg-red-600">
-                Perda
-              </Badge>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         <Card className="p-4">
           <div className="flex flex-wrap gap-3 items-center justify-between">
