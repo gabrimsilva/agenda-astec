@@ -4256,7 +4256,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       console.log(`[time-breakdown] Fetching entries from ${startDate.toISOString()} to ${endDate.toISOString()}`);
       console.log(`[time-breakdown] Conditions:`, conditions);
       
-      const entries = await db
+      // Fetch manual time entries
+      const manualEntries = await db
         .select({
           id: timeEntries.id,
           technicianId: timeEntries.technicianId,
@@ -4276,6 +4277,115 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .innerJoin(activityTypes, eq(timeEntries.activityTypeId, activityTypes.id))
         .innerJoin(technicians, eq(timeEntries.technicianId, technicians.id))
         .where(and(...conditions));
+
+      // Fetch completed activities with actual time records
+      const activityConditions = [
+        gte(activities.scheduledDate, startDate),
+        lte(activities.scheduledDate, endDate),
+        eq(activities.status, "concluido"),
+      ];
+
+      // Apply same technician filter as timeEntries
+      if (userId) {
+        const [technician] = await db
+          .select()
+          .from(technicians)
+          .where(eq(technicians.userId, userId as string))
+          .limit(1);
+        if (technician) {
+          activityConditions.push(eq(activities.technicianId, technician.id));
+        }
+      } else if (technicianId && technicianId !== "all") {
+        activityConditions.push(eq(activities.technicianId, technicianId as string));
+      }
+
+      const completedActivities = await db
+        .select({
+          id: activities.id,
+          technicianId: activities.technicianId,
+          technicianName: technicians.name,
+          activityTypeId: activities.activityTypeId,
+          activityName: activityTypes.name,
+          category: activityTypes.category,
+          color: activityTypes.color,
+          icon: activityTypes.icon,
+          isAutomatic: activityTypes.isAutomatic,
+          scheduledDate: activities.scheduledDate,
+          actualTravelMinutes: activities.actualTravelMinutes,
+          actualDurationMinutes: activities.actualDurationMinutes,
+          actualReturnMinutes: activities.actualReturnMinutes,
+        })
+        .from(activities)
+        .innerJoin(activityTypes, eq(activities.activityTypeId, activityTypes.id))
+        .innerJoin(technicians, eq(activities.technicianId, technicians.id))
+        .where(and(...activityConditions));
+
+      // Convert activities to entries format
+      const activityEntries: typeof manualEntries = [];
+      
+      for (const activity of completedActivities) {
+        const workDate = new Date(activity.scheduledDate);
+        
+        // IDA (Travel) - perda if exists
+        if (activity.actualTravelMinutes && activity.actualTravelMinutes > 0) {
+          activityEntries.push({
+            id: `${activity.id}_travel`,
+            technicianId: activity.technicianId,
+            technicianName: activity.technicianName,
+            activityTypeId: activity.activityTypeId,
+            activityName: `${activity.activityName} - IDA`,
+            category: 'perda',
+            color: activity.color,
+            icon: activity.icon,
+            isAutomatic: activity.isAutomatic,
+            workDate,
+            minutes: activity.actualTravelMinutes,
+            source: 'activity',
+            notes: null,
+          });
+        }
+        
+        // EXECUÇÃO (Duration) - efetivo
+        if (activity.actualDurationMinutes && activity.actualDurationMinutes > 0) {
+          activityEntries.push({
+            id: `${activity.id}_duration`,
+            technicianId: activity.technicianId,
+            technicianName: activity.technicianName,
+            activityTypeId: activity.activityTypeId,
+            activityName: `${activity.activityName} - EXECUÇÃO`,
+            category: activity.category, // Use activity type's category (usually 'efetivo')
+            color: activity.color,
+            icon: activity.icon,
+            isAutomatic: activity.isAutomatic,
+            workDate,
+            minutes: activity.actualDurationMinutes,
+            source: 'activity',
+            notes: null,
+          });
+        }
+        
+        // VOLTA (Return) - perda if exists
+        if (activity.actualReturnMinutes && activity.actualReturnMinutes > 0) {
+          activityEntries.push({
+            id: `${activity.id}_return`,
+            technicianId: activity.technicianId,
+            technicianName: activity.technicianName,
+            activityTypeId: activity.activityTypeId,
+            activityName: `${activity.activityName} - VOLTA`,
+            category: 'perda',
+            color: activity.color,
+            icon: activity.icon,
+            isAutomatic: activity.isAutomatic,
+            workDate,
+            minutes: activity.actualReturnMinutes,
+            source: 'activity',
+            notes: null,
+          });
+        }
+      }
+
+      // Combine manual entries and activity entries
+      const entries = [...manualEntries, ...activityEntries];
       
       // Calculate totals by category
       const totals = {
