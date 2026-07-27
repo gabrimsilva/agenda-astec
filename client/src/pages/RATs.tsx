@@ -1217,10 +1217,10 @@ export default function RATs() {
                               e.stopPropagation();
                               handleViewPdf(rat);
                             }}
-                            title="Ver PDF importado"
+                            title="Baixar PDF importado"
                             data-testid={`button-view-pdf-${rat.id}`}
                           >
-                            <Download className="h-4 w-4 text-purple-600" />
+                            <Download className="h-4 w-4 text-blue-600" />
                           </Button>
                         )}
                         {/* Upload PDF button for RATs without PDF */}
@@ -1268,7 +1268,7 @@ export default function RATs() {
                             <Download className="h-4 w-4 text-blue-600" />
                           </Button>
                         )}
-                        {/* Preview button for manually created RATs */}
+                        {/* Preview button for manually created RATs (NOT for imported PDFs) */}
                         {!rat.importedPdfUrl && (
                           <Button
                             variant="ghost"
@@ -1277,6 +1277,7 @@ export default function RATs() {
                               e.stopPropagation();
                               handlePreview(rat);
                             }}
+                            title="Visualizar RAT no navegador"
                             data-testid={`button-preview-${rat.id}`}
                           >
                             <Eye className="h-4 w-4" />
