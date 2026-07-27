@@ -60,6 +60,10 @@ const formSchema = z.object({
   endTime: z.string().min(1, "Hora final é obrigatória"),
   transportMode: z.string().optional().nullable(), // carro, aviao, onibus, outro, nenhum
   notes: z.string().optional().nullable(),
+  // Campos de tempo das etapas
+  actualTravelMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
+  actualDurationMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
+  actualReturnMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
 }).refine((data) => {
   // Se isMultiDay é true, endDate é obrigatório e deve ser >= scheduledDate
   if (data.isMultiDay) {
@@ -1721,6 +1725,9 @@ export default function MyAgenda() {
       endTime: effectiveEndTime,
       transportMode: (activity as any).transportMode || "carro",
       notes: activity.notes || "",
+      actualTravelMinutes: (activity as any).actualTravelMinutes ?? null,
+      actualDurationMinutes: (activity as any).actualDurationMinutes ?? null,
+      actualReturnMinutes: (activity as any).actualReturnMinutes ?? null,
     });
     setEditActivityDialogOpen(true);
   };
@@ -1786,6 +1793,9 @@ export default function MyAgenda() {
           city: data.city,
           state: data.state,
           transportMode: data.transportMode || "carro",
+          actualTravelMinutes: data.actualTravelMinutes,
+          actualDurationMinutes: data.actualDurationMinutes,
+          actualReturnMinutes: data.actualReturnMinutes,
         };
         
         // Only include optional fields if they have values
@@ -2468,6 +2478,78 @@ export default function MyAgenda() {
                   </FormItem>
                 )}
               />
+
+              {/* Campos de tempo das etapas (IDA, EXECUÇÃO, VOLTA) */}
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
+                <p className="text-sm font-medium">Tempos das Etapas (minutos)</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={editForm.control}
+                    name="actualTravelMinutes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">IDA</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="--"
+                            {...field} 
+                            value={field.value ?? ""}
+                            data-testid="edit-input-travel-time" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="actualDurationMinutes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">EXECUÇÃO</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="--"
+                            {...field} 
+                            value={field.value ?? ""}
+                            data-testid="edit-input-duration-time" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="actualReturnMinutes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">VOLTA</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="--"
+                            {...field} 
+                            value={field.value ?? ""}
+                            data-testid="edit-input-return-time" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Deixe em branco para manter os valores calculados automaticamente
+                </p>
+              </div>
 
               <DialogFooter>
                 <Button
