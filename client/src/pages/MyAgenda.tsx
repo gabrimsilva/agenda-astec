@@ -2495,8 +2495,11 @@ export default function MyAgenda() {
                             type="number" 
                             min="0"
                             placeholder="--"
-                            {...field} 
                             value={field.value ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? null : parseInt(val, 10));
+                            }}
                             data-testid="edit-input-travel-time" 
                           />
                         </FormControl>
@@ -2516,8 +2519,11 @@ export default function MyAgenda() {
                             type="number" 
                             min="0"
                             placeholder="--"
-                            {...field} 
                             value={field.value ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? null : parseInt(val, 10));
+                            }}
                             data-testid="edit-input-duration-time" 
                           />
                         </FormControl>
@@ -2537,8 +2543,11 @@ export default function MyAgenda() {
                             type="number" 
                             min="0"
                             placeholder="--"
-                            {...field} 
                             value={field.value ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? null : parseInt(val, 10));
+                            }}
                             data-testid="edit-input-return-time" 
                           />
                         </FormControl>
