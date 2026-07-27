@@ -2390,6 +2390,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       console.log(`[${req.method} /api/activities/:id] Request body:`, JSON.stringify(req.body, null, 2));
       const data = updateActivitySchema.parse(req.body);
       console.log(`[${req.method} /api/activities/:id] Parsed data:`, JSON.stringify(data, null, 2));
+      console.log(`[${req.method} /api/activities/:id] Time fields in parsed data:`, {
+        actualTravelMinutes: data.actualTravelMinutes,
+        actualDurationMinutes: data.actualDurationMinutes,
+        actualReturnMinutes: data.actualReturnMinutes,
+      });
       console.log(`[${req.method} /api/activities/:id] endDate in parsed data:`, data.endDate);
       const activityId = req.params.id;
       
@@ -2564,6 +2569,13 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       const activity = await storage.updateActivity(req.params.id, data);
+      
+      console.log(`[${req.method} /api/activities/:id] Activity updated successfully:`, {
+        id: activity.id,
+        actualTravelMinutes: activity.actualTravelMinutes,
+        actualDurationMinutes: activity.actualDurationMinutes,
+        actualReturnMinutes: activity.actualReturnMinutes,
+      });
       
       // Invalidate activities cache to force refresh
       invalidateActivitiesCache();
