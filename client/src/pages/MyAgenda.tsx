@@ -1754,6 +1754,12 @@ export default function MyAgenda() {
   const onSubmitEditActivity = async (data: z.infer<typeof formSchema>) => {
     if (!activityBeingEdited) return;
 
+    console.log("[MyAgenda] Form data antes de enviar:", {
+      actualTravelMinutes: data.actualTravelMinutes,
+      actualDurationMinutes: data.actualDurationMinutes,
+      actualReturnMinutes: data.actualReturnMinutes,
+    });
+
     try {
       const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
       if (locs.length > 0 && !(data.location && data.location.trim())) {
