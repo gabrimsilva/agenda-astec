@@ -58,7 +58,7 @@ import { eq, and, gte, lte, desc, sql, like, ilike, or, isNotNull } from "drizzl
 // This prevents accidentally overwriting existing data with null values
 function filterUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null)
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
   ) as Partial<T>;
 }
 
