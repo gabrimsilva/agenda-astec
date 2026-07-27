@@ -528,8 +528,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                           
                           {/* Botões de ação */}
                           <div className="space-y-2 pt-2">
-                            {/* Botão Editar - apenas para atividades não concluídas/canceladas */}
-                            {stop.statusLabel !== "concluido" && stop.statusLabel !== "concluidoSemSucesso" && stop.statusLabel !== "cancelado" && onEdit && (
+                            {/* Botão Editar - Permite edição em qualquer status */}
+                            {onEdit && (
                               <motion.div
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
