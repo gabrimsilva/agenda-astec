@@ -2500,6 +2500,9 @@ export default function MyAgenda() {
                               const val = e.target.value;
                               field.onChange(val === "" ? null : parseInt(val, 10));
                             }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
                             data-testid="edit-input-travel-time" 
                           />
                         </FormControl>
@@ -2524,6 +2527,9 @@ export default function MyAgenda() {
                               const val = e.target.value;
                               field.onChange(val === "" ? null : parseInt(val, 10));
                             }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
                             data-testid="edit-input-duration-time" 
                           />
                         </FormControl>
@@ -2548,6 +2554,9 @@ export default function MyAgenda() {
                               const val = e.target.value;
                               field.onChange(val === "" ? null : parseInt(val, 10));
                             }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
                             data-testid="edit-input-return-time" 
                           />
                         </FormControl>
