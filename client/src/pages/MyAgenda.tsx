@@ -931,6 +931,9 @@ export default function MyAgenda() {
         startTime: data.startTime,
         endTime: data.endTime,
         transportMode: data.transportMode || "carro",
+        actualTravelMinutes: data.actualTravelMinutes,
+        actualDurationMinutes: data.actualDurationMinutes,
+        actualReturnMinutes: data.actualReturnMinutes,
       };
       
       // Only include optional fields if they have values
