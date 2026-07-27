@@ -2713,8 +2713,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         return res.status(403).json({ error: "Você não tem permissão para excluir esta atividade" });
       }
       
-      // Não permitir exclusão de atividades concluídas ou canceladas
-      if (activity.status === "concluido" || activity.status === "cancelado") {
+      // Admin pode excluir qualquer atividade, independente do status
+      // Técnicos não podem excluir atividades concluídas ou canceladas
+      if (!isAdmin && (activity.status === "concluido" || activity.status === "cancelado")) {
         return res.status(400).json({ 
           error: `Não é possível excluir atividades com status "${activity.status}". Apenas atividades planejadas, a caminho ou em execução podem ser excluídas.` 
         });
@@ -2785,8 +2786,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         return res.status(403).json({ error: "Você não tem permissão para excluir esta atividade" });
       }
       
-      // Não permitir exclusão de atividades concluídas ou canceladas
-      if (activity.status === "concluido" || activity.status === "cancelado") {
+      // Admin pode excluir qualquer atividade, independente do status
+      // Técnicos não podem excluir atividades concluídas ou canceladas
+      if (!isAdmin && (activity.status === "concluido" || activity.status === "cancelado")) {
         return res.status(400).json({ 
           error: `Não é possível excluir atividades com status "${activity.status}". Apenas atividades planejadas, a caminho ou em execução podem ser excluídas.` 
         });
