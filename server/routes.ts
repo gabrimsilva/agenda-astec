@@ -2390,6 +2390,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       console.log(`[${req.method} /api/activities/:id] Request body:`, JSON.stringify(req.body, null, 2));
       const data = updateActivitySchema.parse(req.body);
       console.log(`[${req.method} /api/activities/:id] Parsed data:`, JSON.stringify(data, null, 2));
+      console.log(`[${req.method} /api/activities/:id] endDate in parsed data:`, data.endDate);
       const activityId = req.params.id;
       
       // Helper function to extract date string (YYYY-MM-DD) from various formats
@@ -4240,6 +4241,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       // Query time entries with activity type details
       // IMPORTANT: Use timeEntries.category for the category, not activityTypes.category
       // because the checkout process overrides the category with travelClassification (adicional/perda)
+      console.log(`[time-breakdown] Fetching entries from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      console.log(`[time-breakdown] Conditions:`, conditions);
+      
       const entries = await db
         .select({
           id: timeEntries.id,
@@ -4308,6 +4312,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         
         // Extract justification from notes if present
         if (entry.notes && entry.notes.includes("Justificativa:")) {
+          console.log(`[time-breakdown] Found justification for date ${entry.workDate.toISOString()}: ${entry.notes}`);
           const justificationMatch = entry.notes.match(/Justificativa:\s*(.+?)$/);
           if (justificationMatch) {
             breakdown[breakdownKey].justifications.push({
@@ -7322,6 +7327,96 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
   // Mark RAT as complete
   app.patch("/api/rats/:id/complete", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const existingRat = await storage.getRat(req.params.id);
+      
+      if (!existingRat) {
+        return res.status(404).json({ error: "RAT not found" });
+      }
+      
+      // Check authorization
+      if (req.user!.role !== "admin") {
+        const technician = await storage.getTechnicianByUserId(req.user!.userId);
+        if (!technician || existingRat.technicianId !== technician.id) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+      
+      const rat = await storage.updateRat(req.params.id, {
+        status: "completa",
+        closeDate: new Date(),
+      });
+      
+      patchRatInCache(rat.id, { status: "completa" });
+      res.json(rat);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // POST alias for updating RAT (corporate WAF blocks PUT)
+  app.post("/api/rats/:id/update", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      console.log(`[RAT Update POST] User: ${req.user?.userId}, Role: ${req.user?.role}, RAT ID: ${req.params.id}`);
+      console.log(`[RAT Update POST] Body:`, req.body);
+      
+      const existingRat = await storage.getRat(req.params.id);
+      
+      if (!existingRat) {
+        console.log(`[RAT Update POST] RAT not found: ${req.params.id}`);
+        return res.status(404).json({ error: "RAT not found" });
+      }
+      
+      console.log(`[RAT Update POST] Existing RAT technicianId: ${existingRat.technicianId}, sentAt: ${existingRat.sentAt}`);
+      
+      // Check authorization
+      if (req.user!.role !== "admin") {
+        const technician = await storage.getTechnicianByUserId(req.user!.userId);
+        console.log(`[RAT Update POST] Technician found:`, technician?.id);
+        if (!technician || existingRat.technicianId !== technician.id) {
+          console.log(`[RAT Update POST] Access denied - technician mismatch`);
+          return res.status(403).json({ error: "Access denied" });
+        }
+      } else {
+        console.log(`[RAT Update POST] Admin access - bypassing technician check`);
+      }
+      
+      const data = updateRatSchema.parse(req.body);
+      
+      // Prevent updates to sent RATs (unless admin)
+      if (existingRat.sentAt && req.user!.role !== "admin") {
+        console.log(`[RAT Update POST] Cannot update sent RAT (non-admin)`);
+        return res.status(403).json({ error: "Cannot update sent RAT" });
+      }
+      
+      const rat = await storage.updateRat(req.params.id, data);
+      
+      // Surgical cache patch for the updated RAT (keeps admin's cache warm)
+      const lightFields: any = {};
+      if (data.status !== undefined) lightFields.status = data.status;
+      if (data.reportNumberManual !== undefined) lightFields.reportNumberManual = data.reportNumberManual;
+      if (data.clientNameEditable !== undefined) lightFields.clientName = data.clientNameEditable;
+      if (data.openDate !== undefined) lightFields.openDate = data.openDate;
+      patchRatInCache(rat.id, lightFields);
+      
+      console.log(`[RAT Update POST] Success - RAT updated:`, {
+        id: rat.id,
+        status: rat.status,
+        isSimplified: rat.isSimplified,
+        importedPdfUrl: rat.importedPdfUrl,
+        importedPdfFilename: rat.importedPdfFilename,
+        hasFormData: !!rat.formData,
+        hasSignature: !!rat.technicianSignature,
+        hasPhotos: !!(rat.photoSections || rat.photos),
+      });
+      res.json(rat);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // POST alias for completing RAT (corporate WAF blocks PATCH)
+  app.post("/api/rats/:id/complete", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const existingRat = await storage.getRat(req.params.id);
       

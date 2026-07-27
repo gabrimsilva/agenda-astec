@@ -625,11 +625,12 @@ export default function Calendar() {
         status: data.status,
       };
       
-      const response = await apiRequest("PUT", `/api/activities/${id}`, payload);
+      const response = await apiRequest("POST", `/api/activities/${id}/update`, payload);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], exact: false });
       toast({
         title: "Atividade atualizada",
         description: "A atividade foi atualizada com sucesso.",
@@ -676,7 +677,7 @@ export default function Calendar() {
         status: activity.status,
       };
       
-      const response = await apiRequest("PUT", `/api/activities/${activity.id}`, payload);
+      const response = await apiRequest("POST", `/api/activities/${activity.id}/update`, payload);
       return response.json();
     },
     onMutate: async ({ activity, start, end }) => {
@@ -720,9 +721,10 @@ export default function Calendar() {
         variant: "destructive",
       });
     },
-    onSettled: () => {
+    onSettled: async () => {
       // Refetch para garantir sincronização com o servidor
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
+      await queryClient.invalidateQueries({ queryKey: ["/api/activities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["/api/activities"], exact: false });
     },
   });
 

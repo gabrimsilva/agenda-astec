@@ -12,7 +12,8 @@ export async function createActivityType(data: InsertActivityType): Promise<Acti
 }
 
 export async function updateActivityType(id: string, data: Partial<InsertActivityType>): Promise<ActivityType> {
-  const res = await apiRequest("PUT", `/api/activity-types/${id}`, data);
+  // Use POST endpoint instead of PUT to avoid WAF blocking PUT requests
+  const res = await apiRequest("POST", `/api/activity-types/${id}/update`, data);
   return res.json();
 }
 

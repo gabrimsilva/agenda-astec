@@ -54,10 +54,11 @@ import {
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, like, ilike, or, isNotNull } from "drizzle-orm";
 
-// Helper function to remove undefined values from update objects
+// Helper function to remove undefined and null values from update objects
+// This prevents accidentally overwriting existing data with null values
 function filterUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, v]) => v !== undefined)
+    Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null)
   ) as Partial<T>;
 }
 

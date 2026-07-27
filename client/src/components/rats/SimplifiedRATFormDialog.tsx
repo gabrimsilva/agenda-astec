@@ -449,7 +449,7 @@ export function SimplifiedRATFormDialog({
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return apiRequest("PUT", `/api/rats/${id}`, data);
+      return apiRequest("POST", `/api/rats/${id}/update`, data);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
@@ -461,10 +461,23 @@ export function SimplifiedRATFormDialog({
       }
     },
     onError: (error: any) => {
+      // Detectar erro 413 (Request Entity Too Large)
+      let errorMessage = error.message || "Erro desconhecido";
+      let errorTitle = "Erro ao atualizar RAT";
+      
+      if (errorMessage.includes("413") || errorMessage.includes("Request Entity Too Large") || errorMessage.includes("Too Large")) {
+        errorTitle = "Fotos muito grandes";
+        errorMessage = "As fotos adicionadas são muito grandes. Tente adicionar menos fotos ou tirar fotos com menor resolução.";
+      } else if (errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html>")) {
+        errorTitle = "Fotos muito grandes";
+        errorMessage = "As fotos adicionadas são muito grandes. O sistema comprime automaticamente, mas o total ainda excede o limite. Tente adicionar menos fotos.";
+      }
+      
       toast({
-        title: "Erro ao atualizar RAT",
-        description: error.message,
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
+        duration: 8000
       });
     },
   });
@@ -473,15 +486,26 @@ export function SimplifiedRATFormDialog({
 
   const autoSaveMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return apiRequest("PUT", `/api/rats/${id}`, data);
+      return apiRequest("POST", `/api/rats/${id}/update`, data);
     },
     onSuccess: () => {
       setLastAutoSave(new Date());
       setIsAutoSaving(false);
       queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
     },
-    onError: () => {
+    onError: (error: any) => {
       setIsAutoSaving(false);
+      console.error("Auto-save error:", error);
+      
+      const errorMessage = error?.message || "";
+      if (errorMessage.includes("413") || errorMessage.includes("Too Large") || errorMessage.includes("<!DOCTYPE")) {
+        toast({ 
+          title: "Atenção: Fotos muito grandes", 
+          description: "O salvamento automático falhou. Há muitas fotos ou elas são muito grandes. Remova algumas fotos.",
+          variant: "destructive",
+          duration: 8000
+        });
+      }
     },
   });
 

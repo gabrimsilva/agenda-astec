@@ -20,15 +20,41 @@ export function useActivityRealtime() {
 
     socket.on("connect", () => {
       console.log("[ActivityRealtime] Connected to server");
+      
+      // Force refetch on reconnect to ensure fresh data
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return Array.isArray(queryKey) && queryKey[0] === "/api/activities";
+        }
+      });
     });
 
     socket.on("activity_update", (data: { activity: any; action: "created" | "updated" | "deleted" }) => {
       console.log("[ActivityRealtime] Received activity update:", data.action, data.activity?.id);
       
-      // Invalidate and immediately refetch to ensure fresh data
-      // Note: Pass empty queryKey to invalidate all /api/activities variants
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
-      queryClient.refetchQueries({ queryKey: ["/api/activities"] });
+      // Invalidate ALL activity-related queries to force fresh data
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            (Array.isArray(queryKey) && queryKey[0] === "/api/activities") ||
+            (Array.isArray(queryKey) && queryKey[0] === "/api/activity-day-statuses/all")
+          );
+        }
+      });
+      
+      // Force immediate refetch of all matching queries
+      queryClient.refetchQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            (Array.isArray(queryKey) && queryKey[0] === "/api/activities") ||
+            (Array.isArray(queryKey) && queryKey[0] === "/api/activity-day-statuses/all")
+          );
+        },
+        type: "all"
+      });
     });
 
     socket.on("disconnect", (reason) => {
@@ -39,7 +65,28 @@ export function useActivityRealtime() {
       console.error("[ActivityRealtime] Socket error:", error);
     });
 
+    // Refetch when window regains focus (user switches back to tab)
+    const handleFocus = () => {
+      console.log("[ActivityRealtime] Window focused, refreshing data...");
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return Array.isArray(queryKey) && queryKey[0] === "/api/activities";
+        }
+      });
+      queryClient.refetchQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return Array.isArray(queryKey) && queryKey[0] === "/api/activities";
+        },
+        type: "all"
+      });
+    };
+    
+    window.addEventListener("focus", handleFocus);
+
     return () => {
+      window.removeEventListener("focus", handleFocus);
       socket.disconnect();
       socketRef.current = null;
     };

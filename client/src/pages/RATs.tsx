@@ -144,7 +144,7 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
-    staleTime: 60 * 60 * 1000, // 1 hora - cache muito mais agressivo
+    staleTime: 5 * 60 * 1000, // 5 minutos - reduzido para sincronizar com activities
     refetchOnWindowFocus: false,
     retry: (failureCount, error: any) => {
       // Se retornar 503 (aquecendo), retry com delay. Senão, não retry
@@ -169,8 +169,7 @@ export default function RATs() {
   
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: [activitiesQueryUrl],
-    staleTime: 5 * 60 * 1000, // 5 minutos - cache reduzido para evitar dados obsoletos
-    gcTime: 10 * 60 * 1000, // 10 minutos - garbage collection
+    staleTime: 60 * 60 * 1000, // 1 hora - cache agressivo
     retry: (failureCount, error: any) => {
       if (error?.status === 503 && failureCount < 5) return true;
       return failureCount < 1;
@@ -210,25 +209,6 @@ export default function RATs() {
     onError: (error: any) => {
       toast({
         title: "Erro ao excluir RAT",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Toggle sent status mutation
-  const toggleSentMutation = useMutation({
-    mutationFn: async ({ id, isSent }: { id: string; isSent: boolean }) => {
-      return apiRequest("PUT", `/api/rats/${id}`, {
-        sentAt: isSent ? new Date().toISOString() : null,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar status",
         description: error.message,
         variant: "destructive",
       });
@@ -1359,17 +1339,34 @@ export default function RATs() {
                           checked={isSent}
                           onCheckedChange={async (checked) => {
                             try {
+                              // Atualização otimista: atualiza localmente ANTES de chamar API
+                              const previousRats = queryClient.getQueryData<Rat[]>(["/api/rats"]);
+                              
+                              if (previousRats) {
+                                queryClient.setQueryData<Rat[]>(
+                                  ["/api/rats"],
+                                  previousRats.map(r => 
+                                    r.id === rat.id 
+                                      ? { 
+                                          ...r, 
+                                          sentAt: checked ? new Date().toISOString() : null,
+                                          status: (checked && hasImportedPdf) ? "completa" : r.status
+                                        }
+                                      : r
+                                  )
+                                );
+                              }
+                              
+                              // Chama API em background
                               if (hasImportedPdf) {
-                                // For imported PDFs: use toggle-sent endpoint
                                 await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
                                   isSent: !!checked,
-                                  changeStatus: !!checked // Change to completa when marking as sent
+                                  changeStatus: !!checked
                                 });
                               } else {
-                                // For manual RATs: use toggle-sent endpoint
                                 await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
                                   isSent: !!checked,
-                                  changeStatus: !!checked // Change to completa when marking as sent
+                                  changeStatus: !!checked
                                 });
                                 
                                 if (checked) {
@@ -1383,8 +1380,12 @@ export default function RATs() {
                                   });
                                 }
                               }
-                              queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
+                              
+                              // NÃO invalida o cache - mantém os dados carregados
+                              // queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
                             } catch (error: any) {
+                              // Em caso de erro, reverte a mudança otimista
+                              queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
                               toast({
                                 title: "Erro ao atualizar RAT",
                                 description: error.message,

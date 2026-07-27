@@ -704,7 +704,7 @@ export function RATFormDialog({
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Rat> }) => {
-      return apiRequest("PUT", `/api/rats/${id}`, data);
+      return apiRequest("POST", `/api/rats/${id}/update`, data);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
@@ -717,18 +717,32 @@ export function RATFormDialog({
     },
     onError: (error: any) => {
       console.error("Error updating RAT:", error);
+      
+      // Detectar erro 413 (Request Entity Too Large)
+      let errorMessage = error.message || "Erro desconhecido";
+      let errorTitle = "Erro ao atualizar RAT";
+      
+      if (errorMessage.includes("413") || errorMessage.includes("Request Entity Too Large") || errorMessage.includes("Too Large")) {
+        errorTitle = "Fotos muito grandes";
+        errorMessage = "As fotos adicionadas são muito grandes. O sistema comprime automaticamente, mas o total ainda excede o limite. Tente: 1) Adicionar menos fotos por vez, 2) Salvar entre cada foto adicionada, ou 3) Tirar fotos com menor resolução.";
+      } else if (errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html>")) {
+        // Erro HTML do servidor (geralmente 413 do Apache/WAF)
+        errorTitle = "Fotos muito grandes";
+        errorMessage = "As fotos adicionadas são muito grandes. O sistema comprime automaticamente, mas o total ainda excede o limite do servidor. Tente adicionar menos fotos ou salvá-las uma por vez.";
+      }
+      
       toast({ 
-        title: "Erro ao atualizar RAT", 
-        description: error.message || "Erro desconhecido",
+        title: errorTitle, 
+        description: errorMessage,
         variant: "destructive",
-        duration: 5000
+        duration: 8000
       });
     },
   });
 
   const completeMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("PATCH", `/api/rats/${id}/complete`);
+      return apiRequest("POST", `/api/rats/${id}/complete`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
@@ -753,7 +767,7 @@ export function RATFormDialog({
   // Auto-save mutation (silent, no toast on success)
   const autoSaveMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Rat> }) => {
-      return apiRequest("PUT", `/api/rats/${id}`, data);
+      return apiRequest("POST", `/api/rats/${id}/update`, data);
     },
     onSuccess: () => {
       setLastAutoSave(new Date());
@@ -761,8 +775,20 @@ export function RATFormDialog({
       // Invalidate cache so reopening the form loads fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
     },
-    onError: () => {
+    onError: (error: any) => {
       setIsAutoSaving(false);
+      console.error("Auto-save error:", error);
+      
+      // Detectar erro 413 no auto-save
+      const errorMessage = error?.message || "";
+      if (errorMessage.includes("413") || errorMessage.includes("Too Large") || errorMessage.includes("<!DOCTYPE")) {
+        toast({ 
+          title: "Atenção: Fotos muito grandes", 
+          description: "O salvamento automático falhou porque há muitas fotos ou elas são muito grandes. Remova algumas fotos ou salve manualmente.",
+          variant: "destructive",
+          duration: 8000
+        });
+      }
     },
   });
 
@@ -789,6 +815,17 @@ export function RATFormDialog({
       technicianSignatureName: signatureName || undefined,
       photoSections: JSON.stringify(photoSections),
     };
+    
+    // Log payload size for debugging
+    const payloadSize = JSON.stringify(ratData).length;
+    const payloadSizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
+    console.log(`Auto-save payload size: ${payloadSizeMB} MB`);
+    
+    // Skip auto-save if payload is too large (will warn on manual save)
+    if (payloadSize > 1.5 * 1024 * 1024) {
+      console.warn(`Auto-save skipped: payload too large (${payloadSizeMB} MB)`);
+      return;
+    }
     
     setIsAutoSaving(true);
     autoSaveMutation.mutate({
@@ -871,6 +908,26 @@ export function RATFormDialog({
       photoSections: JSON.stringify(photoSections),
     };
     
+    // Log payload size for debugging
+    const payloadSize = JSON.stringify(ratData).length;
+    const payloadSizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
+    console.log(`RAT payload size: ${payloadSizeMB} MB (${payloadSize} bytes)`);
+    
+    // Count total photos
+    const totalPhotos = Object.values(photoSections).reduce((sum, section) => sum + section.length, 0);
+    console.log(`Total photos: ${totalPhotos}`);
+    
+    // Warn if payload is too large
+    if (payloadSize > 1.5 * 1024 * 1024) { // 1.5 MB
+      toast({
+        title: "⚠️ Muitas fotos",
+        description: `O tamanho atual é ${payloadSizeMB} MB com ${totalPhotos} fotos. O limite do servidor é ~1.5 MB. Remova algumas fotos antes de salvar.`,
+        variant: "destructive",
+        duration: 10000
+      });
+      return;
+    }
+    
     if (existingRat) {
       updateMutation.mutate({
         id: existingRat.id,
@@ -915,20 +972,77 @@ export function RATFormDialog({
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       
-      // Convert to base64
+      // Show processing toast
+      const processingToast = toast({
+        title: "Processando foto...",
+        description: "Comprimindo imagem, aguarde...",
+        duration: 30000
+      });
+      
+      // Comprimir imagem antes de salvar
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = reader.result as string;
-        const newPhoto: PhotoItem = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          base64,
-          description: ""
-        };
         
-        setPhotoSections(prev => ({
-          ...prev,
-          [section]: [...prev[section], newPhoto]
-        }));
+        // Criar imagem para compressão
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            processingToast.dismiss();
+            toast({
+              title: "Erro ao processar imagem",
+              description: "Não foi possível processar a imagem.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // Redimensionar se maior que 1920x1080
+          let width = img.width;
+          let height = img.height;
+          const maxWidth = 1920;
+          const maxHeight = 1080;
+          
+          const originalSize = base64.length;
+          
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Comprimir com qualidade 0.7 (JPEG)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          
+          const compressedSize = compressedBase64.length;
+          const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(0);
+          
+          processingToast.dismiss();
+          
+          toast({
+            title: "✓ Foto adicionada",
+            description: `Comprimida em ${compressionRatio}% (${(compressedSize / 1024).toFixed(0)} KB)`,
+            duration: 3000
+          });
+          
+          const newPhoto: PhotoItem = {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            base64: compressedBase64,
+            description: ""
+          };
+          
+          setPhotoSections(prev => ({
+            ...prev,
+            [section]: [...prev[section], newPhoto]
+          }));
+        };
+        img.src = base64;
       };
       reader.readAsDataURL(file);
     };

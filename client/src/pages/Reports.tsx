@@ -1144,7 +1144,7 @@ export default function Reports() {
                                         data-testid={`justification-${category}-${idx}-${jIdx}`}
                                       >
                                         <div className="font-medium text-destructive mb-0.5">
-                                          {new Date(just.date).toLocaleDateString('pt-BR')} ({just.minutes} min)
+                                          {just.date ? just.date.split('-').reverse().join('/') : 'Data inválida'} ({just.minutes} min)
                                         </div>
                                         <div className="italic">"{just.text}"</div>
                                       </div>

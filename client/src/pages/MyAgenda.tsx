@@ -190,7 +190,7 @@ export default function MyAgenda() {
   );
   
   const { data: allDayStatuses = [] } = useQuery<{ activityId: string; date: string; status: string; startTime?: string; endTime?: string; checkInTime?: string; checkOutTime?: string; workCompleted?: boolean; actualDurationMinutes?: number }[]>({
-    queryKey: ["/api/activity-day-statuses/all", multiDayActivityIds.join(",")],
+    queryKey: ["/api/activity-day-statuses/all"],
     queryFn: async () => {
       if (multiDayActivityIds.length === 0) return [];
       const results: any[] = [];
@@ -260,7 +260,7 @@ export default function MyAgenda() {
     const set = new Set<string>();
     allDayStatuses.forEach(d => {
       if (d.status === "cancelado") {
-        const dateStr = moment(d.date).format("YYYY-MM-DD"); // Remove .utc() para usar timezone local
+        const dateStr = moment.utc(d.date).format("YYYY-MM-DD"); // FORÇAR UTC
         set.add(`${d.activityId}_${dateStr}`);
       }
     });
@@ -281,15 +281,15 @@ export default function MyAgenda() {
     };
     const map = new Map<string, typeof allDayStatuses[0]>();
     allDayStatuses.forEach(d => {
-      // Normalizar data: converter timestamp UTC para data local YYYY-MM-DD
-      const dateStr = moment(d.date).format("YYYY-MM-DD"); // Remove .utc() para usar timezone local
+      // Normalizar data: FORÇAR UTC para evitar conversão de timezone
+      const dateStr = moment.utc(d.date).format("YYYY-MM-DD");
       const key = `${d.activityId}_${dateStr}`;
       const existing = map.get(key);
       if (!existing || rank(d) >= rank(existing)) {
         map.set(key, d);
       }
     });
-    console.log('[dayStatusMap] Mapa criado:', Array.from(map.entries()).map(([k, v]) => ({ key: k, status: v.status })));
+    console.log('[dayStatusMap] Mapa criado:', Array.from(map.entries()).map(([k, v]) => ({ key: k, status: v.status, date: v.date })));
     return map;
   }, [allDayStatuses]);
   
@@ -984,15 +984,28 @@ export default function MyAgenda() {
   // V3: Mutation para iniciar navegação
   const startNavigationMutation = useMutation({
     mutationFn: async ({ activityId, gpsEtaMinutes }: { activityId: string; gpsEtaMinutes?: number }) => {
+      const date = selectedDate.format("YYYY-MM-DD");
+      console.log('🚀 [startNavigationMutation] mutationFn called');
+      console.log('🚀 [startNavigationMutation] activityId:', activityId);
+      console.log('🚀 [startNavigationMutation] date:', date);
+      console.log('🚀 [startNavigationMutation] gpsEtaMinutes:', gpsEtaMinutes);
+      
       const response = await apiRequest("POST", `/api/activities/${activityId}/navigation/start`, {
         gpsEtaMinutes,
-        date: selectedDate.format("YYYY-MM-DD"), // Enviar data selecionada para multi-dia
+        date, // Enviar data selecionada para multi-dia
       });
+      
+      console.log('🚀 [startNavigationMutation] response.ok:', response.ok);
+      console.log('🚀 [startNavigationMutation] response.status:', response.status);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error('🚀 [startNavigationMutation] ERROR:', error);
         throw new Error(error.error || "Erro ao iniciar navegação");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('🚀 [startNavigationMutation] SUCCESS:', data);
+      return data;
     },
     onSuccess: async () => {
       toast({
@@ -1227,7 +1240,7 @@ export default function MyAgenda() {
         }
         
         // Força refetch imediato
-        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all", multiDayActivityIds.join(",")] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
         await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
       } else {
         await checkInMutation.mutateAsync(stopId);
@@ -1334,7 +1347,7 @@ export default function MyAgenda() {
         }
         
         // Força refetch imediato
-        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all", multiDayActivityIds.join(",")] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
         await queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
         await queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk", multiDayActivityIds.join(",")] });
       } else {
@@ -1642,6 +1655,9 @@ export default function MyAgenda() {
 
   // Iniciar deslocamento (substitui navegação - apenas registra tempo e pula para cheguei)
   const handleStartSingleNavigation = (activityId: string) => {
+    console.log('🚀 [handleStartSingleNavigation] Called with activityId:', activityId);
+    console.log('🚀 [handleStartSingleNavigation] selectedDate:', selectedDate.format("YYYY-MM-DD"));
+    console.log('🚀 [handleStartSingleNavigation] Calling mutation...');
     startNavigationMutation.mutate({ activityId });
   };
 
