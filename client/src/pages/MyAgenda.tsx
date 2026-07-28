@@ -717,7 +717,11 @@ export default function MyAgenda() {
   // Mutation para criar nova atividade
   const createActivityMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      if (!myTechnician) throw new Error("Técnico não encontrado");
+      console.log("[createActivity] myTechnician:", myTechnician);
+      console.log("[createActivity] user:", user);
+      console.log("[createActivity] technicians:", technicians);
+      
+      if (!myTechnician) throw new Error("Técnico não encontrado. Verifique se o usuário tem um perfil de técnico vinculado.");
       
       // Combinar scheduledDate e startTime em um timestamp ISO
       const scheduledDateTime = `${data.scheduledDate}T${data.startTime}:00`;
