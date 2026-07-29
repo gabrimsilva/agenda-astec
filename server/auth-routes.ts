@@ -1,8 +1,10 @@
 import { Router, type Response } from "express";
+import { Router } from "express";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, comparePassword, generateToken, type AuthPayload, verifyToken } from "./auth";
+import { authLimiter } from "./rate-limiters";
 import { 
   generateMFASecret, 
   validateTOTPCode, 
@@ -29,7 +31,7 @@ initMSAL();
  * Login com email/senha
  * Se MFA está ativado, retorna mfaRequired: true
  */
-authRouter.post("/auth/login", async (req: AuthRequest, res: Response) => {
+authRouter.post("/auth/login", authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -75,7 +77,7 @@ authRouter.post("/auth/login", async (req: AuthRequest, res: Response) => {
  * POST /api/auth/verify-mfa
  * Validar código TOTP do Microsoft Authenticator
  */
-authRouter.post("/auth/verify-mfa", async (req: AuthRequest, res: Response) => {
+authRouter.post("/auth/verify-mfa", authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { userId, totpCode, useBackupCode } = req.body;
 

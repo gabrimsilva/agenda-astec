@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # Instala dependências (inclui devDependencies, necessárias para o build)
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 
 # Copia o restante do código e gera o build

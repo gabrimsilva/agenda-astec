@@ -1,5 +1,8 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import cors from "cors";
+import { authLimiter, apiLimiter } from "./rate-limiters";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedActivityTypes, seedDefaultAdmin } from "./seed";
@@ -8,6 +11,19 @@ import { runMigrations } from "./migrate";
 import { closeBrowser } from "./browser-pool";
 
 const app = express();
+
+// Security: Helmet adds various HTTP headers for security
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled to avoid breaking inline scripts
+  crossOriginEmbedderPolicy: false // Disabled if using iframes/external resources
+}));
+
+// Security: CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || true, // Allow configured origin or any in dev
+  credentials: true
+}));
+
 // Reduced from 50MB to 15MB to limit memory usage
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: false, limit: '15mb' }));

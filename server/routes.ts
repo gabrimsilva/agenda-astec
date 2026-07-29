@@ -13,6 +13,7 @@ import { eq, and, gte, lte, lt, not, ne, sql, desc, inArray, or } from "drizzle-
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth";
 import { authMiddleware, roleMiddleware, agendaScopeMiddleware, reportsScopeMiddleware, type AuthRequest } from "./middleware";
 import { authRouter } from "./auth-routes";
+import { authLimiter, apiLimiter } from "./rate-limiters";
 import { insertUserSchema, insertTechnicianSchema, insertClientSchema, insertClientSiteSchema, insertActivityTypeSchema, insertSegmentSchema, insertRegionSchema, insertActivitySchema, insertApprovalSchema, insertDayMarkerSchema, insertAgendaBlockSchema, loginSchema, updateUserSchema, updateTechnicianSchema, updateUserAndTechnicianSchema, updateClientSchema, updateClientSiteSchema, updateActivityTypeSchema, updateSegmentSchema, updateRegionSchema, updateActivitySchema, updateApprovalSchema, createUserAndTechnicianSchema, insertTechnicianLocationSchema, insertTimeEntrySchema, insertNotificationSchema, insertUserPushSubscriptionSchema, insertRatSchema, createRatSchema, updateRatSchema, technicians, timeEntries, activityTypes, auditLogs, rats, activityTravelTimes, activityTimeRecords, activityReschedules, activityDayStatus, activities, users, travelSegments, approvals, activityAttachments, type InsertUser, type InsertTechnician } from "@shared/schema";
 import { seedActivityTypes, seedDefaultAdmin } from "./seed";
 import { parseGoogleMapsUrl, isValidCoordinates } from "./utils/geo";
@@ -248,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
 
@@ -274,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Login via Datasul (ERP TOTVS). Valida as credenciais no ERP (Basic Auth) e,
   // se válidas, autentica o usuário do ASTEC cujo "Perfil Datasul" corresponde
   // ao usuário informado — herdando o papel (admin/assistente) já cadastrado.
-  app.post("/api/auth/datasul-login", async (req, res) => {
+  app.post("/api/auth/datasul-login", authLimiter, async (req, res) => {
     try {
       const { username, password, host } = (req.body || {}) as {
         username?: string;
@@ -2577,6 +2578,22 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         actualReturnMinutes: activity.actualReturnMinutes,
       });
       
+      // Se atualizou tempos de uma atividade concluída, deletar time_entries antigos
+      // para garantir que o relatório use os valores atualizados de actualDurationMinutes
+      if (activity.status === "concluido" && (
+        data.actualTravelMinutes !== undefined ||
+        data.actualDurationMinutes !== undefined ||
+        data.actualReturnMinutes !== undefined
+      )) {
+        const deleted = await db.delete(timeEntries)
+          .where(eq(timeEntries.agendaActivityId, activity.id))
+          .returning();
+        
+        if (deleted.length > 0) {
+          console.log(`[${req.method} /api/activities/:id] ♻️ Deleted ${deleted.length} old time_entries for activity ${activity.id} to use updated values`);
+        }
+      }
+      
       // Invalidate activities cache to force refresh
       invalidateActivitiesCache();
       
@@ -4274,11 +4291,14 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           minutes: timeEntries.minutes,
           source: timeEntries.source,
           notes: timeEntries.notes,
+          agendaActivityId: timeEntries.agendaActivityId, // Para detectar duplicatas
         })
         .from(timeEntries)
         .innerJoin(activityTypes, eq(timeEntries.activityTypeId, activityTypes.id))
         .innerJoin(technicians, eq(timeEntries.technicianId, technicians.id))
         .where(and(...conditions));
+
+      console.log(`[time-breakdown] Found ${manualEntries.length} manual time entries`);
 
       // Fetch completed activities with actual time records
       const activityConditions = [
@@ -4322,14 +4342,39 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .innerJoin(technicians, eq(activities.technicianId, technicians.id))
         .where(and(...activityConditions));
 
+      console.log(`[time-breakdown] Found ${completedActivities.length} completed activities`);
+
       // Convert activities to entries format
       const activityEntries: typeof manualEntries = [];
       
+      // Criar Set de activityIds que JÁ têm time_entries para evitar duplicação
+      const activitiesWithTimeEntries = new Set(
+        manualEntries
+          .filter(e => e.agendaActivityId)
+          .map(e => e.agendaActivityId)
+      );
+      
+      console.log(`[time-breakdown] ${activitiesWithTimeEntries.size} activities already have time_entries, will skip to avoid duplication`);
+      
       for (const activity of completedActivities) {
+        // SKIP se já existe time_entry para esta atividade (evita duplicação)
+        if (activitiesWithTimeEntries.has(activity.id)) {
+          console.log(`[time-breakdown] ⏭️ SKIPPING activity ${activity.id} (${activity.activityName}) - already has time_entry`);
+          continue;
+        }
+        
         const workDate = new Date(activity.scheduledDate);
+        
+        console.log(`[time-breakdown] Processing activity ${activity.id}:`, {
+          name: activity.activityName,
+          actualTravelMinutes: activity.actualTravelMinutes,
+          actualDurationMinutes: activity.actualDurationMinutes,
+          actualReturnMinutes: activity.actualReturnMinutes,
+        });
         
         // IDA (Travel) - perda if exists
         if (activity.actualTravelMinutes && activity.actualTravelMinutes > 0) {
+          console.log(`[time-breakdown] Adding TRAVEL entry: ${activity.actualTravelMinutes} min`);
           activityEntries.push({
             id: `${activity.id}_travel`,
             technicianId: activity.technicianId,
@@ -4349,6 +4394,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         
         // EXECUÇÃO (Duration) - efetivo
         if (activity.actualDurationMinutes && activity.actualDurationMinutes > 0) {
+          console.log(`[time-breakdown] Adding DURATION entry: ${activity.actualDurationMinutes} min`);
           activityEntries.push({
             id: `${activity.id}_duration`,
             technicianId: activity.technicianId,
@@ -4368,6 +4414,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         
         // VOLTA (Return) - perda if exists
         if (activity.actualReturnMinutes && activity.actualReturnMinutes > 0) {
+          console.log(`[time-breakdown] Adding RETURN entry: ${activity.actualReturnMinutes} min`);
           activityEntries.push({
             id: `${activity.id}_return`,
             technicianId: activity.technicianId,
@@ -4388,6 +4435,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
       // Combine manual entries and activity entries
       const entries = [...manualEntries, ...activityEntries];
+      
+      console.log(`[time-breakdown] Total entries: ${entries.length} (${manualEntries.length} manual + ${activityEntries.length} from activities)`);
+      console.log(`[time-breakdown] Activity entries:`, activityEntries.map(e => ({ name: e.activityName, minutes: e.minutes, category: e.category })));
       
       // Calculate totals by category
       const totals = {
