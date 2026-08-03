@@ -686,18 +686,18 @@ export function SimplifiedRATFormDialog({
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
         
-        // Comprimir imagem antes de adicionar
+        // Comprimir imagem antes de adicionar (otimizado para iPhone)
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           if (!ctx) return;
           
-          // Redimensionar se maior que 1920x1080
+          // Redimensionar para HD (1280x720) - boa qualidade para relatórios
           let width = img.width;
           let height = img.height;
-          const maxWidth = 1920;
-          const maxHeight = 1080;
+          const maxWidth = 1280;
+          const maxHeight = 720;
           
           if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
@@ -709,8 +709,8 @@ export function SimplifiedRATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.7
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          // Comprimir com qualidade 0.5 (menor tamanho, boa qualidade visual)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
           
           setPhotos((prev) => [
             ...prev,

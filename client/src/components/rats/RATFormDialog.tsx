@@ -999,11 +999,11 @@ export function RATFormDialog({
             return;
           }
           
-          // Redimensionar se maior que 1920x1080
+          // Redimensionar para HD (1280x720) - boa qualidade para relatórios
           let width = img.width;
           let height = img.height;
-          const maxWidth = 1920;
-          const maxHeight = 1080;
+          const maxWidth = 1280;
+          const maxHeight = 720;
           
           const originalSize = base64.length;
           
@@ -1017,8 +1017,8 @@ export function RATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.7 (JPEG)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          // Comprimir com qualidade 0.5 (menor tamanho, boa qualidade visual)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
           
           const compressedSize = compressedBase64.length;
           const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(0);

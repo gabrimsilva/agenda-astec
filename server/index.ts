@@ -24,9 +24,9 @@ app.use(cors({
   credentials: true
 }));
 
-// Reduced from 50MB to 15MB to limit memory usage
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: false, limit: '15mb' }));
+// Increased to 25MB to support iPhone photos with compression
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: false, limit: '25mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
