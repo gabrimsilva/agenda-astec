@@ -62,9 +62,21 @@ const formSchema = z.object({
   transportMode: z.string().optional().nullable(), // carro, aviao, onibus, outro, nenhum
   notes: z.string().optional().nullable(),
   // Campos de tempo das etapas
-  actualTravelMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
-  actualDurationMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
-  actualReturnMinutes: z.preprocess((val) => val === "" || val === null ? null : Number(val), z.number().int().min(0).optional().nullable()),
+  actualTravelMinutes: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }, z.number().int().min(0).optional().nullable()),
+  actualDurationMinutes: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }, z.number().int().min(0).optional().nullable()),
+  actualReturnMinutes: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }, z.number().int().min(0).optional().nullable()),
 }).refine((data) => {
   // Se isMultiDay é true, endDate é obrigatório e deve ser >= scheduledDate
   if (data.isMultiDay) {
@@ -1216,12 +1228,20 @@ export default function MyAgenda() {
 
   // Handler para criar atividade
   const onSubmitActivity = async (data: z.infer<typeof formSchema>) => {
+    console.log("[onSubmitActivity] FORM SUBMITTED - data:", data);
+    console.log("[onSubmitActivity] myTechnician:", myTechnician);
+    console.log("[onSubmitActivity] activityTypes:", activityTypes);
+    
     const locs = getActivityTypeLocations(activityTypes, data.activityTypeId);
     if (locs.length > 0 && !(data.location && data.location.trim())) {
+      console.log("[onSubmitActivity] Location validation failed");
       form.setError("location", { type: "manual", message: "Local de execução é obrigatório" });
       return;
     }
+    
+    console.log("[onSubmitActivity] Calling createActivityMutation.mutateAsync...");
     await createActivityMutation.mutateAsync(data);
+    console.log("[onSubmitActivity] Mutation completed");
   };
 
   const handleCheckIn = async (stopId: string) => {
@@ -2224,6 +2244,28 @@ export default function MyAgenda() {
                   type="submit"
                   disabled={createActivityMutation.isPending}
                   data-testid="button-submit"
+                  onClick={() => {
+                    console.log("[BUTTON CLICK] Botão Criar Atividade clicado!");
+                    const values = form.getValues();
+                    console.log("[BUTTON CLICK] Form values:", values);
+                    console.log("[BUTTON CLICK] scheduledDate:", values.scheduledDate);
+                    console.log("[BUTTON CLICK] startTime:", values.startTime);
+                    console.log("[BUTTON CLICK] endTime:", values.endTime);
+                    console.log("[BUTTON CLICK] Form errors:", form.formState.errors);
+                    console.log("[BUTTON CLICK] Form isValid:", form.formState.isValid);
+                    
+                    // Validar manualmente para ver os erros (safeParse é síncrono!)
+                    const result = formSchema.safeParse(values);
+                    if (!result.success) {
+                      console.log("[BUTTON CLICK] ❌ Validation FAILED!");
+                      console.log("[BUTTON CLICK] Validation errors:", result.error.issues);
+                      result.error.issues.forEach((issue: any) => {
+                        console.log(`  - Campo "${issue.path.join('.')}" : ${issue.message}`);
+                      });
+                    } else {
+                      console.log("[BUTTON CLICK] ✅ Validation SUCCESS!");
+                    }
+                  }}
                 >
                   {createActivityMutation.isPending ? "Criando..." : "Criar Atividade"}
                 </Button>
@@ -2493,95 +2535,109 @@ export default function MyAgenda() {
                 )}
               />
 
-              {/* Campos de tempo das etapas (IDA, EXECUÇÃO, VOLTA) */}
-              <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
-                <p className="text-sm font-medium">Tempos das Etapas (minutos)</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <FormField
-                    control={editForm.control}
-                    name="actualTravelMinutes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">IDA</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="--"
-                            value={field.value ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              field.onChange(val === "" ? null : parseInt(val, 10));
-                            }}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                            data-testid="edit-input-travel-time" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {/* Campos de tempo das etapas (IDA, EXECUÇÃO, VOLTA) - oculta IDA/VOLTA se requiresTravel = false */}
+              {(() => {
+                const selectedTypeId = editForm.watch("activityTypeId");
+                const selectedType = activityTypes.find(at => at.id === selectedTypeId) as any;
+                const requiresTravel = selectedType?.requiresTravel !== false;
+                
+                return (
+                  <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
+                    <p className="text-sm font-medium">Tempos das Etapas (minutos)</p>
+                    <div className={`grid gap-3 ${requiresTravel ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                      {requiresTravel && (
+                        <FormField
+                          control={editForm.control}
+                          name="actualTravelMinutes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">IDA</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0"
+                                  placeholder="--"
+                                  value={field.value ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? null : parseInt(val, 10));
+                                  }}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  data-testid="edit-input-travel-time" 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
 
-                  <FormField
-                    control={editForm.control}
-                    name="actualDurationMinutes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">EXECUÇÃO</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="--"
-                            value={field.value ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              field.onChange(val === "" ? null : parseInt(val, 10));
-                            }}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                            data-testid="edit-input-duration-time" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={editForm.control}
+                        name="actualDurationMinutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">EXECUÇÃO</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="0"
+                                placeholder="--"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  field.onChange(val === "" ? null : parseInt(val, 10));
+                                }}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                                data-testid="edit-input-duration-time" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={editForm.control}
-                    name="actualReturnMinutes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">VOLTA</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="--"
-                            value={field.value ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              field.onChange(val === "" ? null : parseInt(val, 10));
-                            }}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                            data-testid="edit-input-return-time" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Deixe em branco para manter os valores calculados automaticamente
-                </p>
-              </div>
+                      {requiresTravel && (
+                        <FormField
+                          control={editForm.control}
+                          name="actualReturnMinutes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">VOLTA</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0"
+                                  placeholder="--"
+                                  value={field.value ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? null : parseInt(val, 10));
+                                  }}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  data-testid="edit-input-return-time" 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {requiresTravel 
+                        ? "Deixe em branco para manter os valores calculados automaticamente"
+                        : "Este tipo de atividade não calcula trajeto (IDA/VOLTA)"}
+                    </p>
+                  </div>
+                );
+              })()}
 
               <DialogFooter>
                 <Button
