@@ -121,7 +121,7 @@ const formSchema = z.object({
   siteId: z.string().optional().nullable(),
   activityTypeId: z.string().min(1, "Tipo de atividade é obrigatório"),
   location: z.string().optional().nullable(),
-  title: z.string().min(1, "Título é obrigatório"),
+  title: z.string().optional().nullable(), // Campo removido do formulário, será gerado automaticamente
   description: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   numero: z.string().optional().nullable(),
@@ -493,7 +493,7 @@ export default function Calendar() {
         clientName: data.clientName,
         siteId: data.siteId || null,
         activityTypeId: data.activityTypeId,
-        title: data.title,
+        title: data.title || null, // Se vazio, será gerado automaticamente no backend
         description: data.description || "",
         address: data.address || null,
         city: data.city || null,
@@ -2522,25 +2522,6 @@ export default function Calendar() {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Título */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título da atividade"
-                        {...field}
-                        data-testid="input-activity-title"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Técnico */}
               <FormField
                 control={form.control}
