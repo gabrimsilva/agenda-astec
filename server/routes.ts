@@ -6036,6 +6036,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       res.json({
         timeRecordId: timeRecord.id,
+        activityId: activity.id,
+        actualReturnMinutes: minutesReported,
         message: "Retorno à base registrado com sucesso"
       });
     } catch (error: any) {

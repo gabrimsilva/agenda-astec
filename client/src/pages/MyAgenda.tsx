@@ -1102,15 +1102,19 @@ export default function MyAgenda() {
       }
       return response.json();
     },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" }),
-        queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" }),
-      ]);
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" }),
-        queryClient.refetchQueries({ queryKey: ["/api/activity-time-records/bulk"], type: "all" }),
-      ]);
+    onSuccess: async (data) => {
+      // Atualizar cache diretamente com o dado retornado pelo servidor para UI imediata
+      queryClient.setQueryData(["/api/activities", user?.id], (old: Activity[] | undefined) => {
+        if (!old || !data?.activityId) return old;
+        return old.map((a) =>
+          a.id === data.activityId
+            ? { ...a, actualReturnMinutes: data.actualReturnMinutes ?? a.actualReturnMinutes }
+            : a
+        );
+      });
+      // Depois invalida para sincronizar com servidor em background
+      queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
     },
   });
 
@@ -1653,6 +1657,16 @@ export default function MyAgenda() {
   // V3: Handler para confirmar retorno à base
   const handleReturnBaseConfirm = async (data: { minutesReported: number; gpsEtaMinutes?: number; transportType?: string }) => {
     if (!completedActivityForNextStep) return;
+    
+    // Atualização otimista: já mostra o valor na UI antes da resposta do servidor
+    queryClient.setQueryData(["/api/activities", user?.id], (old: Activity[] | undefined) => {
+      if (!old) return old;
+      return old.map((a) =>
+        a.id === completedActivityForNextStep.id
+          ? { ...a, actualReturnMinutes: data.minutesReported }
+          : a
+      );
+    });
     
     try {
       await recordReturnBaseMutation.mutateAsync({
