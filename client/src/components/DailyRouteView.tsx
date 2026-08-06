@@ -9,6 +9,13 @@ import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Formata minutos em "Xh Ymin", "Xh" ou "Ymin"
 function formatMinutes(mins: number): string {
@@ -18,13 +25,6 @@ function formatMinutes(mins: number): string {
   if (h > 0) return `${h}h`;
   return `${m}min`;
 }
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const statusLabels = {
   planejado: "Planejado",
