@@ -9,6 +9,15 @@ import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
+
+// Formata minutos em "Xh Ymin", "Xh" ou "Ymin"
+function formatMinutes(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}min`;
+  if (h > 0) return `${h}h`;
+  return `${m}min`;
+}
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -412,14 +421,14 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                                     <div className="bg-amber-100 dark:bg-amber-900/50 rounded-lg p-2 border border-amber-300 dark:border-amber-600">
                                       <div className="text-xs text-amber-700 dark:text-amber-300 font-semibold">IDA</div>
                                       <div className="text-base font-bold text-amber-800 dark:text-amber-200">
-                                        {stop.actualTravelMinutes}min
+                                        {formatMinutes(stop.actualTravelMinutes)}
                                       </div>
                                     </div>
                                   ) : stop.navigationStartTime && stop.checkInTime ? (
                                     <div className="bg-amber-100 dark:bg-amber-900/50 rounded-lg p-2 border border-amber-300 dark:border-amber-600">
                                       <div className="text-xs text-amber-700 dark:text-amber-300 font-semibold">IDA</div>
                                       <div className="text-base font-bold text-amber-800 dark:text-amber-200">
-                                        {Math.round((new Date(stop.checkInTime).getTime() - new Date(stop.navigationStartTime).getTime()) / 60000)}min
+                                        {formatMinutes(Math.round((new Date(stop.checkInTime).getTime() - new Date(stop.navigationStartTime).getTime()) / 60000))}
                                       </div>
                                     </div>
                                   ) : (
@@ -437,8 +446,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                                       <div className="text-xs text-red-700 dark:text-red-300 font-semibold">PERDA</div>
                                       <div className="text-base font-bold text-red-800 dark:text-red-200">
                                         {stop.actualDurationMinutes !== null && stop.actualDurationMinutes !== undefined 
-                                          ? `${stop.actualDurationMinutes}min`
-                                          : `${Math.round((new Date(stop.checkOutTime).getTime() - new Date(stop.checkInTime).getTime()) / 60000)}min`
+                                          ? formatMinutes(stop.actualDurationMinutes)
+                                          : formatMinutes(Math.round((new Date(stop.checkOutTime!).getTime() - new Date(stop.checkInTime!).getTime()) / 60000))
                                         }
                                       </div>
                                     </div>
@@ -447,8 +456,8 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                                       <div className="text-xs text-blue-700 dark:text-blue-300 font-semibold">EXECUÇÃO</div>
                                       <div className="text-base font-bold text-blue-800 dark:text-blue-200">
                                         {stop.actualDurationMinutes !== null && stop.actualDurationMinutes !== undefined 
-                                          ? `${stop.actualDurationMinutes}min`
-                                          : `${Math.round((new Date(stop.checkOutTime).getTime() - new Date(stop.checkInTime).getTime()) / 60000)}min`
+                                          ? formatMinutes(stop.actualDurationMinutes)
+                                          : formatMinutes(Math.round((new Date(stop.checkOutTime!).getTime() - new Date(stop.checkInTime!).getTime()) / 60000))
                                         }
                                       </div>
                                     </div>
@@ -474,7 +483,7 @@ export function DailyRouteView({ date, stops, onStartSingleNavigation, onCheckIn
                                           {isNextActivity ? "PRÓXIMA" : "VOLTA"}
                                         </div>
                                         <div className="text-base font-bold text-green-800 dark:text-green-200">
-                                          {returnMinutes}min
+                                          {formatMinutes(returnMinutes)}
                                         </div>
                                         {isNextActivity && (
                                           <div className="text-[10px] text-green-600 dark:text-green-400 mt-0.5">

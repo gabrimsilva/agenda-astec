@@ -126,6 +126,23 @@ export default function MyAgenda() {
   const [editActivityDialogOpen, setEditActivityDialogOpen] = useState(false);
   const [activityBeingEdited, setActivityBeingEdited] = useState<string | null>(null);
   const [editClientSearchOpen, setEditClientSearchOpen] = useState(false);
+
+  // Estados h+min para os campos de tempo no modal de edição
+  const [editTravelH, setEditTravelH] = useState("");
+  const [editTravelMin, setEditTravelMin] = useState("");
+  const [editDurationH, setEditDurationH] = useState("");
+  const [editDurationMin, setEditDurationMin] = useState("");
+  const [editReturnH, setEditReturnH] = useState("");
+  const [editReturnMin, setEditReturnMin] = useState("");
+
+  // Converte h+min para total em minutos e sincroniza no form
+  const syncTimeField = (
+    h: string, m: string,
+    fieldName: "actualTravelMinutes" | "actualDurationMinutes" | "actualReturnMinutes"
+  ) => {
+    const total = (parseInt(h, 10) || 0) * 60 + (parseInt(m, 10) || 0);
+    editForm.setValue(fieldName, total === 0 && h === "" && m === "" ? null : total);
+  };
   
   // Estados para RAT (Relatório de Assistência Técnica)
   const [ratConfirmDialogOpen, setRatConfirmDialogOpen] = useState(false);
@@ -1776,6 +1793,19 @@ export default function MyAgenda() {
       actualReturnMinutes: (activity as any).actualReturnMinutes ?? null,
     });
     setEditActivityDialogOpen(true);
+
+    // Inicializar estados h+min para os campos de tempo
+    const toH = (mins: number | null | undefined) => mins != null ? String(Math.floor(mins / 60)) : "";
+    const toM = (mins: number | null | undefined) => mins != null ? String(mins % 60) : "";
+    const travel = (activity as any).actualTravelMinutes ?? null;
+    const duration = (activity as any).actualDurationMinutes ?? null;
+    const ret = (activity as any).actualReturnMinutes ?? null;
+    setEditTravelH(toH(travel));
+    setEditTravelMin(toM(travel));
+    setEditDurationH(toH(duration));
+    setEditDurationMin(toM(duration));
+    setEditReturnH(toH(ret));
+    setEditReturnMin(toM(ret));
   };
 
   // Handler para selecionar cliente no formulário de edição
@@ -2539,98 +2569,117 @@ export default function MyAgenda() {
                 const selectedTypeId = editForm.watch("activityTypeId");
                 const selectedType = activityTypes.find(at => at.id === selectedTypeId) as any;
                 const requiresTravel = selectedType?.requiresTravel !== false;
-                
+
                 return (
                   <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
-                    <p className="text-sm font-medium">Tempos das Etapas (minutos)</p>
-                    <div className={`grid gap-3 ${requiresTravel ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                    <p className="text-sm font-medium">Tempos das Etapas</p>
+                    <div className={`grid gap-4 ${requiresTravel ? 'grid-cols-3' : 'grid-cols-1'}`}>
+
+                      {/* IDA */}
                       {requiresTravel && (
-                        <FormField
-                          control={editForm.control}
-                          name="actualTravelMinutes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">IDA</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  min="0"
-                                  placeholder="--"
-                                  value={field.value ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    field.onChange(val === "" ? null : parseInt(val, 10));
-                                  }}
-                                  onBlur={field.onBlur}
-                                  name={field.name}
-                                  ref={field.ref}
-                                  data-testid="edit-input-travel-time" 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-muted-foreground">IDA</p>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number" min="0"
+                              placeholder="0"
+                              value={editTravelH}
+                              onChange={(e) => {
+                                setEditTravelH(e.target.value);
+                                syncTimeField(e.target.value, editTravelMin, "actualTravelMinutes");
+                              }}
+                              className="text-center"
+                              data-testid="edit-input-travel-h"
+                            />
+                            <span className="text-xs text-muted-foreground shrink-0">h</span>
+                            <Input
+                              type="number" min="0" max="59"
+                              placeholder="0"
+                              value={editTravelMin}
+                              onChange={(e) => {
+                                const v = Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0));
+                                const s = e.target.value === "" ? "" : String(v);
+                                setEditTravelMin(s);
+                                syncTimeField(editTravelH, s, "actualTravelMinutes");
+                              }}
+                              className="text-center"
+                              data-testid="edit-input-travel-min"
+                            />
+                            <span className="text-xs text-muted-foreground shrink-0">min</span>
+                          </div>
+                        </div>
                       )}
 
-                      <FormField
-                        control={editForm.control}
-                        name="actualDurationMinutes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">EXECUÇÃO</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="0"
-                                placeholder="--"
-                                value={field.value ?? ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  field.onChange(val === "" ? null : parseInt(val, 10));
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                                data-testid="edit-input-duration-time" 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* EXECUÇÃO */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-muted-foreground">EXECUÇÃO</p>
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number" min="0"
+                            placeholder="0"
+                            value={editDurationH}
+                            onChange={(e) => {
+                              setEditDurationH(e.target.value);
+                              syncTimeField(e.target.value, editDurationMin, "actualDurationMinutes");
+                            }}
+                            className="text-center"
+                            data-testid="edit-input-duration-h"
+                          />
+                          <span className="text-xs text-muted-foreground shrink-0">h</span>
+                          <Input
+                            type="number" min="0" max="59"
+                            placeholder="0"
+                            value={editDurationMin}
+                            onChange={(e) => {
+                              const v = Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0));
+                              const s = e.target.value === "" ? "" : String(v);
+                              setEditDurationMin(s);
+                              syncTimeField(editDurationH, s, "actualDurationMinutes");
+                            }}
+                            className="text-center"
+                            data-testid="edit-input-duration-min"
+                          />
+                          <span className="text-xs text-muted-foreground shrink-0">min</span>
+                        </div>
+                      </div>
 
+                      {/* VOLTA */}
                       {requiresTravel && (
-                        <FormField
-                          control={editForm.control}
-                          name="actualReturnMinutes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">VOLTA</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  min="0"
-                                  placeholder="--"
-                                  value={field.value ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    field.onChange(val === "" ? null : parseInt(val, 10));
-                                  }}
-                                  onBlur={field.onBlur}
-                                  name={field.name}
-                                  ref={field.ref}
-                                  data-testid="edit-input-return-time" 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-muted-foreground">VOLTA</p>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number" min="0"
+                              placeholder="0"
+                              value={editReturnH}
+                              onChange={(e) => {
+                                setEditReturnH(e.target.value);
+                                syncTimeField(e.target.value, editReturnMin, "actualReturnMinutes");
+                              }}
+                              className="text-center"
+                              data-testid="edit-input-return-h"
+                            />
+                            <span className="text-xs text-muted-foreground shrink-0">h</span>
+                            <Input
+                              type="number" min="0" max="59"
+                              placeholder="0"
+                              value={editReturnMin}
+                              onChange={(e) => {
+                                const v = Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0));
+                                const s = e.target.value === "" ? "" : String(v);
+                                setEditReturnMin(s);
+                                syncTimeField(editReturnH, s, "actualReturnMinutes");
+                              }}
+                              className="text-center"
+                              data-testid="edit-input-return-min"
+                            />
+                            <span className="text-xs text-muted-foreground shrink-0">min</span>
+                          </div>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {requiresTravel 
+                      {requiresTravel
                         ? "Deixe em branco para manter os valores calculados automaticamente"
                         : "Este tipo de atividade não calcula trajeto (IDA/VOLTA)"}
                     </p>
