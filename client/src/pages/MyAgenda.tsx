@@ -2314,25 +2314,6 @@ export default function MyAgenda() {
 
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onSubmitEditActivity)} className="space-y-4">
-              {/* Título */}
-              <FormField
-                control={editForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título da atividade"
-                        {...field}
-                        data-testid="edit-input-activity-title"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Técnico (somente leitura) */}
               <div className="space-y-2">
                 <FormLabel>Técnico</FormLabel>
