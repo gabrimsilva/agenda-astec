@@ -273,7 +273,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTechnicians(): Promise<Technician[]> {
-    return await db.select().from(technicians);
+    // JOIN com users para incluir isActive e permitir filtro de inativos na API
+    const rows = await db
+      .select({
+        technician: technicians,
+        userIsActive: users.isActive,
+      })
+      .from(technicians)
+      .leftJoin(users, eq(technicians.userId, users.id));
+
+    return rows.map(({ technician, userIsActive }) => ({
+      ...technician,
+      user: { isActive: userIsActive },
+    })) as any;
   }
 
   async createTechnician(insertTechnician: InsertTechnician): Promise<Technician> {
