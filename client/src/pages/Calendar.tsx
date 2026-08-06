@@ -2776,17 +2776,17 @@ export default function Calendar() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-primary" />
+                {selectedActivity.clientName && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Cliente</p>
+                      <p className="text-sm font-medium truncate">{selectedActivity.clientName}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Cliente</p>
-                    <p className="text-sm font-medium truncate">
-                      {clients.find((c) => c.id === selectedActivity.clientId)?.companyName || "N/A"}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Tipo de Atividade - Destaque */}
@@ -2823,15 +2823,6 @@ export default function Calendar() {
                   </div>
                 </div>
               )}
-
-              {/* Cliente */}
-              <div className="flex items-start gap-3">
-                <Building2 className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Cliente</p>
-                  <p className="text-base font-medium">{selectedActivity.clientName || "Não informado"}</p>
-                </div>
-              </div>
 
               {/* Contato do Cliente */}
               {(selectedActivity as any).client && ((selectedActivity as any).client.contactName || (selectedActivity as any).client.contactPhone || (selectedActivity as any).client.contactEmail) && (
