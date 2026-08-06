@@ -127,7 +127,8 @@ export default function MyAgenda() {
   const [activityBeingEdited, setActivityBeingEdited] = useState<string | null>(null);
   const [editClientSearchOpen, setEditClientSearchOpen] = useState(false);
 
-  // Estados h+min para os campos de tempo no modal de edição
+  // Estado local para override otimista de actualReturnMinutes por activityId
+  const [returnMinutesOverride, setReturnMinutesOverride] = useState<Record<string, number>>({});
   const [editTravelH, setEditTravelH] = useState("");
   const [editTravelMin, setEditTravelMin] = useState("");
   const [editDurationH, setEditDurationH] = useState("");
@@ -665,6 +666,8 @@ export default function MyAgenda() {
             const dayTimeRec = timeRecordsByDayMap.get(dayTimeKey);
             if (dayTimeRec?.retorno != null) return dayTimeRec.retorno;
           }
+          // Override local otimista tem prioridade
+          if (returnMinutesOverride[activity.id] != null) return returnMinutesOverride[activity.id];
           return (activity as any).actualReturnMinutes ?? null;
         })(),
         nextActivityTravelMinutes: null as number | null,
@@ -685,7 +688,7 @@ export default function MyAgenda() {
     });
     console.log(`[MyAgenda] stops derived: ${result.length} stops from ${baseStops.length} baseStops`);
     return result;
-  }, [selectedDateActivities, activityTypes, activityRatMap, dayStatusMap, selectedDateStr, timeRecordsByDayMap]);
+  }, [selectedDateActivities, activityTypes, activityRatMap, dayStatusMap, selectedDateStr, timeRecordsByDayMap, returnMinutesOverride]);
 
   // Calcular porcentagem de atividades efetivas da semana
   const weekStats = useMemo(() => {
@@ -1120,7 +1123,15 @@ export default function MyAgenda() {
       return response.json();
     },
     onSuccess: async (data) => {
-      // Atualizar cache diretamente com o dado retornado pelo servidor para UI imediata
+      // Limpar override local pois o servidor confirmou
+      if (data?.activityId) {
+        setReturnMinutesOverride(prev => {
+          const next = { ...prev };
+          delete next[data.activityId];
+          return next;
+        });
+      }
+      // Atualizar cache com valor confirmado pelo servidor
       queryClient.setQueryData(["/api/activities", user?.id], (old: Activity[] | undefined) => {
         if (!old || !data?.activityId) return old;
         return old.map((a) =>
@@ -1129,7 +1140,7 @@ export default function MyAgenda() {
             : a
         );
       });
-      // Depois invalida para sincronizar com servidor em background
+      // Sincronizar em background
       queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
       queryClient.invalidateQueries({ queryKey: ["/api/activity-time-records/bulk"], refetchType: "all" });
     },
@@ -1674,12 +1685,17 @@ export default function MyAgenda() {
   // V3: Handler para confirmar retorno à base
   const handleReturnBaseConfirm = async (data: { minutesReported: number; gpsEtaMinutes?: number; transportType?: string }) => {
     if (!completedActivityForNextStep) return;
-    
-    // Atualização otimista: já mostra o valor na UI antes da resposta do servidor
+
+    const activityId = completedActivityForNextStep.id;
+
+    // Override local imediato — sem esperar cache ou servidor
+    setReturnMinutesOverride(prev => ({ ...prev, [activityId]: data.minutesReported }));
+
+    // Atualização otimista no cache também
     queryClient.setQueryData(["/api/activities", user?.id], (old: Activity[] | undefined) => {
       if (!old) return old;
       return old.map((a) =>
-        a.id === completedActivityForNextStep.id
+        a.id === activityId
           ? { ...a, actualReturnMinutes: data.minutesReported }
           : a
       );
