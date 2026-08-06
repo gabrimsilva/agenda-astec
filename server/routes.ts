@@ -5744,7 +5744,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         const nextDay = new Date(targetDate);
         nextDay.setDate(nextDay.getDate() + 1);
         const targetDateStr = targetDate.toISOString().split('T')[0];
-        
+
+        // Idempotência por dia da série: usa record_date (fonte de verdade).
+        // Fallback por finishedAt cobre registros legados criados antes da coluna existir.
         const existingRecord = await db
           .select()
           .from(activityTimeRecords)
@@ -5752,7 +5754,13 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             and(
               eq(activityTimeRecords.activityId, activity.id),
               eq(activityTimeRecords.recordType, "ida"),
-              sql`DATE(${activityTimeRecords.finishedAt}) = ${targetDateStr}`
+              or(
+                eq(activityTimeRecords.recordDate, targetDateStr),
+                and(
+                  sql`${activityTimeRecords.recordDate} IS NULL`,
+                  sql`DATE(${activityTimeRecords.finishedAt}) = ${targetDateStr}`
+                )
+              )
             )
           )
           .limit(1);
@@ -5763,15 +5771,25 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             existingRecord: existingRecord[0]
           });
         }
-        
+
+        // finishedAt ancorado no dia da série (não no "agora"), preservando a hora do relógio.
+        // Sem isso, registrar um dia retroativamente colide com o dia real corrente.
+        const nowForIda = new Date();
+        const finishedAtForIda = new Date(targetDate.getTime() + (
+          nowForIda.getHours() * 3600000 +
+          nowForIda.getMinutes() * 60000 +
+          nowForIda.getSeconds() * 1000
+        ));
+
         const [timeRecord] = await db.insert(activityTimeRecords).values({
           activityId: activity.id,
           recordType: "ida",
           minutesReported,
           gpsEtaMinutes: gpsEtaMinutes || null,
           transportType: transportType || null,
+          recordDate: targetDateStr,
           startedAt: activity.navigationStartTime,
-          finishedAt: new Date(),
+          finishedAt: finishedAtForIda,
         }).returning();
         
         const now = new Date();
@@ -5913,7 +5931,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       // Check for existing return_base record for this specific date (idempotency)
       let existingRecordQuery;
       if (isMultiDay && date) {
-        // For multi-day: check per-date
+        // Idempotência por dia da série: usa record_date (fonte de verdade).
+        // Fallback por finishedAt cobre registros legados sem record_date.
+        // NÃO usar createdAt aqui: ele reflete o momento do registro, então um registro
+        // retroativo de outro dia geraria falso positivo neste dia.
         existingRecordQuery = await db
           .select()
           .from(activityTimeRecords)
@@ -5922,11 +5943,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               eq(activityTimeRecords.activityId, activity.id),
               eq(activityTimeRecords.recordType, "retorno_base"),
               or(
+                eq(activityTimeRecords.recordDate, recordDateStr),
                 and(
+                  sql`${activityTimeRecords.recordDate} IS NULL`,
                   gte(activityTimeRecords.finishedAt, recordDateStart),
                   lt(activityTimeRecords.finishedAt, recordDateEnd)
-                ),
-                sql`DATE(${activityTimeRecords.createdAt}) = ${recordDateStr}`
+                )
               )
             )
           )
@@ -5966,6 +5988,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         gpsEtaMinutes: gpsEtaMinutes || null,
         transportType: transportType || null,
         baseId: baseId || null,
+        recordDate: recordDateStr,
         startedAt: activity.checkOutTime,
         finishedAt: finishedAtForRecord,
       }).returning();
@@ -6874,7 +6897,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             .limit(1);
           
           if (existingIdaEntry.length === 0) {
-            // Find IDA records using DATE comparison for robustness
+            // Busca o registro de IDA DESTE dia da série.
+            // record_date é a fonte de verdade; finishedAt só para registros legados.
+            // NÃO usar createdAt: registros de outros dias criados hoje gerariam falso positivo,
+            // fazendo a conclusão de um dia consumir o tempo de outro dia da série.
             const targetDateStr = date; // YYYY-MM-DD format from URL param
             const idaRecords = await db
               .select()
@@ -6884,11 +6910,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
                   eq(activityTimeRecords.activityId, id),
                   eq(activityTimeRecords.recordType, "ida"),
                   or(
+                    eq(activityTimeRecords.recordDate, targetDateStr),
                     and(
+                      sql`${activityTimeRecords.recordDate} IS NULL`,
                       gte(activityTimeRecords.finishedAt, targetDate),
                       lt(activityTimeRecords.finishedAt, nextDay)
-                    ),
-                    sql`DATE(${activityTimeRecords.createdAt}) = ${targetDateStr}`
+                    )
                   )
                 )
               )

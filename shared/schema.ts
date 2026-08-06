@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, pgEnum, decimal, boolean, unique, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, pgEnum, decimal, boolean, unique, serial, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -244,6 +244,10 @@ export const activityTimeRecords = pgTable("activity_time_records", {
   gpsEtaMinutes: integer("gps_eta_minutes"), // GPS estimated time (nullable)
   transportType: transportTypeEnum("transport_type"), // For ida and retorno_base
   baseId: varchar("base_id"), // For retorno_base only (technician's base ID)
+  // Dia da série ao qual este registro pertence (atividades multi-dia).
+  // Fonte de verdade para idempotência por dia — NÃO usar finishedAt/createdAt para isso,
+  // pois eles refletem o momento real do registro (que pode ser retroativo/adiantado).
+  recordDate: date("record_date"),
   startedAt: timestamp("started_at"),
   finishedAt: timestamp("finished_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

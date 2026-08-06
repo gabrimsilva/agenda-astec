@@ -267,7 +267,7 @@ export default function MyAgenda() {
     gcTime: 0,
   });
 
-  const { data: allTimeRecords = [] } = useQuery<{ activityId: string; recordType: string; minutesReported: number; finishedAt: string }[]>({
+  const { data: allTimeRecords = [] } = useQuery<{ activityId: string; recordType: string; minutesReported: number; finishedAt: string; recordDate?: string | null }[]>({
     queryKey: ["/api/activity-time-records/bulk", multiDayActivityIds.join(",")],
     queryFn: async () => {
       if (multiDayActivityIds.length === 0) return [];
@@ -284,7 +284,11 @@ export default function MyAgenda() {
   const timeRecordsByDayMap = useMemo(() => {
     const map = new Map<string, { ida?: number; retorno?: number }>();
     allTimeRecords.forEach(r => {
-      const dateStr = r.finishedAt ? moment.utc(r.finishedAt).format("YYYY-MM-DD") : null;
+      // recordDate é a fonte de verdade do dia da série.
+      // finishedAt é apenas fallback para registros legados.
+      const dateStr = r.recordDate
+        ? moment.utc(r.recordDate).format("YYYY-MM-DD")
+        : (r.finishedAt ? moment.utc(r.finishedAt).format("YYYY-MM-DD") : null);
       if (!dateStr) return;
       const key = `${r.activityId}_${dateStr}`;
       const existing = map.get(key) || {};
