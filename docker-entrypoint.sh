@@ -11,7 +11,13 @@ else
   echo "==> [ASTEC] Sincronizando schema do banco (drizzle-kit push)..."
   # stdin vindo de /dev/null: se o push pedir confirmacao interativa, ele recebe EOF
   # e aborta em vez de travar o container num prompt.
-  if ! npx drizzle-kit push < /dev/null; then
+  PUSH_OUTPUT=$(npx drizzle-kit push < /dev/null 2>&1)
+  PUSH_EXIT=$?
+  echo "$PUSH_OUTPUT"
+  
+  # Bug do drizzle-kit: retorna exit 0 mesmo quando aborta no prompt interativo.
+  # Verificamos stderr para detectar o erro real.
+  if [ $PUSH_EXIT -ne 0 ] || echo "$PUSH_OUTPUT" | grep -q "Interactive prompts require a TTY"; then
     echo ""
     echo "############################################################"
     echo "  [ASTEC] DEPLOY ABORTADO: falha ao sincronizar o schema."
