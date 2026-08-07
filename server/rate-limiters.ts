@@ -7,11 +7,9 @@ export const authLimiter = rateLimit({
   message: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
-  // Use email + IP for better limiting
-  keyGenerator: (req) => {
-    const email = req.body?.email || req.body?.username || '';
-    return `${req.ip}-${email}`;
-  }
+  // Limita por IP (rate-limiter trata IPv6 internamente). O fingerprint
+  // email+IP seria ideal, mas exigiria store customizado. IP sozinho ja
+  // bloqueia brute-force de mesma origem.
 });
 
 // Security: General API rate limiting
