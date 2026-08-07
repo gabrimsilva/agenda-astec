@@ -1467,11 +1467,26 @@ export default function MyAgenda() {
       
       setActivityBeingCompleted(null);
     } catch (error: any) {
-      toast({
-        title: "Erro ao concluir atividade",
-        description: error.message || "Não foi possível concluir a atividade",
-        variant: "destructive",
-      });
+      const msg = error?.message || "";
+      // Dia já concluído não é falha: é a protecao contra duplicar horas.
+      // Fecha o modal e orienta, em vez de mostrar erro generico.
+      if (msg.includes("já foi concluído")) {
+        toast({
+          title: "Dia já concluído",
+          description: msg,
+          duration: 7000,
+        });
+        setCompletionDialogOpen(false);
+        setActivityBeingCompleted(null);
+        queryClient.invalidateQueries({ queryKey: ["/api/activity-day-statuses/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/activities"], refetchType: "all" });
+      } else {
+        toast({
+          title: "Erro ao concluir atividade",
+          description: msg || "Não foi possível concluir a atividade",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsCompletingActivity(false);
     }

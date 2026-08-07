@@ -383,11 +383,20 @@ export const timeEntries = pgTable("time_entries", {
   location: text("location"), // Local de realização ("Executado em") associado a estas horas; "Trajeto" para deslocamentos
   notes: text("notes"),
   createdBy: varchar("created_by").references(() => users.id).notNull(),
-  agendaActivityId: varchar("agenda_activity_id").references(() => activities.id).unique(),
+  // NAO usar .unique() isolado aqui: uma atividade gera varios lancamentos
+  // (IDA/EXECUCAO/VOLTA e, em multi-dia, um conjunto por dia). Com UNIQUE
+  // isolado apenas UM registro conseguia o vinculo e os demais ficavam nulos,
+  // o que quebrava a idempotencia e permitia duplicar horas.
+  agendaActivityId: varchar("agenda_activity_id").references(() => activities.id),
   travelSegmentId: varchar("travel_segment_id").references(() => travelSegments.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Um lancamento por (atividade, dia, etapa). O proprio banco passa a rejeitar
+  // duplicatas, mesmo que a aplicacao erre.
+  uniqActivityDaySource: unique("time_entries_activity_date_source_unique")
+    .on(table.agendaActivityId, table.workDate, table.source),
+}));
 
 // Travel segments table (for route planning and tracking)
 export const travelSegments = pgTable("travel_segments", {

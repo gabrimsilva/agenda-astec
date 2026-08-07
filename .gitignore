@@ -27,3 +27,6 @@ Thumbs.db
 # Observação: NADA do código do projeto é ignorado.
 # server/, client/, shared/ (schema/tabelas), migrations/, scripts/,
 # package.json, *.config.ts, drizzle.config.ts, attached_assets/ etc. são versionados.
+
+# Override local do docker compose (desenvolvimento apenas)
+docker-compose.override.yml

@@ -5416,6 +5416,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             location: 'Trajeto',
             notes: travelNotes,
             createdBy: req.user!.userId,
+            agendaActivityId: activity.id,
+          }).onConflictDoNothing({
+            target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
           });
           
           console.log(`✅ Time entry IDA criado: ${idaTravelMinutes}min de ${travelCategory} (tipo atividade: ${activityType?.category})`);
@@ -5459,7 +5462,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               notes: notes,
               createdBy: req.user!.userId,
               agendaActivityId: activity.id,
-            }).onConflictDoNothing({ target: timeEntries.agendaActivityId });
+            }).onConflictDoNothing({
+              target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
+            });
             
             console.log(`✅ Time entry EXECUÇÃO criado: ${durationMinutes}min de ${timeEntryCategory} (workCompleted=${finalWorkCompleted})`);
           } catch (timeEntryError) {
@@ -5490,7 +5495,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               notes: notes,
               createdBy: req.user!.userId,
               agendaActivityId: activity.id,
-            }).onConflictDoNothing({ target: timeEntries.agendaActivityId });
+            }).onConflictDoNothing({
+              target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
+            });
             
             console.log(`✅ Time entry PERDA criado: ${parsedLostMinutes}min (trabalho não realizado)`);
           } catch (lostTimeError) {
@@ -6047,7 +6054,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           location: 'Trajeto',
           notes: voltaNotes,
           createdBy: req.user!.userId,
-          agendaActivityId: isMultiDay ? activity.id : undefined,
+          // Vincula sempre (antes era so multi-dia). Sem o vinculo o indice
+          // unico nao protege, pois Postgres aceita varios NULLs.
+          agendaActivityId: activity.id,
+        }).onConflictDoNothing({
+          target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
         });
         
         console.log(`✅ Time entry VOLTA criado: ${minutesReported}min de ${voltaCategory} (dia: ${recordDateStr})`);
@@ -6832,7 +6843,18 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       if (!existingStatus) {
         return res.status(400).json({ error: "No check-in found for this date" });
       }
-      
+
+      // Bloqueia reconclusao do mesmo dia.
+      // Sem isso, cada nova chamada recriava os time_entries do dia (execucao,
+      // IDA e VOLTA), duplicando horas no relatorio.
+      if (existingStatus.status === 'concluido') {
+        console.warn(`[day check-out] Tentativa de reconcluir o dia ${date} da atividade ${id} — bloqueada.`);
+        return res.status(409).json({
+          error: `O dia ${date} já foi concluído. Para ajustar os tempos, use a edição da atividade.`,
+          alreadyCompleted: true,
+        });
+      }
+
       // Calculate actual duration
       let actualDuration: number | null = null;
       if (workCompleted === true) {
@@ -6945,6 +6967,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
                 notes: `Dia ${date} - IDA até ${activity.clientName || 'cliente'}: ${idaRecord.minutesReported}min (informado pelo técnico)`,
                 createdBy: req.user!.userId,
                 agendaActivityId: id,
+              }).onConflictDoNothing({
+                target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
               });
               console.log(`✅ Time entry IDA dia ${date}: ${idaRecord.minutesReported}min de ${travelCategory}`);
             }
@@ -6970,6 +6994,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
             location: (activity as any).location ?? null,
             notes: `Dia ${date} - Execução em ${activity.clientName || 'cliente'}`,
             createdBy: req.user!.userId,
+            // Antes este insert nao vinculava nem tinha nenhuma protecao:
+            // era a maior fonte de horas duplicadas ao reconcluir um dia.
+            agendaActivityId: id,
+          }).onConflictDoNothing({
+            target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
           });
           console.log(`✅ Time entry EXECUÇÃO dia ${date}: ${actualDuration}min`);
         } catch (e) {
@@ -6990,6 +7019,9 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               location: (activity as any).location ?? null,
               notes: `Dia ${date} - Tempo não produtivo em ${activity.clientName || 'cliente'}${justification ? ` | Motivo: ${justification.trim()}` : ''}`,
               createdBy: req.user!.userId,
+              agendaActivityId: id,
+            }).onConflictDoNothing({
+              target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
             });
             console.log(`✅ Time entry PERDA dia ${date}: ${parsedLost}min`);
           } catch (e) {
