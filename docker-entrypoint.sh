@@ -9,9 +9,9 @@ if [ "$SKIP_DB_PUSH" = "1" ]; then
   echo "==> [ASTEC] O servidor pode falhar se o codigo esperar colunas que nao existem."
 else
   echo "==> [ASTEC] Sincronizando schema do banco (drizzle-kit push)..."
-  # stdin vindo de /dev/null: se o push pedir confirmacao interativa, ele recebe EOF
-  # e aborta em vez de travar o container num prompt.
-  PUSH_OUTPUT=$(npx drizzle-kit push < /dev/null 2>&1)
+  # --force: ignora prompts interativos (ex: tabelas no banco ausentes do schema)
+  # stdin vindo de /dev/null para garantir que nao haja input interativo
+  PUSH_OUTPUT=$(npx drizzle-kit push --force < /dev/null 2>&1)
   PUSH_EXIT=$?
   echo "$PUSH_OUTPUT"
   
