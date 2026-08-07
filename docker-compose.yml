@@ -39,6 +39,10 @@ services:
       DATABASE_URL: postgresql://astec:astec@db:5432/astec
       # IMPORTANTE: troque por um segredo forte e unico para producao.
       SESSION_SECRET: "troque-este-segredo-em-producao-2f9c7a1e5b4d8063"
+      # Desativa o drizzle-kit push no entrypoint. Usado quando o schema
+      # ja esta sincronizado manualmente ou o drizzle-kit push apresenta
+      # problema (ex: prompts interativos causando crash-loop).
+      SKIP_DB_PUSH: "1"
     ports:
       # A porta 80/443 e servida pelo reverse proxy (deploy/proxy) que termina o TLS.
       # O ASTEC publica apenas a 5000 no host; o proxy o alcanca via host.docker.internal:5000.
