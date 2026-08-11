@@ -1188,11 +1188,6 @@ export default function RATs() {
                         <Badge className={`${statusConfig.bg} ${statusConfig.text} text-xs`}>
                           {statusConfig.label}
                         </Badge>
-                        {isSent && (
-                          <Badge className={`${SENT_STYLE.bg} ${SENT_STYLE.text} text-xs`}>
-                            Enviada
-                          </Badge>
-                        )}
                         {(rat as any).isSimplified ? (
                           <Badge variant="outline" className="text-xs no-default-hover-elevate no-default-active-elevate">
                             <ClipboardList className="h-3 w-3 mr-1" />
@@ -1326,84 +1321,6 @@ export default function RATs() {
                         </div>
                       )}
                     </div>
-                    
-                    {/* Row 4: RAT enviada checkbox */}
-                    {/* For imported PDFs: always show, marks as completa + sent */}
-                    {/* For manual RATs: show when status is completa or rascunho */}
-                    {(hasImportedPdf || rat.status === "completa" || rat.status === "rascunho") && (
-                      <div 
-                        className="flex items-center gap-2 mt-3 pt-3 border-t"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          id={`sent-${rat.id}`}
-                          checked={isSent}
-                          onCheckedChange={async (checked) => {
-                            try {
-                              // Atualização otimista: atualiza localmente ANTES de chamar API
-                              const previousRats = queryClient.getQueryData<Rat[]>(["/api/rats"]);
-                              
-                              if (previousRats) {
-                                queryClient.setQueryData<Rat[]>(
-                                  ["/api/rats"],
-                                  previousRats.map(r => 
-                                    r.id === rat.id 
-                                      ? { 
-                                          ...r, 
-                                          sentAt: checked ? new Date().toISOString() : null,
-                                          status: (checked && hasImportedPdf) ? "completa" : r.status
-                                        }
-                                      : r
-                                  )
-                                );
-                              }
-                              
-                              // Chama API em background
-                              if (hasImportedPdf) {
-                                await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
-                                  isSent: !!checked,
-                                  changeStatus: !!checked
-                                });
-                              } else {
-                                await apiRequest("POST", `/api/rats/${rat.id}/toggle-sent`, { 
-                                  isSent: !!checked,
-                                  changeStatus: !!checked
-                                });
-                                
-                                if (checked) {
-                                  toast({ 
-                                    title: "RAT marcada como enviada",
-                                    description: "Status alterado para completa" 
-                                  });
-                                } else {
-                                  toast({ 
-                                    title: "RAT desmarcada como enviada" 
-                                  });
-                                }
-                              }
-                              
-                              // NÃO invalida o cache - mantém os dados carregados
-                              // queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
-                            } catch (error: any) {
-                              // Em caso de erro, reverte a mudança otimista
-                              queryClient.invalidateQueries({ queryKey: ["/api/rats"] });
-                              toast({
-                                title: "Erro ao atualizar RAT",
-                                description: error.message,
-                                variant: "destructive"
-                              });
-                            }
-                          }}
-                          data-testid={`checkbox-sent-${rat.id}`}
-                        />
-                        <label 
-                          htmlFor={`sent-${rat.id}`}
-                          className="text-sm cursor-pointer select-none"
-                        >
-                          RAT enviada
-                        </label>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
