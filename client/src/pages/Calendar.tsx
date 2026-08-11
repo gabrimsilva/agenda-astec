@@ -1437,9 +1437,37 @@ export default function Calendar() {
         const tooltipHeight = 400; // altura estimada do tooltip
         const minTopSpace = 80; // espaço mínimo para header/navbar
         const padding = 16; // padding das bordas da tela
+        const bottomPadding = 20; // padding inferior da tela
         
-        // Verificar se há espaço acima (considerando altura do tooltip + espaço para navbar)
-        const hasSpaceAbove = rect.top > tooltipHeight + minTopSpace;
+        // Calcular viewport height
+        const viewportHeight = window.innerHeight;
+        
+        // Verificar espaço disponível acima e abaixo
+        const spaceAbove = rect.top - minTopSpace;
+        const spaceBelow = viewportHeight - rect.bottom - bottomPadding;
+        
+        // Decidir posição: prioriza acima se tiver espaço, senão vai para baixo
+        let showBelow = false;
+        let y = rect.top - 10;
+        
+        if (spaceAbove >= tooltipHeight) {
+          // Tem espaço acima, mostrar acima
+          showBelow = false;
+          y = rect.top - 10;
+        } else if (spaceBelow >= tooltipHeight) {
+          // Não tem espaço acima, mas tem abaixo
+          showBelow = true;
+          y = rect.bottom + 10;
+        } else {
+          // Não tem espaço ideal em nenhum lado, escolher o que tem mais espaço
+          if (spaceBelow > spaceAbove) {
+            showBelow = true;
+            y = rect.bottom + 10;
+          } else {
+            showBelow = false;
+            y = rect.top - 10;
+          }
+        }
         
         // Calcular posição X inicial (centro do evento)
         let x = rect.left + rect.width / 2;
@@ -1459,8 +1487,8 @@ export default function Calendar() {
         
         const position = {
           x,
-          y: hasSpaceAbove ? rect.top - 10 : rect.bottom + 10,
-          showBelow: !hasSpaceAbove
+          y,
+          showBelow
         };
         
         if (isTooltipOpen) {
@@ -1580,7 +1608,7 @@ export default function Calendar() {
         {/* Tooltip para evento fantasma (reagendamento) */}
         {isGhost && isTooltipOpen && tooltipPosition && createPortal(
           <div
-            className="fixed w-72 p-3 shadow-xl border bg-popover text-popover-foreground rounded-lg animate-in fade-in-0 zoom-in-95 z-[9999]"
+            className="fixed w-72 max-h-[90vh] overflow-y-auto p-3 shadow-xl border bg-popover text-popover-foreground rounded-lg animate-in fade-in-0 zoom-in-95 z-[9999]"
             style={{
               left: `${tooltipPosition.x}px`,
               top: `${tooltipPosition.y}px`,
@@ -1639,7 +1667,7 @@ export default function Calendar() {
         {/* Tooltip compacto com informações básicas */}
         {!isGhost && isTooltipOpen && tooltipPosition && createPortal(
           <div
-            className="fixed w-72 p-3 shadow-xl border bg-popover text-popover-foreground rounded-lg animate-in fade-in-0 zoom-in-95 z-[9999]"
+            className="fixed w-72 max-h-[90vh] overflow-y-auto p-3 shadow-xl border bg-popover text-popover-foreground rounded-lg animate-in fade-in-0 zoom-in-95 z-[9999]"
             style={{
               left: `${tooltipPosition.x}px`,
               top: `${tooltipPosition.y}px`,
