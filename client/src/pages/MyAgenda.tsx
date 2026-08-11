@@ -1186,6 +1186,31 @@ export default function MyAgenda() {
     },
   });
 
+  // Mutation para excluir atividade
+  const deleteActivityMutation = useMutation({
+    mutationFn: async (activityId: string) => {
+      const response = await apiRequest("DELETE", `/api/activities/${activityId}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao excluir atividade");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/activities", user?.id], refetchType: "all" });
+      queryClient.refetchQueries({ queryKey: ["/api/activities", user?.id], type: "all" });
+      toast({ title: "Atividade excluída com sucesso!" });
+    },
+    onError: (error: any) => {
+      console.error("Error deleting activity:", error);
+      toast({ 
+        variant: "destructive", 
+        title: "Erro ao excluir atividade", 
+        description: error?.message || "Acesso negado: você não tem permissão para realizar esta ação" 
+      });
+    },
+  });
+
   // Handler para abrir modal de nova atividade
   const handleOpenNewActivityModal = () => {
     form.reset({
@@ -1340,6 +1365,23 @@ export default function MyAgenda() {
     setActivityBeingCompleted(stopId);
     // Abrir o novo modal de conclusão com tempo de deslocamento
     setCompletionDialogOpen(true);
+  };
+
+  // Handler para excluir atividade
+  const handleDelete = (stopId: string) => {
+    deleteActivityMutation.mutate(stopId);
+  };
+
+  // Handler para editar atividade (placeholder)
+  const handleEdit = (stopId: string) => {
+    console.log("Edit activity:", stopId);
+    // TODO: Implementar edição de atividade
+  };
+
+  // Handler para reagendar atividade (placeholder)
+  const handleReschedule = (stopId: string) => {
+    console.log("Reschedule activity:", stopId);
+    // TODO: Implementar reagendamento de atividade
   };
 
   // Handler chamado quando o dialog de conclusão pede para abrir formulário de RAT
@@ -2483,7 +2525,10 @@ export default function MyAgenda() {
               </div>
 
               {/* Tipo de Atividade */}
-              <ActivityTypeSelector form={editForm} activityTypes={activityTypes} />
+              <ActivityTypeSelector form={editForm} activityTypes={activityTypes} disabled={true} />
+              <p className="text-xs text-muted-foreground -mt-2">
+                ⚠️ O tipo de atividade não pode ser alterado após a criação. Para mudar o tipo, exclua esta atividade e crie uma nova.
+              </p>
 
               {/* Local de Realização (puxado do tipo de atividade) */}
               <ActivityLocationSelector form={editForm} activityTypes={activityTypes} />

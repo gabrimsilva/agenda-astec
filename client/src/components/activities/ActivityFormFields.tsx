@@ -28,12 +28,14 @@ interface ActivityTypeSelectorProps {
   form: UseFormReturn<any>;
   activityTypes: ActivityType[];
   fieldName?: string;
+  disabled?: boolean;
 }
 
 export function ActivityTypeSelector({
   form,
   activityTypes,
   fieldName = "activityTypeId",
+  disabled = false,
 }: ActivityTypeSelectorProps) {
   // Lista única (sem cores e sem separação por categoria efetivo/adicional/perda).
   // Mantém apenas a relação categoria principal > subcategoria por indentação.
@@ -69,9 +71,9 @@ export function ActivityTypeSelector({
         return (
           <FormItem>
             <FormLabel>Tipo de Atividade *</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
               <FormControl>
-                <SelectTrigger data-testid="select-activity-type">
+                <SelectTrigger data-testid="select-activity-type" disabled={disabled}>
                   <SelectValue placeholder="Selecione um tipo">
                     {selectedType
                       ? (parentType ? `${parentType.name} > ${selectedType.name}` : selectedType.name)
