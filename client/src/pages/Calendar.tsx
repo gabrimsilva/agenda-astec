@@ -1433,14 +1433,32 @@ export default function Calendar() {
       
       if (eventRef.current) {
         const rect = eventRef.current.getBoundingClientRect();
+        const tooltipWidth = 288; // w-72 = 18rem = 288px
         const tooltipHeight = 400; // altura estimada do tooltip
         const minTopSpace = 80; // espaço mínimo para header/navbar
+        const padding = 16; // padding das bordas da tela
         
         // Verificar se há espaço acima (considerando altura do tooltip + espaço para navbar)
         const hasSpaceAbove = rect.top > tooltipHeight + minTopSpace;
         
+        // Calcular posição X inicial (centro do evento)
+        let x = rect.left + rect.width / 2;
+        
+        // Verificar limites laterais da tela e ajustar se necessário
+        const halfTooltipWidth = tooltipWidth / 2;
+        const viewportWidth = window.innerWidth;
+        
+        // Se sair pela esquerda, ajustar
+        if (x - halfTooltipWidth < padding) {
+          x = halfTooltipWidth + padding;
+        }
+        // Se sair pela direita, ajustar
+        else if (x + halfTooltipWidth > viewportWidth - padding) {
+          x = viewportWidth - halfTooltipWidth - padding;
+        }
+        
         const position = {
-          x: rect.left + rect.width / 2,
+          x,
           y: hasSpaceAbove ? rect.top - 10 : rect.bottom + 10,
           showBelow: !hasSpaceAbove
         };
