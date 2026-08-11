@@ -902,7 +902,7 @@ export default function MyAgenda() {
   // Mutation para excluir atividade
   const deleteActivityMutation = useMutation({
     mutationFn: async (activityId: string) => {
-      const response = await apiRequest("POST", `/api/activities/${activityId}/delete`);
+      const response = await apiRequest("DELETE", `/api/activities/${activityId}`);
       return response;
     },
     onSuccess: async () => {
