@@ -73,6 +73,9 @@ function getRatsMinimalSelect() {
     openDate: rats.openDate, // Data da atividade (checkout)
     technicianId: rats.technicianId, // Necessário para filtro no frontend
     activityId: rats.activityId, // CRÍTICO: necessário para matching com activities
+    importedPdfUrl: rats.importedPdfUrl, // Para mostrar badge "PDF"
+    importedPdfFilename: rats.importedPdfFilename, // Para nome do arquivo
+    isSimplified: rats.isSimplified, // Para mostrar badge "Simplificada"
   };
 }
 
