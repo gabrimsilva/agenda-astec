@@ -2,7 +2,19 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
+    let text = (await res.text()) || res.statusText;
+    
+    // If we get HTML (like a 403 from proxy/firewall), extract meaningful error
+    if (text.includes('<html>') || text.includes('<!DOCTYPE')) {
+      // Check if it's a 403 HTML page
+      if (res.status === 403) {
+        text = "Acesso negado: você não tem permissão para realizar esta ação";
+      } else if (res.status === 404) {
+        text = "Recurso não encontrado";
+      } else {
+        text = `Erro ${res.status}: ${res.statusText}`;
+      }
+    }
     
     // Try to parse JSON error response and extract just the message
     try {
@@ -14,7 +26,7 @@ async function throwIfResNotOk(res: Response) {
         throw new Error(json.message);
       }
     } catch (parseError) {
-      // If not JSON or no error field, use plain text
+      // If not JSON or no error field, use processed text
       if (parseError instanceof SyntaxError) {
         throw new Error(text || res.statusText);
       }
