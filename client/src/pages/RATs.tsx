@@ -931,8 +931,8 @@ export default function RATs() {
                   <div className={`text-3xl font-bold ${config.text} mb-2`}>
                     {statusCounts[status] || 0}
                   </div>
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    {config.label}
+                  <div className="text-xs font-medium text-muted-foreground tracking-wide">
+                    {config.label.toUpperCase()}
                   </div>
                   {statusFilter === status && (
                     <div className="text-[10px] text-primary font-semibold mt-2">
