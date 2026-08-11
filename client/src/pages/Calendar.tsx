@@ -2506,28 +2506,6 @@ export default function Calendar() {
           </Card>
         )}
 
-        <Card className="p-4">
-          <div className="flex flex-wrap gap-3 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Atalhos:</span>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Badge variant="outline" className="gap-1">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">N</kbd> Nova
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">/</kbd> Buscar
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">←</kbd>
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">→</kbd> Navegar
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded">T</kbd> Hoje
-              </Badge>
-            </div>
-          </div>
-        </Card>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
