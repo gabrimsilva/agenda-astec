@@ -75,7 +75,6 @@ function getRatsMinimalSelect() {
     activityId: rats.activityId, // CRÍTICO: necessário para matching com activities
     importedPdfUrl: rats.importedPdfUrl, // Para mostrar badge "PDF"
     importedPdfFilename: rats.importedPdfFilename, // Para nome do arquivo
-    isSimplified: rats.isSimplified, // Para mostrar badge "Simplificada"
   };
 }
 
@@ -7083,8 +7082,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
       const runQuery = async (): Promise<any[]> => {
         const q = conditions.length > 0
-          ? db.select(lightSelect).from(rats).where(and(...conditions)).orderBy(desc(rats.createdAt))
-          : db.select(lightSelect).from(rats).orderBy(desc(rats.createdAt));
+          ? db.select(lightSelect).from(rats).where(and(...conditions)).orderBy(desc(rats.createdAt)).limit(50)
+          : db.select(lightSelect).from(rats).orderBy(desc(rats.createdAt)).limit(100);
         return q;
       };
 
