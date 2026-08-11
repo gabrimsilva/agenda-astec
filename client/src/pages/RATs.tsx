@@ -78,7 +78,7 @@ const STATUS_CONFIG: Record<string, {
     border: "border-l-orange-500"
   },
   completa: { 
-    label: "Completa", 
+    label: "Concluída", 
     bg: "bg-blue-100 dark:bg-blue-900/30", 
     text: "text-blue-800 dark:text-blue-200",
     border: "border-l-blue-500"
