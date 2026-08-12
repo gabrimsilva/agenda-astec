@@ -6982,6 +6982,79 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         } catch (e) {
           console.error("⚠️ Erro ao criar time entry de IDA do dia:", e);
         }
+        
+        // 1b. Create time entry for VOLTA travel (return-base) - after IDA
+        try {
+          // Check if VOLTA time entry already exists for this day (idempotency)
+          const existingVoltaEntry = await db
+            .select()
+            .from(timeEntries)
+            .where(
+              and(
+                eq(timeEntries.technicianId, activity.technicianId),
+                eq(timeEntries.agendaActivityId, id),
+                eq(timeEntries.source, "volta_travel"),
+                eq(timeEntries.workDate, targetDate)
+              )
+            )
+            .limit(1);
+          
+          if (existingVoltaEntry.length === 0) {
+            const targetDateStr = date; // YYYY-MM-DD format from URL param
+            const voltaRecords = await db
+              .select()
+              .from(activityTimeRecords)
+              .where(
+                and(
+                  eq(activityTimeRecords.activityId, id),
+                  eq(activityTimeRecords.recordType, "return-base"),
+                  or(
+                    eq(activityTimeRecords.recordDate, targetDateStr),
+                    and(
+                      sql`${activityTimeRecords.recordDate} IS NULL`,
+                      gte(activityTimeRecords.finishedAt, targetDate),
+                      lt(activityTimeRecords.finishedAt, nextDay)
+                    )
+                  )
+                )
+              )
+              .orderBy(activityTimeRecords.createdAt);
+            
+            const voltaRecord = voltaRecords.length > 0 ? voltaRecords[voltaRecords.length - 1] : null;
+            
+            if (voltaRecord && voltaRecord.minutesReported > 0) {
+              let travelCategory: "efetivo" | "adicional" | "perda";
+              if (activityType.category === "efetivo" && workCompleted !== false) {
+                travelCategory = "adicional";
+              } else if (workCompleted === false) {
+                travelCategory = "perda";
+              } else {
+                travelCategory = activityType.category === "adicional" ? "adicional" : 
+                                 activityType.category === "perda" ? "perda" : "adicional";
+              }
+              
+              await db.insert(timeEntries).values({
+                technicianId: activity.technicianId,
+                activityTypeId: activity.activityTypeId,
+                workDate: targetDateForWorkDate,
+                minutes: voltaRecord.minutesReported,
+                category: travelCategory,
+                source: "volta_travel",
+                location: 'Trajeto',
+                notes: `Dia ${date} - VOLTA de ${activity.clientName || 'cliente'} à base: ${voltaRecord.minutesReported}min (informado pelo técnico)`,
+                createdBy: req.user!.userId,
+                agendaActivityId: id,
+              }).onConflictDoNothing({
+                target: [timeEntries.agendaActivityId, timeEntries.workDate, timeEntries.source],
+              });
+              console.log(`✅ Time entry VOLTA dia ${date}: ${voltaRecord.minutesReported}min de ${travelCategory}`);
+            }
+          } else {
+            console.log(`ℹ️ Time entry VOLTA já existe para dia ${date}, pulando`);
+          }
+        } catch (e) {
+          console.error("⚠️ Erro ao criar time entry de VOLTA do dia:", e);
+        }
       }
       
       // 2. Create time entry for execution/work time
