@@ -1017,8 +1017,8 @@ export function RATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.5 (menor tamanho, boa qualidade visual)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+          // Comprimir com qualidade 0.3 (compressão agressiva, ainda boa qualidade visual)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.3);
           
           const compressedSize = compressedBase64.length;
           const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(0);
