@@ -2584,6 +2584,44 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         actualReturnMinutes: activity.actualReturnMinutes,
       });
       
+      // Sincronizar actualTravelMinutes com activityTimeRecords (tempo de IDA)
+      if (data.actualTravelMinutes !== undefined && data.actualTravelMinutes !== null) {
+        const existingIdaRecord = await db
+          .select()
+          .from(activityTimeRecords)
+          .where(
+            and(
+              eq(activityTimeRecords.activityId, activity.id),
+              eq(activityTimeRecords.recordType, "ida")
+            )
+          )
+          .limit(1);
+        
+        if (existingIdaRecord.length > 0) {
+          // Atualizar registro existente
+          await db
+            .update(activityTimeRecords)
+            .set({
+              minutesReported: data.actualTravelMinutes,
+              finishedAt: new Date(),
+            })
+            .where(eq(activityTimeRecords.id, existingIdaRecord[0].id));
+          
+          console.log(`🔄 [Edit Activity] Updated existing IDA record for activity ${activity.id}: ${data.actualTravelMinutes} minutes`);
+        } else {
+          // Criar novo registro se não existir
+          await db.insert(activityTimeRecords).values({
+            activityId: activity.id,
+            recordType: "ida",
+            minutesReported: data.actualTravelMinutes,
+            startedAt: activity.navigationStartTime || activity.scheduledDate,
+            finishedAt: new Date(),
+          });
+          
+          console.log(`➕ [Edit Activity] Created new IDA record for activity ${activity.id}: ${data.actualTravelMinutes} minutes`);
+        }
+      }
+      
       // Se atualizou tempos de uma atividade concluída, deletar time_entries antigos
       // para garantir que o relatório use os valores atualizados de actualDurationMinutes
       if (activity.status === "concluido" && (
@@ -5776,32 +5814,49 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           )
           .limit(1);
         
+        // Se já existe, atualizar em vez de retornar erro
+        let timeRecord;
         if (existingRecord.length > 0) {
-          return res.status(409).json({ 
-            error: "Tempo de IDA já registrado para este dia",
-            existingRecord: existingRecord[0]
-          });
+          console.log(`🔄 [Multi-dia] Atualizando tempo de IDA existente para dia ${targetDateStr}`);
+          
+          const nowForIda = new Date();
+          const finishedAtForIda = new Date(targetDate.getTime() + (
+            nowForIda.getHours() * 3600000 +
+            nowForIda.getMinutes() * 60000 +
+            nowForIda.getSeconds() * 1000
+          ));
+          
+          [timeRecord] = await db
+            .update(activityTimeRecords)
+            .set({
+              minutesReported,
+              gpsEtaMinutes: gpsEtaMinutes || null,
+              transportType: transportType || null,
+              finishedAt: finishedAtForIda,
+            })
+            .where(eq(activityTimeRecords.id, existingRecord[0].id))
+            .returning();
+        } else {
+          console.log(`➕ [Multi-dia] Criando novo tempo de IDA para dia ${targetDateStr}`);
+          
+          const nowForIda = new Date();
+          const finishedAtForIda = new Date(targetDate.getTime() + (
+            nowForIda.getHours() * 3600000 +
+            nowForIda.getMinutes() * 60000 +
+            nowForIda.getSeconds() * 1000
+          ));
+
+          [timeRecord] = await db.insert(activityTimeRecords).values({
+            activityId: activity.id,
+            recordType: "ida",
+            minutesReported,
+            gpsEtaMinutes: gpsEtaMinutes || null,
+            transportType: transportType || null,
+            recordDate: targetDateStr,
+            startedAt: activity.navigationStartTime,
+            finishedAt: finishedAtForIda,
+          }).returning();
         }
-
-        // finishedAt ancorado no dia da série (não no "agora"), preservando a hora do relógio.
-        // Sem isso, registrar um dia retroativamente colide com o dia real corrente.
-        const nowForIda = new Date();
-        const finishedAtForIda = new Date(targetDate.getTime() + (
-          nowForIda.getHours() * 3600000 +
-          nowForIda.getMinutes() * 60000 +
-          nowForIda.getSeconds() * 1000
-        ));
-
-        const [timeRecord] = await db.insert(activityTimeRecords).values({
-          activityId: activity.id,
-          recordType: "ida",
-          minutesReported,
-          gpsEtaMinutes: gpsEtaMinutes || null,
-          transportType: transportType || null,
-          recordDate: targetDateStr,
-          startedAt: activity.navigationStartTime,
-          finishedAt: finishedAtForIda,
-        }).returning();
         
         const now = new Date();
         console.log(`🔄 [Multi-dia] Atualizando day status para emExecucao, data: ${targetDateStr}`);
@@ -5843,7 +5898,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           })
           .where(eq(activities.id, req.params.id));
       } else {
-        // For single-day: check for existing IDA record
+        // For single-day: check for existing IDA record and update if exists
         const existingRecord = await db
           .select()
           .from(activityTimeRecords)
@@ -5855,22 +5910,35 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           )
           .limit(1);
         
+        // Se já existe, atualizar em vez de retornar erro
+        let timeRecord;
         if (existingRecord.length > 0) {
-          return res.status(409).json({ 
-            error: "Tempo de IDA já registrado para esta atividade",
-            existingRecord: existingRecord[0]
-          });
+          console.log(`🔄 [Single-day] Atualizando tempo de IDA existente`);
+          
+          [timeRecord] = await db
+            .update(activityTimeRecords)
+            .set({
+              minutesReported,
+              gpsEtaMinutes: gpsEtaMinutes || null,
+              transportType: transportType || null,
+              finishedAt: new Date(),
+            })
+            .where(eq(activityTimeRecords.id, existingRecord[0].id))
+            .returning();
+        } else {
+          console.log(`➕ [Single-day] Criando novo tempo de IDA`);
+          
+          [timeRecord] = await db.insert(activityTimeRecords).values({
+            activityId: activity.id,
+            recordType: "ida",
+            minutesReported,
+            gpsEtaMinutes: gpsEtaMinutes || null,
+            transportType: transportType || null,
+            recordDate: null, // Single-day não precisa recordDate explícito
+            startedAt: activity.navigationStartTime,
+            finishedAt: new Date(),
+          }).returning();
         }
-        
-        const [timeRecord] = await db.insert(activityTimeRecords).values({
-          activityId: activity.id,
-          recordType: "ida",
-          minutesReported,
-          gpsEtaMinutes: gpsEtaMinutes || null,
-          transportType: transportType || null,
-          startedAt: activity.navigationStartTime,
-          finishedAt: new Date(),
-        }).returning();
         
         const now = new Date();
         const [updatedActivity] = await db.update(activities)
