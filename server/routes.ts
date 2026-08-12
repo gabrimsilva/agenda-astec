@@ -7007,7 +7007,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
               .where(
                 and(
                   eq(activityTimeRecords.activityId, id),
-                  eq(activityTimeRecords.recordType, "return-base"),
+                  eq(activityTimeRecords.recordType, "retorno_base"),
                   or(
                     eq(activityTimeRecords.recordDate, targetDateStr),
                     and(
