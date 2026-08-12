@@ -7172,7 +7172,20 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       // Check if this is the LAST day of the multi-day activity
       // If yes, check if we need to create a RAT
-      const isLastDay = targetDate.getTime() >= activityEndDate.getTime();
+      // Compare only dates (YYYY-MM-DD), not full timestamps
+      const targetDateOnly = new Date(targetDate);
+      targetDateOnly.setUTCHours(0, 0, 0, 0);
+      const activityEndDateOnly = new Date(activity.endDate);
+      activityEndDateOnly.setUTCHours(0, 0, 0, 0);
+      const isLastDay = targetDateOnly.getTime() >= activityEndDateOnly.getTime();
+      
+      console.log(`🔍 [day check-out] Verificando se é último dia:`, {
+        targetDate: targetDateOnly.toISOString().split('T')[0],
+        endDate: activityEndDateOnly.toISOString().split('T')[0],
+        isLastDay,
+        workCompleted,
+        activityTypeRequiresRat: activityType?.requiresRat
+      });
       
       if (isLastDay && workCompleted === true && activityType) {
         // Check if activity type requires RAT
