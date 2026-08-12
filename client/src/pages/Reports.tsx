@@ -653,6 +653,7 @@ export default function Reports() {
 
       const sourceLabelsExcel: Record<string, string> = {
         timer: "Execução",
+        activity: "Execução",
         ida_travel: "IDA",
         volta_travel: "VOLTA",
         manual: "Manual",
@@ -1645,6 +1646,7 @@ export default function Reports() {
                             .map((entry: any, idx: number) => {
                               const sourceLabels: Record<string, { label: string; icon: any }> = {
                                 timer: { label: "Execução", icon: Timer },
+                                activity: { label: "Execução", icon: Timer },
                                 ida_travel: { label: "IDA", icon: Navigation },
                                 volta_travel: { label: "VOLTA", icon: Car },
                                 manual: { label: "Manual", icon: Clock },
