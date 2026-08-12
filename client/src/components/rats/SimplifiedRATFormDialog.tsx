@@ -736,8 +736,8 @@ export function SimplifiedRATFormDialog({
           // Redimensionar para HD (1280x720) - boa qualidade para relatórios
           let width = img.width;
           let height = img.height;
-          const maxWidth = 1280;
-          const maxHeight = 720;
+          const maxWidth = 1024;
+          const maxHeight = 576;
           
           if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
@@ -749,8 +749,8 @@ export function SimplifiedRATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.3 (compressão agressiva, ainda boa qualidade visual)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.3);
+          // Comprimir com qualidade 0.2 (compressão muito agressiva para permitir múltiplas fotos)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.2);
           
           setPhotos((prev) => [
             ...prev,

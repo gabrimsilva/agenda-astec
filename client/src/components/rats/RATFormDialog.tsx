@@ -957,17 +957,6 @@ export function RATFormDialog({
     const totalPhotos = Object.values(photoSections).reduce((sum, section) => sum + section.length, 0);
     console.log(`Total photos: ${totalPhotos}`);
     
-    // Warn if payload is too large
-    if (payloadSize > 1.5 * 1024 * 1024) { // 1.5 MB
-      toast({
-        title: "⚠️ Muitas fotos",
-        description: `O tamanho atual é ${payloadSizeMB} MB com ${totalPhotos} fotos. O limite do servidor é ~1.5 MB. Remova algumas fotos antes de salvar.`,
-        variant: "destructive",
-        duration: 10000
-      });
-      return;
-    }
-    
     if (existingRat) {
       updateMutation.mutate({
         id: existingRat.id,
@@ -1039,11 +1028,11 @@ export function RATFormDialog({
             return;
           }
           
-          // Redimensionar para HD (1280x720) - boa qualidade para relatórios
+          // Redimensionar para resolução otimizada (1024x576) - boa qualidade, tamanho reduzido
           let width = img.width;
           let height = img.height;
-          const maxWidth = 1280;
-          const maxHeight = 720;
+          const maxWidth = 1024;
+          const maxHeight = 576;
           
           const originalSize = base64.length;
           
@@ -1057,8 +1046,8 @@ export function RATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.3 (compressão agressiva, ainda boa qualidade visual)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.3);
+          // Comprimir com qualidade 0.2 (compressão muito agressiva para permitir múltiplas fotos)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.2);
           
           const compressedSize = compressedBase64.length;
           const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(0);
