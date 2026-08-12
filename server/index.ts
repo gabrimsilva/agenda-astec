@@ -24,9 +24,9 @@ app.use(cors({
   credentials: true
 }));
 
-// Increased to 50MB to support multiple iPhone photos with compression
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+// Increased to 100MB to support multiple high-resolution photos in RATs
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: false, limit: '100mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
