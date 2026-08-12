@@ -6124,6 +6124,69 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       // The IDA time for the next activity will only be created when
       // the technician clicks "Iniciar Navegação" on that activity
       
+      // However, if action is "end_journey" and activity is multi-day,
+      // we should check if it's the last day and create RAT if needed
+      if (action === "end_journey" && isMultiDay) {
+        const activityType = await storage.getActivityType(activity.activityTypeId);
+        
+        // Check if this is the last day by verifying all days are completed
+        const allDayStatuses = await db
+          .select()
+          .from(activityDayStatus)
+          .where(eq(activityDayStatus.activityId, activity.id));
+        
+        const allDaysCompleted = allDayStatuses.length > 0 && allDayStatuses.every(ds => ds.status === 'concluido');
+        
+        if (allDaysCompleted && activityType) {
+          // Check if activity type requires RAT
+          let parentRequiresRat = false;
+          const typesRequiringRat = [
+            "Atendimento de Reclamação Técnica em campo",
+            "Inspeção ou Acompanhamento de processo"
+          ];
+          
+          if (activityType.parentId) {
+            const parentType = await storage.getActivityType(activityType.parentId);
+            if (parentType?.requiresRat) {
+              parentRequiresRat = true;
+            }
+          }
+          
+          const shouldCreateRat = activityType.requiresRat === true || 
+                                  parentRequiresRat || 
+                                  typesRequiringRat.some(t => t.trim() === activityType.name.trim());
+          
+          if (shouldCreateRat) {
+            try {
+              // Check if RAT already exists for this activity
+              const existingRats = await db.select().from(rats).where(eq(rats.activityId, activity.id));
+              
+              if (existingRats.length === 0 && activity.technicianId) {
+                // Create pending RAT automatically
+                const reportNumber = await storage.getNextRatNumber();
+                
+                await storage.createRat({
+                  activityId: activity.id,
+                  technicianId: activity.technicianId,
+                  formData: JSON.stringify({}),
+                  reportNumber: reportNumber,
+                  status: "pendente",
+                  clientName: activity.clientName || "",
+                  openDate: new Date(),
+                });
+                
+                console.log(`📋 RAT pendente criada via end_journey para atividade multidia ${activity.id}`);
+                
+                // Invalidate RATs cache
+                invalidateRatsCache(activity.technicianId);
+              }
+            } catch (ratError) {
+              console.error("⚠️ Error auto-creating RAT on end_journey:", ratError);
+            }
+          }
+        }
+      }
+      
       console.log(`✅ Próximo passo selecionado: ${action}${nextActivityId ? ` → ${nextActivityId}` : ''}`);
       
       res.json({
