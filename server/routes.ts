@@ -7107,6 +7107,59 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         }
       }
       
+      // Check if this is the LAST day of the multi-day activity
+      // If yes, check if we need to create a RAT
+      const isLastDay = targetDate.getTime() >= activityEndDate.getTime();
+      
+      if (isLastDay && workCompleted === true && activityType) {
+        // Check if activity type requires RAT
+        let parentRequiresRat = false;
+        const typesRequiringRat = [
+          "Atendimento de Reclamação Técnica em campo",
+          "Inspeção ou Acompanhamento de processo"
+        ];
+        
+        if (activityType.parentId) {
+          const parentType = await storage.getActivityType(activityType.parentId);
+          if (parentType?.requiresRat) {
+            parentRequiresRat = true;
+          }
+        }
+        
+        const shouldCreateRat = activityType.requiresRat === true || 
+                                parentRequiresRat || 
+                                typesRequiringRat.some(t => t.trim() === activityType.name.trim());
+        
+        if (shouldCreateRat) {
+          try {
+            // Check if RAT already exists for this activity
+            const existingRats = await db.select().from(rats).where(eq(rats.activityId, activity.id));
+            
+            if (existingRats.length === 0 && activity.technicianId) {
+              // Create pending RAT automatically
+              const reportNumber = await storage.getNextRatNumber();
+              
+              await storage.createRat({
+                activityId: activity.id,
+                technicianId: activity.technicianId,
+                formData: JSON.stringify({}),
+                reportNumber: reportNumber,
+                status: "pendente",
+                clientName: activity.clientName || "",
+                openDate: new Date(),
+              });
+              
+              console.log(`📋 RAT pendente criada automaticamente para atividade multidia ${activity.id} (último dia: ${date})`);
+              
+              // Invalidate RATs cache
+              invalidateRatsCache(activity.technicianId);
+            }
+          } catch (ratError) {
+            console.error("⚠️ Error auto-creating RAT for multi-day activity:", ratError);
+          }
+        }
+      }
+      
       // For multi-day: do NOT reset overall activity status
       // Each day has independent status tracked via activityDayStatus
       // Just clear navigation times for the next day's navigation
