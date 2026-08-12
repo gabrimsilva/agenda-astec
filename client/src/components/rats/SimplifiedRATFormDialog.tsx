@@ -712,10 +712,21 @@ export function SimplifiedRATFormDialog({
           // Comprimir com qualidade 0.3 (compressão agressiva, ainda boa qualidade visual)
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.3);
           
-          setPhotos((prev) => [
-            ...prev,
-            { id: Date.now().toString() + Math.random(), base64: compressedBase64, description: "" },
-          ]);
+          setPhotos((prev) => {
+            const updated = [
+              ...prev,
+              { id: Date.now().toString() + Math.random(), base64: compressedBase64, description: "" },
+            ];
+            
+            // Auto-save após adicionar foto
+            if (resolvedExistingRat) {
+              setTimeout(() => {
+                handleSave();
+              }, 500);
+            }
+            
+            return updated;
+          });
         };
         img.src = base64;
       };

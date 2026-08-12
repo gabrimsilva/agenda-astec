@@ -1037,10 +1037,21 @@ export function RATFormDialog({
             description: ""
           };
           
-          setPhotoSections(prev => ({
-            ...prev,
-            [section]: [...prev[section], newPhoto]
-          }));
+          setPhotoSections(prev => {
+            const updated = {
+              ...prev,
+              [section]: [...prev[section], newPhoto]
+            };
+            
+            // Auto-save após adicionar foto (evita exceder limite ao adicionar múltiplas fotos)
+            if (existingRat) {
+              setTimeout(() => {
+                handleSave();
+              }, 500); // Pequeno delay para garantir que o state foi atualizado
+            }
+            
+            return updated;
+          });
         };
         img.src = base64;
       };
