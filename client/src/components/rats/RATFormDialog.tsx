@@ -1028,11 +1028,11 @@ export function RATFormDialog({
             return;
           }
           
-          // Redimensionar para resolução otimizada (1024x576) - boa qualidade, tamanho reduzido
+          // Redimensionar para resolução otimizada (800x450) - qualidade suficiente, tamanho muito reduzido
           let width = img.width;
           let height = img.height;
-          const maxWidth = 1024;
-          const maxHeight = 576;
+          const maxWidth = 800;
+          const maxHeight = 450;
           
           const originalSize = base64.length;
           
@@ -1046,8 +1046,8 @@ export function RATFormDialog({
           canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Comprimir com qualidade 0.2 (compressão muito agressiva para permitir múltiplas fotos)
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.2);
+          // Comprimir com qualidade 0.15 (compressão muito agressiva para permitir 15+ fotos)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.15);
           
           const compressedSize = compressedBase64.length;
           const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(0);
