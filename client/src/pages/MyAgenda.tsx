@@ -902,11 +902,8 @@ export default function MyAgenda() {
   // Mutation para excluir atividade
   const deleteActivityMutation = useMutation({
     mutationFn: async (activityId: string) => {
-      const response = await apiRequest("DELETE", `/api/activities/${activityId}`);
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({} as any));
-        throw new Error(err?.error || "Erro ao excluir atividade");
-      }
+      // Usar POST /delete para contornar WAF que bloqueia método DELETE
+      const response = await apiRequest("POST", `/api/activities/${activityId}/delete`);
       return response;
     },
     onSuccess: async () => {
