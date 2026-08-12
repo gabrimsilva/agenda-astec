@@ -325,6 +325,7 @@ export function SimplifiedRATFormDialog({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
+  const photoCountRef = useRef(0);
 
   const { data: technicians = [] } = useQuery<Technician[]>({
     queryKey: ["/api/technicians"],
@@ -421,6 +422,45 @@ export function SimplifiedRATFormDialog({
       setSignatureName(myTechnician?.name || "");
     }
   }, [open, resolvedExistingRat, lightExistingRat, activity, form, myTechnician]);
+
+  // Auto-save when photos are added (to avoid exceeding limit with multiple photos)
+  useEffect(() => {
+    const totalPhotos = photos.length;
+    
+    // Only auto-save if:
+    // 1. We have an existing RAT (not creating new one)
+    // 2. Photo count has increased (not initial load or photo removal)
+    // 3. Not already in the process of loading initial data
+    if (resolvedExistingRat && totalPhotos > photoCountRef.current && !isInitialLoadRef.current) {
+      photoCountRef.current = totalPhotos;
+      
+      console.log(`Auto-saving Simplified RAT after adding photo (total: ${totalPhotos})`);
+      
+      toast({
+        title: "💾 Salvando automaticamente...",
+        description: `${totalPhotos} foto${totalPhotos > 1 ? 's' : ''} no total`,
+        duration: 2000
+      });
+      
+      handleSave();
+    } else if (totalPhotos > 0) {
+      // Update ref even if not auto-saving (for initial load or photo removal)
+      photoCountRef.current = totalPhotos;
+    }
+  }, [photos, resolvedExistingRat]);
+
+  // Mark initial load as complete after first render
+  useEffect(() => {
+    if (open && isInitialLoadRef.current) {
+      // Set a small delay to ensure form data is loaded first
+      const timer = setTimeout(() => {
+        isInitialLoadRef.current = false;
+        photoCountRef.current = photos.length;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [open, photos]);
+
 
   useEffect(() => {
     if (open) {
@@ -712,21 +752,10 @@ export function SimplifiedRATFormDialog({
           // Comprimir com qualidade 0.3 (compressão agressiva, ainda boa qualidade visual)
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.3);
           
-          setPhotos((prev) => {
-            const updated = [
-              ...prev,
-              { id: Date.now().toString() + Math.random(), base64: compressedBase64, description: "" },
-            ];
-            
-            // Auto-save após adicionar foto
-            if (resolvedExistingRat) {
-              setTimeout(() => {
-                handleSave();
-              }, 500);
-            }
-            
-            return updated;
-          });
+          setPhotos((prev) => [
+            ...prev,
+            { id: Date.now().toString() + Math.random(), base64: compressedBase64, description: "" },
+          ]);
         };
         img.src = base64;
       };

@@ -556,6 +556,7 @@ export function RATFormDialog({
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
+  const photoCountRef = useRef(0);
 
   const lastResetRatIdRef = useRef<string | null>(null);
 
@@ -681,6 +682,45 @@ export function RATFormDialog({
       });
     }
   }, [resolvedRat, existingRat, form, activity, myTechnician, user]);
+
+  // Auto-save when photos are added (to avoid exceeding limit with multiple photos)
+  useEffect(() => {
+    const totalPhotos = Object.values(photoSections).flat().length;
+    
+    // Only auto-save if:
+    // 1. We have an existing RAT (not creating new one)
+    // 2. Photo count has increased (not initial load or photo removal)
+    // 3. Not already in the process of loading initial data
+    if (existingRat && totalPhotos > photoCountRef.current && !isInitialLoadRef.current) {
+      photoCountRef.current = totalPhotos;
+      
+      console.log(`Auto-saving RAT after adding photo (total: ${totalPhotos})`);
+      
+      toast({
+        title: "💾 Salvando automaticamente...",
+        description: `${totalPhotos} foto${totalPhotos > 1 ? 's' : ''} no total`,
+        duration: 2000
+      });
+      
+      handleSave();
+    } else if (totalPhotos > 0) {
+      // Update ref even if not auto-saving (for initial load or photo removal)
+      photoCountRef.current = totalPhotos;
+    }
+  }, [photoSections, existingRat]);
+
+  // Mark initial load as complete after first render
+  useEffect(() => {
+    if (open && isInitialLoadRef.current) {
+      // Set a small delay to ensure form data is loaded first
+      const timer = setTimeout(() => {
+        isInitialLoadRef.current = false;
+        photoCountRef.current = Object.values(photoSections).flat().length;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [open, photoSections]);
+
 
   const createMutation = useMutation({
     mutationFn: async (data: { activityId: string; technicianId: string; formData: string; status: string }) => {
@@ -1037,21 +1077,10 @@ export function RATFormDialog({
             description: ""
           };
           
-          setPhotoSections(prev => {
-            const updated = {
-              ...prev,
-              [section]: [...prev[section], newPhoto]
-            };
-            
-            // Auto-save após adicionar foto (evita exceder limite ao adicionar múltiplas fotos)
-            if (existingRat) {
-              setTimeout(() => {
-                handleSave();
-              }, 500); // Pequeno delay para garantir que o state foi atualizado
-            }
-            
-            return updated;
-          });
+          setPhotoSections(prev => ({
+            ...prev,
+            [section]: [...prev[section], newPhoto]
+          }));
         };
         img.src = base64;
       };
