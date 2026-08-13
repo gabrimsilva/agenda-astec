@@ -7896,6 +7896,17 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       
       const data = updateRatSchema.parse(req.body);
       
+      console.log(`[RAT Update POST] Parsed data:`, {
+        status: data.status,
+        hasFormData: !!data.formData,
+        formDataLength: data.formData?.length || 0,
+        hasPhotoSections: !!data.photoSections,
+        photoSectionsLength: data.photoSections?.length || 0,
+        reportNumberManual: data.reportNumberManual,
+        openingDate: data.openingDate,
+        closingDate: data.closingDate,
+      });
+      
       // Prevent updates to sent RATs (unless admin)
       if (existingRat.sentAt && req.user!.role !== "admin") {
         console.log(`[RAT Update POST] Cannot update sent RAT (non-admin)`);
@@ -7903,6 +7914,15 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       const rat = await storage.updateRat(req.params.id, data);
+      
+      console.log(`[RAT Update POST] After DB update:`, {
+        id: rat.id,
+        status: rat.status,
+        hasFormData: !!rat.formData,
+        formDataLength: rat.formData?.length || 0,
+        hasPhotoSections: !!rat.photoSections,
+        photoSectionsLength: rat.photoSections?.length || 0,
+      });
       
       // Surgical cache patch for the updated RAT (keeps admin's cache warm)
       const lightFields: any = {};
