@@ -9,7 +9,7 @@ import { generatePdfFromHtml, getBrowserStats } from "./browser-pool";
 import { RENNER_LOGO_BASE64 } from "./logo-base64";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq, and, gte, lte, lt, not, ne, sql, desc, inArray, or } from "drizzle-orm";
+import { eq, and, gte, lte, lt, not, ne, sql, desc, inArray, or, isNull } from "drizzle-orm";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth";
 import { authMiddleware, roleMiddleware, agendaScopeMiddleware, reportsScopeMiddleware, type AuthRequest } from "./middleware";
 import { authRouter } from "./auth-routes";
@@ -4322,6 +4322,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       console.log(`[time-breakdown] Conditions:`, conditions);
       
       // Fetch manual time entries
+      // IMPORTANT: Exclude Administrador technician and entries from deleted activities
       const manualEntries = await db
         .select({
           id: timeEntries.id,
@@ -4338,13 +4339,30 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           source: timeEntries.source,
           notes: timeEntries.notes,
           agendaActivityId: timeEntries.agendaActivityId, // Para detectar duplicatas
+          activityStatus: activities.status, // For filtering deleted activities
         })
         .from(timeEntries)
         .innerJoin(activityTypes, eq(timeEntries.activityTypeId, activityTypes.id))
         .innerJoin(technicians, eq(timeEntries.technicianId, technicians.id))
-        .where(and(...conditions));
+        .leftJoin(activities, eq(timeEntries.agendaActivityId, activities.id))
+        .where(and(
+          ...conditions,
+          ne(technicians.name, "Administrador"), // EXCLUDE Administrador technician
+          // Include entry if: no linked activity (manual) OR activity exists and is not canceled
+          or(
+            isNull(timeEntries.agendaActivityId), // Manual time entry without activity
+            ne(activities.status, "cancelado") // OR activity is not deleted
+          )
+        ));
 
       console.log(`[time-breakdown] Found ${manualEntries.length} manual time entries`);
+      
+      // DEBUG: Log entries with their activity status
+      manualEntries.forEach(entry => {
+        if (entry.agendaActivityId) {
+          console.log(`[time-breakdown] Entry ${entry.id}: agendaActivityId=${entry.agendaActivityId}, activityStatus=${entry.activityStatus}, activityName=${entry.activityName}`);
+        }
+      });
 
       // Fetch completed activities with actual time records
       const activityConditions = [
@@ -4386,7 +4404,10 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         .from(activities)
         .innerJoin(activityTypes, eq(activities.activityTypeId, activityTypes.id))
         .innerJoin(technicians, eq(activities.technicianId, technicians.id))
-        .where(and(...activityConditions));
+        .where(and(
+          ...activityConditions,
+          ne(technicians.name, "Administrador") // EXCLUDE Administrador technician
+        ));
 
       console.log(`[time-breakdown] Found ${completedActivities.length} completed activities`);
 
