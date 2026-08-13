@@ -937,7 +937,11 @@ export function RATFormDialog({
     
     const formDataString = JSON.stringify(formValues);
     
-    // Build the full data object with new fields
+    // Count total photos
+    const totalPhotos = Object.values(photoSections).reduce((sum, section) => sum + section.length, 0);
+    console.log(`Total photos: ${totalPhotos}`);
+    
+    // Build the data object WITHOUT photos first
     const ratData: any = {
       formData: formDataString,
       status: status,
@@ -950,28 +954,48 @@ export function RATFormDialog({
       applicationNote: formValues.applicationNote || undefined,
       technicianSignature: signature || undefined,
       technicianSignatureName: signatureName || undefined,
-      photoSections: JSON.stringify(photoSections),
+      // DO NOT send photoSections yet - will be sent separately
     };
     
     // Log payload size for debugging
     const payloadSize = JSON.stringify(ratData).length;
-    const payloadSizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
-    console.log(`RAT payload size: ${payloadSizeMB} MB (${payloadSize} bytes)`);
-    
-    // Count total photos
-    const totalPhotos = Object.values(photoSections).reduce((sum, section) => sum + section.length, 0);
-    console.log(`Total photos: ${totalPhotos}`);
+    const payloadSizeKB = (payloadSize / 1024).toFixed(2);
+    console.log(`RAT payload size (without photos): ${payloadSizeKB} KB`);
     
     if (existingRat) {
+      // First save the form data without photos
       updateMutation.mutate({
         id: existingRat.id,
         data: ratData,
+      }, {
+        onSuccess: () => {
+          // Then save photos in a separate request
+          if (totalPhotos > 0) {
+            const photosPayload = {
+              photoSections: JSON.stringify(photoSections),
+            };
+            const photosSize = JSON.stringify(photosPayload).length;
+            const photosSizeKB = (photosSize / 1024).toFixed(2);
+            console.log(`Sending photos separately: ${photosSizeKB} KB`);
+            
+            updateMutation.mutate({
+              id: existingRat.id,
+              data: photosPayload,
+            });
+          }
+        }
       });
     } else if (activity) {
+      // For new RAT, send everything together (no existing photos)
+      const ratDataWithPhotos = {
+        ...ratData,
+        photoSections: JSON.stringify(photoSections),
+      };
+      
       createMutation.mutate({
         activityId: activity.id,
         technicianId: activity.technicianId,
-        ...ratData,
+        ...ratDataWithPhotos,
       });
     }
   };

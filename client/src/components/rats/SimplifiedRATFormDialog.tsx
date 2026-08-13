@@ -637,7 +637,10 @@ export function SimplifiedRATFormDialog({
 
     try {
       const photoSections = { section1: photos };
+      const totalPhotos = photos.length;
+      console.log(`Total photos: ${totalPhotos}`);
       
+      // Build data WITHOUT photos first
       const ratData = {
         activityId: activity?.id || resolvedExistingRat?.activityId,
         reportNumberManual: formData.reportNumberManual || undefined,
@@ -653,16 +656,38 @@ export function SimplifiedRATFormDialog({
           activityPerformed: formData.activityPerformed,
           generalComments: formData.generalComments,
         }),
-        photoSections: JSON.stringify(photoSections),
+        // DO NOT send photoSections yet - will be sent separately
         technicianSignature: signature || undefined,
         technicianSignatureName: signatureName || undefined,
         isSimplified: true,
       };
+      
+      const payloadSize = JSON.stringify(ratData).length;
+      const payloadSizeKB = (payloadSize / 1024).toFixed(2);
+      console.log(`Simplified RAT payload size (without photos): ${payloadSizeKB} KB`);
 
       if (resolvedExistingRat) {
+        // First save form data without photos
         await updateMutation.mutateAsync({ id: resolvedExistingRat.id, data: ratData });
+        
+        // Then save photos separately if there are any
+        if (totalPhotos > 0) {
+          const photosPayload = {
+            photoSections: JSON.stringify(photoSections),
+          };
+          const photosSize = JSON.stringify(photosPayload).length;
+          const photosSizeKB = (photosSize / 1024).toFixed(2);
+          console.log(`Sending photos separately: ${photosSizeKB} KB`);
+          
+          await updateMutation.mutateAsync({ id: resolvedExistingRat.id, data: photosPayload });
+        }
       } else {
-        await createMutation.mutateAsync(ratData);
+        // For new RAT, send everything together (no existing photos)
+        const ratDataWithPhotos = {
+          ...ratData,
+          photoSections: JSON.stringify(photoSections),
+        };
+        await createMutation.mutateAsync(ratDataWithPhotos);
       }
     } catch (error) {
       console.error("Erro ao salvar RAT:", error);
