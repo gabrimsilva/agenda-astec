@@ -423,14 +423,12 @@ export function SimplifiedRATFormDialog({
     }
   }, [open, resolvedExistingRat, lightExistingRat, activity, form, myTechnician]);
 
-  // Auto-save when photos are added (to avoid exceeding limit with multiple photos)
+  // Auto-save disabled - causing 413 errors even with small payloads
+  // User must save manually after adding all photos
+  /*
   useEffect(() => {
     const totalPhotos = photos.length;
     
-    // Only auto-save if:
-    // 1. We have an existing RAT (not creating new one)
-    // 2. Photo count has increased (not initial load or photo removal)
-    // 3. Not already in the process of loading initial data
     if (resolvedExistingRat && totalPhotos > photoCountRef.current && !isInitialLoadRef.current) {
       photoCountRef.current = totalPhotos;
       
@@ -442,7 +440,6 @@ export function SimplifiedRATFormDialog({
         duration: 2000
       });
       
-      // Debounce: wait 1 second before saving to avoid rapid consecutive saves
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
@@ -452,10 +449,10 @@ export function SimplifiedRATFormDialog({
         autoSaveTimerRef.current = null;
       }, 1000);
     } else if (totalPhotos > 0) {
-      // Update ref even if not auto-saving (for initial load or photo removal)
       photoCountRef.current = totalPhotos;
     }
   }, [photos, resolvedExistingRat]);
+  */
 
   // Mark initial load as complete after first render
   useEffect(() => {
