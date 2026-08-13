@@ -702,7 +702,15 @@ export function RATFormDialog({
         duration: 2000
       });
       
-      handleSave();
+      // Debounce: wait 1 second before saving to avoid rapid consecutive saves
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      
+      autoSaveTimerRef.current = setTimeout(() => {
+        handleSave();
+        autoSaveTimerRef.current = null;
+      }, 1000);
     } else if (totalPhotos > 0) {
       // Update ref even if not auto-saving (for initial load or photo removal)
       photoCountRef.current = totalPhotos;
