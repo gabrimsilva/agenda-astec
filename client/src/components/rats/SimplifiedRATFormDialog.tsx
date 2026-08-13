@@ -641,6 +641,9 @@ export function SimplifiedRATFormDialog({
     const formData = form.getValues();
     setIsSaving(true);
 
+    console.log("[handleSave Simplified] Form values:", formData);
+    console.log("[handleSave Simplified] Status:", status);
+
     try {
       const photoSections = { section1: photos };
       const totalPhotos = photos.length;
@@ -666,6 +669,8 @@ export function SimplifiedRATFormDialog({
         technicianSignatureName: signatureName || undefined,
         isSimplified: true,
       };
+      
+      console.log("[handleSave Simplified] Sending ratData:", ratData);
       
       const payloadSize = JSON.stringify(ratData).length;
       const payloadSizeKB = (payloadSize / 1024).toFixed(2);

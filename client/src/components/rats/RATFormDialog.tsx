@@ -935,6 +935,9 @@ export function RATFormDialog({
     const formValues = form.getValues();
     formValues.components = components;
     
+    console.log("[handleSave] Form values:", formValues);
+    console.log("[handleSave] Status:", status);
+    
     const formDataString = JSON.stringify(formValues);
     
     // Count total photos
@@ -956,6 +959,8 @@ export function RATFormDialog({
       technicianSignatureName: signatureName || undefined,
       photoSections: JSON.stringify(photoSections),
     };
+    
+    console.log("[handleSave] Sending ratData:", ratData);
     
     // Log payload size for debugging
     const payloadSize = JSON.stringify(ratData).length;
