@@ -73,8 +73,10 @@ function getRatsMinimalSelect() {
     openDate: rats.openDate, // Data da atividade (checkout)
     technicianId: rats.technicianId, // Necessário para filtro no frontend
     activityId: rats.activityId, // CRÍTICO: necessário para matching com activities
-    importedPdfUrl: rats.importedPdfUrl, // Para mostrar badge "PDF"
+    // importedPdfUrl removed - too heavy (several MB per RAT with PDF)
+    // We'll add a computed field 'hasPdf' in the SELECT query instead
     importedPdfFilename: rats.importedPdfFilename, // Para nome do arquivo
+    isSimplified: rats.isSimplified, // Para identificar RAT simplificada
   };
 }
 
@@ -7377,7 +7379,13 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
         const q = conditions.length > 0
           ? db.select(lightSelect).from(rats).where(and(...conditions)).orderBy(desc(rats.createdAt)).limit(50)
           : db.select(lightSelect).from(rats).orderBy(desc(rats.createdAt)).limit(100);
-        return q;
+        const results = await q;
+        
+        // Add computed 'hasPdf' field without loading the actual PDF data
+        return results.map(rat => ({
+          ...rat,
+          hasPdf: !!rat.importedPdfFilename, // If filename exists, PDF exists
+        }));
       };
 
       // ── Stale-while-revalidate ────────────────────────────────────────────

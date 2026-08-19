@@ -280,9 +280,9 @@ export default function RATs() {
     if (typeFilter === "simplificada") {
       filtered = filtered.filter((rat) => (rat as any).isSimplified === true);
     } else if (typeFilter === "completa") {
-      filtered = filtered.filter((rat) => !(rat as any).isSimplified && !rat.importedPdfUrl);
+      filtered = filtered.filter((rat) => !(rat as any).isSimplified && !(rat as any).hasPdf);
     } else if (typeFilter === "pdf") {
-      filtered = filtered.filter((rat) => !!rat.importedPdfUrl);
+      filtered = filtered.filter((rat) => !!(rat as any).hasPdf);
     }
 
     // Filter by date range (using openDate which represents the activity/visit date)
@@ -734,7 +734,7 @@ export default function RATs() {
       });
       
       // Fetch the PDF as blob
-      const endpoint = rat.importedPdfUrl 
+      const endpoint = (rat as any).hasPdf 
         ? `/api/rats/${rat.id}/download-imported-pdf`
         : `/api/rats/${rat.id}/pdf`;
       
@@ -1169,7 +1169,7 @@ export default function RATs() {
               const activity = activities.find((a) => a.id === rat.activityId);
               const ratTechnician = technicians.find((t) => t.id === rat.technicianId);
               
-              const hasImportedPdf = !!rat.importedPdfUrl;
+              const hasImportedPdf = !!(rat as any).hasPdf;
               
               return (
                 <Card
@@ -1193,7 +1193,7 @@ export default function RATs() {
                             <ClipboardList className="h-3 w-3 mr-1" />
                             Simplificada
                           </Badge>
-                        ) : rat.importedPdfUrl ? (
+                        ) : (rat as any).hasPdf ? (
                           <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700">
                             <FileUp className="h-3 w-3 mr-1" />
                             PDF
@@ -1204,7 +1204,7 @@ export default function RATs() {
                       
                       <div className="flex items-center gap-1 shrink-0">
                         {/* View PDF button for imported PDFs */}
-                        {rat.importedPdfUrl && (
+                        {(rat as any).hasPdf && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1219,7 +1219,7 @@ export default function RATs() {
                           </Button>
                         )}
                         {/* Upload PDF button for RATs without PDF */}
-                        {!rat.importedPdfUrl && !isSent && (
+                        {!(rat as any).hasPdf && !isSent && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1234,7 +1234,7 @@ export default function RATs() {
                           </Button>
                         )}
                         {/* Simplified RAT button for pending RATs */}
-                        {rat.status === "pendente" && !rat.importedPdfUrl && !(rat as any).isSimplified && (
+                        {rat.status === "pendente" && !(rat as any).hasPdf && !(rat as any).isSimplified && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1249,7 +1249,7 @@ export default function RATs() {
                           </Button>
                         )}
                         {/* Download PDF button for manually created RATs (Completa/Simplificada) */}
-                        {!rat.importedPdfUrl && rat.status === "completa" && (
+                        {!(rat as any).hasPdf && rat.status === "completa" && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1264,7 +1264,7 @@ export default function RATs() {
                           </Button>
                         )}
                         {/* Preview button for manually created RATs (NOT for imported PDFs) */}
-                        {!rat.importedPdfUrl && (
+                        {!(rat as any).hasPdf && (
                           <Button
                             variant="ghost"
                             size="icon"
