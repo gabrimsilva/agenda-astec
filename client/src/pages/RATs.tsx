@@ -159,6 +159,19 @@ export default function RATs() {
     },
   });
 
+  // Debug logs
+  useEffect(() => {
+    console.log('[RATs Debug]', {
+      ratsPending,
+      ratsError,
+      ratsCount: rats.length,
+      ratsErrorObj,
+      filteredCount: filteredRats.length,
+      statusFilter,
+      searchQuery,
+    });
+  }, [ratsPending, ratsError, rats.length, filteredRats.length, statusFilter, searchQuery]);
+
   // Fetch activities with date range to include older activities
   const activitiesQueryUrl = useMemo(() => {
     const params = new URLSearchParams();
