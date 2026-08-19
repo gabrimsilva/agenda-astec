@@ -1045,7 +1045,10 @@ export const updateActivitySchema = insertActivitySchema.partial().extend({
 export const updateApprovalSchema = insertApprovalSchema.partial();
 export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
 export const updateTravelSegmentSchema = insertTravelSegmentSchema.partial();
-export const updateRatSchema = insertRatSchema.partial();
+export const updateRatSchema = insertRatSchema.partial().extend({
+  // Remove default from status to allow explicit updates
+  status: z.enum(["pendente", "rascunho", "completa"]).optional(),
+});
 
 // Update user and technician together (used when editing from Technicians tab)
 export const updateUserAndTechnicianSchema = z.object({
