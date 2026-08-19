@@ -8184,7 +8184,11 @@ _Segue em anexo o relatório completo em PDF._`;
         status: "completa", // PDF imports are always complete
       };
       
+      console.log(`[PDF Upload] Updating RAT ${req.params.id} with status: completa`);
+      
       const rat = await storage.updateRat(req.params.id, updateData);
+      
+      console.log(`[PDF Upload] RAT ${rat.id} updated - status: ${rat.status}`);
       
       patchRatInCache(rat.id, {
         importedPdfUrl: rat.importedPdfUrl,
