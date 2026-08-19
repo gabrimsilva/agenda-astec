@@ -790,6 +790,52 @@ export default function RATs() {
     }
   };
 
+  const handleDownloadImportedPdf = async (rat: Rat) => {
+    try {
+      const token = localStorage.getItem("astec_token");
+      const fileName = (rat as any).importedPdfFilename || `RAT-${(rat as any).reportNumberManual || rat.reportNumber}.pdf`;
+      
+      toast({
+        title: "Baixando PDF...",
+        description: "Por favor aguarde...",
+        duration: 5000
+      });
+      
+      const response = await fetch(`/api/rats/${rat.id}/download-imported-pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erro ao baixar PDF");
+      }
+      
+      const pdfBlob = await response.blob();
+      
+      // Direct download
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "PDF baixado!",
+        description: fileName,
+        duration: 3000
+      });
+    } catch (error: any) {
+      console.error("Download error:", error);
+      toast({
+        title: "Erro ao baixar PDF",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDownloadPdf = async (rat: Rat) => {
     try {
       const token = localStorage.getItem("astec_token");
@@ -1203,19 +1249,19 @@ export default function RATs() {
                       </div>
                       
                       <div className="flex items-center gap-1 shrink-0">
-                        {/* View PDF button for imported PDFs */}
+                        {/* View/Download PDF button for imported PDFs */}
                         {(rat as any).hasPdf && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleViewPdf(rat);
+                              handleDownloadImportedPdf(rat);
                             }}
                             title="Baixar PDF importado"
-                            data-testid={`button-view-pdf-${rat.id}`}
+                            data-testid={`button-download-imported-pdf-${rat.id}`}
                           >
-                            <Download className="h-4 w-4 text-blue-600" />
+                            <Download className="h-4 w-4 text-purple-600" />
                           </Button>
                         )}
                         {/* Upload PDF button for RATs without PDF */}
