@@ -7397,6 +7397,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
           ...rat,
           hasPdf: rat.hasPdf !== undefined ? rat.hasPdf : !!rat.importedPdfFilename,
         }));
+        console.log(`[RATs API] Serving ${dataWithHasPdf.length} rats, ${dataWithHasPdf.filter((r: any) => r.hasPdf).length} with PDF`);
         res.json(dataWithHasPdf);
         // Trigger background refresh only if TTL has expired
         const age = Date.now() - cached.ts;
@@ -7423,7 +7424,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
 
       _ratsCache.set(cacheKey, { data: lightRats, ts: Date.now() });
-      console.log(`[RATs cache] populated key="${cacheKey}" (${lightRats.length} items)`);
+      console.log(`[RATs cache] populated key="${cacheKey}" (${lightRats.length} items, ${lightRats.filter((r: any) => r.hasPdf).length} with PDF)`);
       res.json(lightRats);
     } catch (error: any) {
       console.error("[RATs] Failed to fetch:", error.message);
