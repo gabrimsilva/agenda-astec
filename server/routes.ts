@@ -7885,11 +7885,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       const rat = await storage.updateRat(req.params.id, {
-        status: "completa",
+        status: "concluida",
         closeDate: new Date(),
       });
       
-      patchRatInCache(rat.id, { status: "completa" });
+      patchRatInCache(rat.id, { status: "concluida" });
       res.json(rat);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -7995,11 +7995,11 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       }
       
       const rat = await storage.updateRat(req.params.id, {
-        status: "completa",
+        status: "concluida",
         closeDate: new Date(),
       });
       
-      patchRatInCache(rat.id, { status: "completa" });
+      patchRatInCache(rat.id, { status: "concluida" });
       res.json(rat);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -8014,7 +8014,7 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       for (const rat of allRats) {
         const hasContent = rat.formData && rat.formData !== '{}' && rat.formData !== '';
         if (hasContent) {
-          await db.update(rats).set({ status: "completa", closeDate: new Date() }).where(eq(rats.id, rat.id));
+          await db.update(rats).set({ status: "concluida", closeDate: new Date() }).where(eq(rats.id, rat.id));
           fixed++;
         }
       }
@@ -8189,10 +8189,10 @@ _Segue em anexo o relatório completo em PDF._`;
       const updateData: any = {
         importedPdfUrl: pdfBase64,
         importedPdfFilename: filename,
-        status: "completa", // PDF imports are always complete
+        status: "concluida", // PDF imports are always complete
       };
       
-      console.log(`[PDF Upload] Updating RAT ${req.params.id} with status: completa`);
+      console.log(`[PDF Upload] Updating RAT ${req.params.id} with status: concluida`);
       
       const rat = await storage.updateRat(req.params.id, updateData);
       
