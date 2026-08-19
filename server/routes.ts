@@ -8177,15 +8177,12 @@ _Segue em anexo o relatório completo em PDF._`;
       const pdfBase64 = `data:application/pdf;base64,${req.file.buffer.toString("base64")}`;
       const filename = req.file.originalname || `RAT-${existingRat.reportNumber}.pdf`;
       
-      // Only update status to rascunho if currently pendente
+      // When importing PDF, mark as completed (since PDF is already finalized)
       const updateData: any = {
         importedPdfUrl: pdfBase64,
         importedPdfFilename: filename,
+        status: "completa", // PDF imports are always complete
       };
-      
-      if (existingRat.status === "pendente") {
-        updateData.status = "rascunho";
-      }
       
       const rat = await storage.updateRat(req.params.id, updateData);
       
