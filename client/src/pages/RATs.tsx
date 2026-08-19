@@ -169,6 +169,8 @@ export default function RATs() {
       filteredCount: filteredRats.length,
       statusFilter,
       searchQuery,
+      firstRatWithPdf: rats.find(r => (r as any).hasPdf),
+      totalWithPdf: rats.filter(r => (r as any).hasPdf).length,
     });
   }, [ratsPending, ratsError, rats.length, filteredRats.length, statusFilter, searchQuery]);
 
