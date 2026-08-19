@@ -7377,8 +7377,8 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
 
       const runQuery = async (): Promise<any[]> => {
         const q = conditions.length > 0
-          ? db.select(lightSelect).from(rats).where(and(...conditions)).orderBy(desc(rats.createdAt)).limit(50)
-          : db.select(lightSelect).from(rats).orderBy(desc(rats.createdAt)).limit(100);
+          ? db.select(lightSelect).from(rats).where(and(...conditions)).orderBy(desc(rats.createdAt)).limit(500)
+          : db.select(lightSelect).from(rats).orderBy(desc(rats.createdAt)).limit(500);
         const results = await q;
         
         // Add computed 'hasPdf' field without loading the actual PDF data
