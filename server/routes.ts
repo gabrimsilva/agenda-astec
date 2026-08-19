@@ -7392,7 +7392,12 @@ app.put("/api/users/:id", authMiddleware, roleMiddleware(["admin"]), async (req:
       const cached = _ratsCache.get(cacheKey);
       if (cached) {
         // Always serve cached data immediately (eliminates gateway timeout risk)
-        res.json(cached.data);
+        // Add hasPdf to cached data if not present (backward compatibility)
+        const dataWithHasPdf = cached.data.map((rat: any) => ({
+          ...rat,
+          hasPdf: rat.hasPdf !== undefined ? rat.hasPdf : !!rat.importedPdfFilename,
+        }));
+        res.json(dataWithHasPdf);
         // Trigger background refresh only if TTL has expired
         const age = Date.now() - cached.ts;
         if (age > RATS_CACHE_TTL) {
