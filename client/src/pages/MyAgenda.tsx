@@ -50,7 +50,7 @@ const formSchema = z.object({
   activityTypeId: z.string().min(1, "Tipo de atividade é obrigatório"),
   location: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
- to falando   address: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
   numero: z.string().optional().nullable(),
   bairro: z.string().optional().nullable(),
   siteId: z.string().optional().nullable(),
