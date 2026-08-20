@@ -30,19 +30,20 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Temporarily disable code splitting to avoid circular dependency issues
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash].[ext]`,
-        manualChunks: {
-          // Separate vendor chunks to avoid circular dependencies
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          'query-vendor': ['@tanstack/react-query'],
-        }
+        manualChunks: undefined, // Disable manual chunks
       }
-    }
+    },
+    // Force all code into a single chunk to avoid circular refs
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
   server: {
     fs: {
