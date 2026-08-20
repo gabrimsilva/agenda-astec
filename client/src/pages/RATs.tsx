@@ -144,6 +144,48 @@ export default function RATs() {
 
   const { data: rats = [], isPending: ratsPending, isError: ratsError, isFetching: ratsRetrying, error: ratsErrorObj, refetch: refetchRats } = useQuery<Rat[]>({
     queryKey: ["/api/rats"],
+    queryFn: async () => {
+      const token = localStorage.getItem("astec_token");
+      console.log('[RATs Query] Fetching rats with token:', token ? 'present' : 'missing');
+      
+      try {
+        const response = await fetch("/api/rats", {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
+        console.log('[RATs Query] Response status:', response.status);
+        console.log('[RATs Query] Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+          const text = await response.text();
+          console.error('[RATs Query] Error response:', text);
+          
+          // If HTML is returned, provide a clearer error
+          if (text.includes('<html>') || text.includes('<!DOCTYPE')) {
+            throw new Error(`Erro ${response.status}: O servidor retornou HTML em vez de JSON. Verifique se a autenticação está funcionando.`);
+          }
+          
+          try {
+            const json = JSON.parse(text);
+            throw new Error(json.error || json.message || `Erro ${response.status}`);
+          } catch (parseError) {
+            throw new Error(text || `Erro ${response.status}`);
+          }
+        }
+        
+        const data = await response.json();
+        console.log('[RATs Query] Success, received', data.length, 'rats');
+        return data;
+      } catch (error) {
+        console.error('[RATs Query] Fetch error:', error);
+        throw error;
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutos - reduzido para sincronizar com activities
     refetchOnWindowFocus: false,
     retry: (failureCount, error: any) => {
@@ -934,6 +976,7 @@ export default function RATs() {
     }
   };
 
+  // Loading state
   if (ratsPending) {
     return (
       <div className="container mx-auto p-4 max-w-4xl space-y-4">
@@ -946,6 +989,37 @@ export default function RATs() {
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-24" />
         ))}
+      </div>
+    );
+  }
+
+  // Error state - show full error page
+  if (ratsError && !ratsRetrying) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl">
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+              <CardTitle>Erro ao carregar RATs</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {ratsErrorObj instanceof Error 
+                ? ratsErrorObj.message 
+                : "Não foi possível carregar os relatórios. Verifique sua conexão e tente novamente."}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={() => refetchRats()} variant="default">
+                Tentar Novamente
+              </Button>
+              <Button onClick={() => window.location.href = "/minha-agenda"} variant="outline">
+                Voltar para Agenda
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

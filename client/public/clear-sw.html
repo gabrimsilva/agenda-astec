@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Limpando Cache...</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 { color: #0f0; }
+        .status { margin: 10px 0; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #0f0;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧹 Limpando Cache do Sistema</h1>
+    <div id="log"></div>
+    <button id="reload" style="display:none">Voltar para o Sistema</button>
+
+    <script>
+        const log = document.getElementById('log');
+        const reloadBtn = document.getElementById('reload');
+
+        function addLog(msg, isError = false) {
+            const div = document.createElement('div');
+            div.className = `status ${isError ? 'error' : 'success'}`;
+            div.textContent = msg;
+            log.appendChild(div);
+        }
+
+        async function clearEverything() {
+            try {
+                // 1. Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    addLog('🔍 Procurando Service Workers...');
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    
+                    if (registrations.length === 0) {
+                        addLog('✅ Nenhum Service Worker encontrado');
+                    } else {
+                        for (const registration of registrations) {
+                            await registration.unregister();
+                            addLog(`✅ Service Worker desregistrado: ${registration.scope}`);
+                        }
+                    }
+                }
+
+                // 2. Clear all caches
+                if ('caches' in window) {
+                    addLog('🔍 Procurando caches...');
+                    const cacheNames = await caches.keys();
+                    
+                    if (cacheNames.length === 0) {
+                        addLog('✅ Nenhum cache encontrado');
+                    } else {
+                        for (const name of cacheNames) {
+                            await caches.delete(name);
+                            addLog(`✅ Cache deletado: ${name}`);
+                        }
+                    }
+                }
+
+                // 3. Clear localStorage
+                if (localStorage) {
+                    localStorage.clear();
+                    addLog('✅ LocalStorage limpo');
+                }
+
+                // 4. Clear sessionStorage
+                if (sessionStorage) {
+                    sessionStorage.clear();
+                    addLog('✅ SessionStorage limpo');
+                }
+
+                addLog('');
+                addLog('🎉 TUDO LIMPO! Aguarde 3 segundos...', false);
+                
+                reloadBtn.style.display = 'block';
+                
+                // Auto-redirect após 3 segundos
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+
+            } catch (error) {
+                addLog(`❌ Erro: ${error.message}`, true);
+            }
+        }
+
+        reloadBtn.addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        // Executar automaticamente
+        clearEverything();
+    </script>
+</body>
+</html>
