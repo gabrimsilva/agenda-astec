@@ -39,61 +39,20 @@ async function initApp() {
   if (reloading) return;
 
   if ('serviceWorker' in navigator) {
-    if (import.meta.env.PROD) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((registration) => {
-            console.log('[PWA] Service Worker registrado com sucesso:', registration.scope);
-            
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('[PWA] Nova versão do SW disponível. Atualizando...');
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                });
-              }
-            });
-
-            setInterval(() => {
-              registration.update();
-              checkForNewVersion();
-            }, 2 * 60 * 1000);
-          })
-          .catch((error) => {
-            console.error('[PWA] Erro ao registrar Service Worker:', error);
-          });
+    // TEMPORARIAMENTE DESABILITADO - Forçar unregister para limpar cache
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        console.log('[PWA] Unregistering service worker');
+        registration.unregister();
       });
-
-      let refreshing = false;
-
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'CACHE_CLEARED') {
-          console.log('[PWA] Service Worker limpou caches. Recarregando...');
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-          }
-        }
+    });
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          console.log('[PWA] Deleting cache:', name);
+          caches.delete(name);
+        });
       });
-
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
-        }
-      });
-    } else {
-      // DEV: não usar service worker/cache para evitar servir versões antigas durante o desenvolvimento
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => registration.unregister());
-      });
-      if ('caches' in window) {
-        caches.keys().then((names) => names.forEach((name) => caches.delete(name)));
-      }
     }
   }
 

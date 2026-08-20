@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const CACHE_NAME = `astec-${CACHE_VERSION}`;
 const MAP_CACHE = `astec-map-tiles-${CACHE_VERSION}`;
 const API_CACHE = `astec-api-${CACHE_VERSION}`;
