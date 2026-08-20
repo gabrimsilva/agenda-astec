@@ -4,9 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Calendar, User, Download, Trash2, Eye, Filter, ChevronDown } from "lucide-react";
+import { FileText, Calendar, User, Download, Trash2, Eye, Filter, Edit } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { RATFormDialog } from "@/components/rats/RATFormDialog";
+import { SimplifiedRATFormDialog } from "@/components/rats/SimplifiedRATFormDialog";
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
   pendente: { label: "Pendente", bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-800 dark:text-yellow-200", border: "border-l-yellow-500" },
@@ -22,9 +26,11 @@ const SENT_STYLE = {
 
 export default function RATsSimple() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const isAdmin = user?.role === "admin";
   
   const [rats, setRats] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +42,13 @@ export default function RATsSimple() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   
+  const [selectedRat, setSelectedRat] = useState<any | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [simplifiedFormDialogOpen, setSimplifiedFormDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ratToDelete, setRatToDelete] = useState<any | null>(null);
+  
   const [startDate, setStartDate] = useState<string>(() => {
     const date = new Date();
     date.setMonth(date.getMonth() - 3);
@@ -43,19 +56,23 @@ export default function RATsSimple() {
   });
   const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
+  const fetchData = () => {
     const token = localStorage.getItem('astec_token');
     
     Promise.all([
       fetch('/api/rats', {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       }).then(res => res.json()),
+      fetch('/api/activities', {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      }).then(res => res.json()),
       fetch('/api/technicians', {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       }).then(res => res.json())
     ])
-      .then(([ratsData, techsData]) => {
+      .then(([ratsData, activitiesData, techsData]) => {
         setRats(ratsData);
+        setActivities(activitiesData);
         setTechnicians(techsData);
         setLoading(false);
       })
@@ -63,7 +80,125 @@ export default function RATsSimple() {
         setError(err.message);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleOpenRat = (rat: any) => {
+    const activity = activities.find(a => a.id === rat.activityId);
+    
+    if (rat.isSimplified) {
+      setSelectedRat(rat);
+      setSelectedActivity(activity || null);
+      setSimplifiedFormDialogOpen(true);
+    } else {
+      setSelectedRat(rat);
+      setSelectedActivity(activity || null);
+      setFormDialogOpen(true);
+    }
+  };
+
+  const handleDownloadPdf = async (rat: any) => {
+    try {
+      const token = localStorage.getItem('astec_token');
+      const reportNumber = rat.reportNumberManual || rat.reportNumber;
+      const fileName = `RAT-${reportNumber}.pdf`;
+
+      toast({
+        title: "Gerando PDF...",
+        description: "Por favor aguarde...",
+        duration: 5000
+      });
+
+      const endpoint = rat.hasPdf 
+        ? `/api/rats/${rat.id}/download-imported-pdf`
+        : `/api/rats/${rat.id}/pdf`;
+
+      const response = await fetch(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao gerar PDF");
+      }
+
+      const pdfBlob = await response.blob();
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      toast({
+        title: "PDF baixado!",
+        description: fileName,
+        duration: 3000
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao baixar PDF",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePreview = async (rat: any) => {
+    try {
+      const token = localStorage.getItem('astec_token');
+      const previewUrl = `/api/rats/${rat.id}/preview?token=${encodeURIComponent(token || '')}`;
+      window.open(previewUrl, '_blank');
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar visualização",
+        description: "Não foi possível gerar a visualização da RAT.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteClick = (rat: any) => {
+    setRatToDelete(rat);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!ratToDelete) return;
+
+    try {
+      const token = localStorage.getItem('astec_token');
+      const response = await fetch(`/api/rats/${ratToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir RAT');
+      }
+
+      toast({
+        title: "RAT excluída",
+        description: "A RAT foi excluída com sucesso.",
+      });
+
+      fetchData();
+      setDeleteDialogOpen(false);
+      setRatToDelete(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredRats = useMemo(() => {
     let filtered = rats;
@@ -345,7 +480,23 @@ export default function RATsSimple() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {/* TODO: Download */}}
+                        onClick={() => handleOpenRat(rat)}
+                        title="Editar/Visualizar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handlePreview(rat)}
+                        title="Visualizar Preview"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDownloadPdf(rat)}
                         title="Baixar PDF"
                       >
                         <Download className="h-4 w-4" />
@@ -353,15 +504,7 @@ export default function RATsSimple() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {/* TODO: Visualizar */}}
-                        title="Visualizar"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {/* TODO: Deletar */}}
+                        onClick={() => handleDeleteClick(rat)}
                         title="Excluir"
                         className="text-destructive hover:text-destructive"
                       >
@@ -375,6 +518,53 @@ export default function RATsSimple() {
           })
         )}
       </div>
+
+      {/* Dialogs */}
+      <RATFormDialog
+        open={formDialogOpen}
+        onOpenChange={(open) => {
+          setFormDialogOpen(open);
+          if (!open) {
+            setSelectedRat(null);
+            setSelectedActivity(null);
+            fetchData();
+          }
+        }}
+        rat={selectedRat}
+        activity={selectedActivity}
+      />
+
+      <SimplifiedRATFormDialog
+        open={simplifiedFormDialogOpen}
+        onOpenChange={(open) => {
+          setSimplifiedFormDialogOpen(open);
+          if (!open) {
+            setSelectedRat(null);
+            setSelectedActivity(null);
+            fetchData();
+          }
+        }}
+        rat={selectedRat}
+        activity={selectedActivity}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a RAT {ratToDelete?.reportNumber}?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
