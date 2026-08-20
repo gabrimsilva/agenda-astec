@@ -50,7 +50,7 @@ const formSchema = z.object({
   activityTypeId: z.string().min(1, "Tipo de atividade é obrigatório"),
   location: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
+ to falando   address: z.string().optional().nullable(),
   numero: z.string().optional().nullable(),
   bairro: z.string().optional().nullable(),
   siteId: z.string().optional().nullable(),
@@ -506,9 +506,10 @@ export default function MyAgenda() {
   const selectedDateActivities = useMemo(() => {
     const filtered = activities
       .filter((activity) => {
-        const activityStartDate = moment(activity.scheduledDate).format("YYYY-MM-DD");
+        // Parse dates using UTC to avoid timezone shifts
+        const activityStartDate = moment.utc(activity.scheduledDate).format("YYYY-MM-DD");
         const activityEndDate = (activity as any).endDate 
-          ? moment((activity as any).endDate).format("YYYY-MM-DD") 
+          ? moment.utc((activity as any).endDate).format("YYYY-MM-DD") 
           : activityStartDate;
         
         // Atividade está no dia se: startDate <= selectedDate <= endDate
@@ -725,9 +726,10 @@ export default function MyAgenda() {
       
       // Incluir atividades que começam no dia OU que são multi-dia e abrangem este dia
       const dayActivities = activities.filter(a => {
-        const activityStartDate = moment(a.scheduledDate).format("YYYY-MM-DD");
+        // Parse dates using UTC to avoid timezone shifts
+        const activityStartDate = moment.utc(a.scheduledDate).format("YYYY-MM-DD");
         const activityEndDate = (a as any).endDate 
-          ? moment((a as any).endDate).format("YYYY-MM-DD") 
+          ? moment.utc((a as any).endDate).format("YYYY-MM-DD") 
           : activityStartDate;
         
         if (dayStr < activityStartDate || dayStr > activityEndDate) return false;
@@ -1817,7 +1819,7 @@ export default function MyAgenda() {
       state: activity.state || "",
       latitude: latitude !== null && !isNaN(latitude) ? latitude : null,
       longitude: longitude !== null && !isNaN(longitude) ? longitude : null,
-      scheduledDate: moment(activity.scheduledDate).format("YYYY-MM-DD"),
+      scheduledDate: moment.utc(activity.scheduledDate).format("YYYY-MM-DD"),
       isMultiDay: hasEndDate,
       endDate: endDateValue,
       startTime: effectiveStartTime,
