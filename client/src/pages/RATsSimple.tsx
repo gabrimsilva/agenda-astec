@@ -1,38 +1,62 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Calendar, User, Download, Trash2, Eye, Filter, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useAuth } from "@/hooks/useAuth";
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  pendente: { label: "Pendente", bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-800 dark:text-yellow-200" },
-  rascunho: { label: "Rascunho", bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-800 dark:text-orange-200" },
-  completa: { label: "Concluída", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-800 dark:text-blue-200" },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  pendente: { label: "Pendente", bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-800 dark:text-yellow-200", border: "border-l-yellow-500" },
+  rascunho: { label: "Rascunho", bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-800 dark:text-orange-200", border: "border-l-orange-500" },
+  completa: { label: "Concluída", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-800 dark:text-blue-200", border: "border-l-blue-500" },
+};
+
+const SENT_STYLE = {
+  bg: "bg-green-100 dark:bg-green-900/30",
+  text: "text-green-800 dark:text-green-200",
+  border: "border-l-green-500"
 };
 
 export default function RATsSimple() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  
   const [rats, setRats] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sentFilter, setSentFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [technicianFilter, setTechnicianFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  
+  const [startDate, setStartDate] = useState<string>(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const token = localStorage.getItem('astec_token');
     
-    fetch('/api/rats', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`Erro ${res.status}: ${res.statusText}`);
-        return res.json();
-      })
-      .then(data => {
-        setRats(data);
+    Promise.all([
+      fetch('/api/rats', {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      }).then(res => res.json()),
+      fetch('/api/technicians', {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      }).then(res => res.json())
+    ])
+      .then(([ratsData, techsData]) => {
+        setRats(ratsData);
+        setTechnicians(techsData);
         setLoading(false);
       })
       .catch(err => {
@@ -41,31 +65,72 @@ export default function RATsSimple() {
       });
   }, []);
 
-  const filteredRats = rats
-    .filter(rat => statusFilter === "all" || rat.status === statusFilter)
-    .filter(rat => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        rat.clientName?.toLowerCase().includes(query) ||
-        rat.reportNumber.toLowerCase().includes(query)
-      );
-    })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filteredRats = useMemo(() => {
+    let filtered = rats;
 
-  const statusCounts = rats.reduce((acc, rat) => {
-    acc[rat.status] = (acc[rat.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+    if (isAdmin && technicianFilter !== "all") {
+      filtered = filtered.filter(r => r.technicianId === technicianFilter);
+    }
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+
+    if (sentFilter === "sent") {
+      filtered = filtered.filter(r => r.sentAt);
+    } else if (sentFilter === "not_sent") {
+      filtered = filtered.filter(r => !r.sentAt);
+    }
+
+    if (typeFilter === "simplificada") {
+      filtered = filtered.filter(r => r.isSimplified === true);
+    } else if (typeFilter === "completa") {
+      filtered = filtered.filter(r => !r.isSimplified && !r.hasPdf);
+    } else if (typeFilter === "pdf") {
+      filtered = filtered.filter(r => r.hasPdf);
+    }
+
+    if (startDate) {
+      const start = new Date(startDate + 'T00:00:00');
+      filtered = filtered.filter(r => {
+        const ratDate = new Date(r.openDate || r.createdAt);
+        return ratDate >= start;
+      });
+    }
+
+    if (endDate) {
+      const end = new Date(endDate + 'T23:59:59');
+      filtered = filtered.filter(r => {
+        const ratDate = new Date(r.openDate || r.createdAt);
+        return ratDate <= end;
+      });
+    }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.clientName?.toLowerCase().includes(query) ||
+        r.reportNumber.toLowerCase().includes(query) ||
+        (r.reportNumberManual || "").toLowerCase().includes(query)
+      );
+    }
+
+    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rats, statusFilter, sentFilter, typeFilter, technicianFilter, searchQuery, startDate, endDate, isAdmin]);
+
+  const statusCounts = useMemo(() => {
+    return rats.reduce((acc, rat) => {
+      acc[rat.status] = (acc[rat.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [rats]);
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 max-w-6xl">
-        <div className="space-y-4">
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-64"></div>
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-200 rounded animate-pulse"></div>)}
-          </div>
+      <div className="container mx-auto p-4 max-w-6xl space-y-4">
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-64"></div>
+        <div className="grid grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-200 rounded animate-pulse"></div>)}
         </div>
       </div>
     );
@@ -88,12 +153,15 @@ export default function RATsSimple() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl space-y-6">
+    <div className="container mx-auto p-4 max-w-6xl space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">RATs</h1>
+        <div className="flex items-center gap-2">
+          <FileText className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">RAT</h1>
+        </div>
         <Badge variant="outline" className="text-lg px-4 py-2">
-          {filteredRats.length} RAT{filteredRats.length !== 1 ? 's' : ''}
+          {filteredRats.length} RAT
         </Badge>
       </div>
 
@@ -104,13 +172,15 @@ export default function RATsSimple() {
             key={status}
             className={`cursor-pointer transition-all ${
               statusFilter === status
-                ? "ring-2 ring-primary shadow-lg scale-105"
+                ? "ring-2 ring-primary shadow-lg"
                 : "hover:shadow-md"
             }`}
             onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
           >
             <CardContent className="p-6 text-center">
-              <div className="text-4xl font-bold mb-2">{statusCounts[status] || 0}</div>
+              <div className={`text-4xl font-bold mb-2 ${config.text}`}>
+                {statusCounts[status] || 0}
+              </div>
               <div className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 {config.label}
               </div>
@@ -122,78 +192,189 @@ export default function RATsSimple() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="flex gap-4">
-        <Input
-          placeholder="Buscar por cliente ou número..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
-        />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrar status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([status, config]) => (
-              <SelectItem key={status} value={status}>{config.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      {filteredRats.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            Nenhuma RAT encontrada.
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Número</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Cliente</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Data</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Enviado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredRats.map((rat) => (
-                    <tr key={rat.id} className="hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-sm">{rat.reportNumber}</td>
-                      <td className="px-4 py-3 text-sm">{rat.clientName}</td>
-                      <td className="px-4 py-3">
-                        <Badge className={`${STATUS_CONFIG[rat.status]?.bg} ${STATUS_CONFIG[rat.status]?.text}`}>
-                          {STATUS_CONFIG[rat.status]?.label || rat.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {new Date(rat.createdAt).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-4 py-3">
-                        {rat.sentAt ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            ✓ Enviado
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">Não enviado</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Search and Filters */}
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Buscar por cliente ou número..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-3"
+            />
+          </div>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="mt-3">
+          <Card className="p-4">
+            <div className={`grid gap-4 ${isAdmin ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1 sm:grid-cols-3"}`}>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                      <SelectItem key={status} value={status}>{config.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Envio</label>
+                <Select value={sentFilter} onValueChange={setSentFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="sent">Enviadas</SelectItem>
+                    <SelectItem value="not_sent">Não enviadas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Tipo</label>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="completa">Completa</SelectItem>
+                    <SelectItem value="simplificada">Simplificada</SelectItem>
+                    <SelectItem value="pdf">PDF Importado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {isAdmin && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Técnico</label>
+                  <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os técnicos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os técnicos</SelectItem>
+                      {technicians.map(tech => (
+                        <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Data Inicial</label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Data Final</label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* RAT Cards */}
+      <div className="space-y-3">
+        {filteredRats.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Nenhuma RAT encontrada.
+            </CardContent>
+          </Card>
+        ) : (
+          filteredRats.map((rat) => {
+            const tech = technicians.find(t => t.id === rat.technicianId);
+            const statusConfig = rat.sentAt ? SENT_STYLE : STATUS_CONFIG[rat.status];
+            
+            return (
+              <Card key={rat.id} className={`border-l-4 ${statusConfig?.border} hover:shadow-md transition-shadow`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-semibold text-lg">{rat.reportNumber}</span>
+                        {rat.reportNumberManual && (
+                          <Badge variant="outline">{rat.reportNumberManual}</Badge>
+                        )}
+                        <Badge className={`${statusConfig?.bg} ${statusConfig?.text}`}>
+                          {rat.sentAt ? "Enviada" : STATUS_CONFIG[rat.status]?.label}
+                        </Badge>
+                        {rat.isSimplified && (
+                          <Badge variant="outline">Simplificada</Badge>
+                        )}
+                        {rat.hasPdf && (
+                          <Badge variant="outline" className="gap-1">
+                            <FileText className="h-3 w-3" /> PDF
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="font-semibold">{rat.clientName}</div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(rat.openDate || rat.createdAt).toLocaleDateString('pt-BR')}
+                        </div>
+                        {tech && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            {tech.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {/* TODO: Download */}}
+                        title="Baixar PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {/* TODO: Visualizar */}}
+                        title="Visualizar"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {/* TODO: Deletar */}}
+                        title="Excluir"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
