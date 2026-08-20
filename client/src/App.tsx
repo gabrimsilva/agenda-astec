@@ -31,7 +31,7 @@ import CheckIn from "@/pages/CheckIn";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
-import RATs from "@/pages/RATs";
+import RATs from "@/pages/RATsSimple";
 import Login from "@/pages/Login";
 import GPSTest from "@/pages/GPSTest";
 import IconGenerator from "@/pages/IconGenerator";
