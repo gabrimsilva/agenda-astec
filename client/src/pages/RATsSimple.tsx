@@ -590,7 +590,7 @@ export default function RATsSimple() {
             fetchData();
           }
         }}
-        rat={selectedRat}
+        existingRat={selectedRat}
         activity={selectedActivity}
       />
 
@@ -604,7 +604,7 @@ export default function RATsSimple() {
             fetchData();
           }
         }}
-        rat={selectedRat}
+        existingRat={selectedRat}
         activity={selectedActivity}
       />
 
