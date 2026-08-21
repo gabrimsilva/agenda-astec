@@ -551,7 +551,7 @@ export default function RATsSimple() {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      {!rat.hasPdf && !rat.sentAt && (
+                      {!rat.hasPdf && !rat.sentAt && rat.status === 'pendente' && (
                         <Button
                           variant="ghost"
                           size="icon"
