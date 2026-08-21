@@ -477,22 +477,26 @@ export default function RATsSimple() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenRat(rat)}
-                        title="Editar/Visualizar"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handlePreview(rat)}
-                        title="Visualizar Preview"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      {!rat.hasPdf && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenRat(rat)}
+                            title="Editar/Visualizar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handlePreview(rat)}
+                            title="Visualizar Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
