@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Calendar, User, Download, Trash2, Eye, Filter, Edit } from "lucide-react";
+import { FileText, Calendar, User, Download, Trash2, Eye, Filter, Edit, Upload } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -198,6 +198,52 @@ export default function RATsSimple() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleUploadPdfToRat = (rat: any) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/pdf";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          const token = localStorage.getItem('astec_token');
+          const formData = new FormData();
+          formData.append("pdf", file);
+
+          toast({
+            title: "Importando PDF...",
+            description: "Por favor aguarde...",
+            duration: 5000
+          });
+
+          const response = await fetch(`/api/rats/${rat.id}/pdf`, {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error("Erro ao fazer upload do PDF");
+          }
+
+          toast({
+            title: "PDF importado!",
+            description: "O PDF foi anexado à RAT com sucesso.",
+          });
+
+          fetchData();
+        } catch (error: any) {
+          toast({
+            title: "Erro ao importar PDF",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    input.click();
   };
 
   const filteredRats = useMemo(() => {
@@ -505,6 +551,16 @@ export default function RATsSimple() {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
+                      {!rat.hasPdf && !rat.sentAt && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleUploadPdfToRat(rat)}
+                          title="Importar PDF"
+                        >
+                          <Upload className="h-4 w-4 text-purple-600" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
